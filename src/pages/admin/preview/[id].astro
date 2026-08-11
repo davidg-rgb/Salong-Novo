@@ -10,9 +10,11 @@ export const prerender = false;
 import AdminBase from "../../../layouts/AdminBase.astro";
 import PostView from "../../../components/PostView.astro";
 import { getById } from "../../../lib/db";
+import { bindings } from "../../../lib/cms/bindings";
 import "../../../styles/admin.css";
 
-const db = Astro.locals.runtime?.env?.DB;
+const env = await bindings();
+const db = env.DB;
 const userEmail = Astro.locals.user?.email ?? null;
 
 const idParam = Astro.params.id ?? "";

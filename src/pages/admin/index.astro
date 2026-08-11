@@ -9,9 +9,11 @@ export const prerender = false;
 import AdminBase from "../../layouts/AdminBase.astro";
 import PostList from "../../components/admin/PostList.astro";
 import { listAll } from "../../lib/db";
+import { bindings } from "../../lib/cms/bindings";
 import "../../styles/admin.css";
 
-const db = Astro.locals.runtime?.env?.DB;
+const env = await bindings();
+const db = env.DB;
 const userEmail = Astro.locals.user?.email ?? null;
 const posts = db ? await listAll(db).catch(() => []) : [];
 ---

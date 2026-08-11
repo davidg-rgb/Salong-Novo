@@ -1,13 +1,14 @@
 export const prerender = false;
 import type { APIRoute } from "astro";
 import { getById } from "../../../../lib/db";
+import { bindings } from "../../../../lib/cms/bindings";
 import type { ApiError, GetPostResponse } from "../../../../lib/admin-api";
 
 /**
  * Load one post by id for the edit form (§10.5). Returns any status (drafts
  * included) — this is Access-gated, unlike the public slug lookup.
  */
-function authorized(request: Request, env: App.Locals["runtime"]["env"]): boolean {
+function authorized(request: Request, env: Partial<Env>): boolean {
   const expected = env.ADMIN_API_TOKEN;
   if (!expected) return true;
   return request.headers.get("x-admin-token") === expected;
@@ -20,9 +21,9 @@ function json(data: unknown, status = 200): Response {
   });
 }
 
-export const GET: APIRoute = async ({ request, locals, params }) => {
-  const env = locals.runtime?.env;
-  if (!env?.DB) return json(<ApiError>{ error: "db_unavailable" }, 503);
+export const GET: APIRoute = async ({ request, params }) => {
+  const env = await bindings();
+  if (!env.DB) return json(<ApiError>{ error: "db_unavailable" }, 503);
   if (!authorized(request, env)) return json(<ApiError>{ error: "unauthorized" }, 401);
 
   const idParam = params.id ?? "";

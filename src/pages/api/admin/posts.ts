@@ -14,6 +14,7 @@ import { resolveSlug } from "../../../lib/slug";
 import { nextPublishedAt } from "../../../lib/posts";
 import { parsePostWrite } from "../../../lib/admin-validate";
 import { isSameOriginWrite } from "../../../lib/access";
+import { bindings } from "../../../lib/cms/bindings";
 import { extractMediaKeys } from "../../../lib/media";
 import { isLocale, type Locale } from "../../../i18n/routes";
 import type {
@@ -30,7 +31,7 @@ import type { Post, PostStatus } from "../../../lib/posts";
  * /api/admin at the edge; this token check is defense-in-depth only. Every write
  * additionally enforces the same-origin CSRF guard (§10.8).
  */
-function authorized(request: Request, env: App.Locals["runtime"]["env"]): boolean {
+function authorized(request: Request, env: Partial<Env>): boolean {
   const expected = env.ADMIN_API_TOKEN;
   if (!expected) return true; // not configured locally -> allow (Access still gates prod)
   return request.headers.get("x-admin-token") === expected;
@@ -72,9 +73,9 @@ async function associateMedia(
   }
 }
 
-export const GET: APIRoute = async ({ request, locals, url }) => {
-  const env = locals.runtime?.env;
-  if (!env?.DB) return json(<ApiError>{ error: "db_unavailable" }, 503);
+export const GET: APIRoute = async ({ request, url }) => {
+  const env = await bindings();
+  if (!env.DB) return json(<ApiError>{ error: "db_unavailable" }, 503);
   if (!authorized(request, env)) return json(<ApiError>{ error: "unauthorized" }, 401);
 
   const localeParam = url.searchParams.get("locale");
@@ -99,10 +100,10 @@ export const GET: APIRoute = async ({ request, locals, url }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  const env = locals.runtime?.env;
-  if (!env?.DB) return json(<ApiError>{ error: "db_unavailable" }, 503);
+  const env = await bindings();
+  if (!env.DB) return json(<ApiError>{ error: "db_unavailable" }, 503);
   if (!authorized(request, env)) return json(<ApiError>{ error: "unauthorized" }, 401);
-  if (!isSameOriginWrite(request, env.PUBLIC_SITE_URL)) {
+  if (!isSameOriginWrite(request, env.PUBLIC_SITE_URL ?? "")) {
     return json(<ApiError>{ error: "forbidden" }, 403);
   }
 
@@ -132,15 +133,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
   };
 
   const post: Post = await insertPost(env.DB, input, now);
-  await associateMedia(env.DB, post.id, post.coverImage, post.body, env.PUBLIC_IMAGE_BASE);
+  await associateMedia(env.DB, post.id, post.coverImage, post.body, env.PUBLIC_IMAGE_BASE ?? "");
   return json(<CreatePostResponse>{ ok: true, post }, 201);
 };
 
-export const PUT: APIRoute = async ({ request, locals }) => {
-  const env = locals.runtime?.env;
-  if (!env?.DB) return json(<ApiError>{ error: "db_unavailable" }, 503);
+export const PUT: APIRoute = async ({ request }) => {
+  const env = await bindings();
+  if (!env.DB) return json(<ApiError>{ error: "db_unavailable" }, 503);
   if (!authorized(request, env)) return json(<ApiError>{ error: "unauthorized" }, 401);
-  if (!isSameOriginWrite(request, env.PUBLIC_SITE_URL)) {
+  if (!isSameOriginWrite(request, env.PUBLIC_SITE_URL ?? "")) {
     return json(<ApiError>{ error: "forbidden" }, 403);
   }
 
@@ -180,15 +181,15 @@ export const PUT: APIRoute = async ({ request, locals }) => {
   };
 
   const post: Post = await updatePost(env.DB, existing.id, input, now);
-  await associateMedia(env.DB, post.id, post.coverImage, post.body, env.PUBLIC_IMAGE_BASE);
+  await associateMedia(env.DB, post.id, post.coverImage, post.body, env.PUBLIC_IMAGE_BASE ?? "");
   return json(<UpdatePostResponse>{ ok: true, post }, 200);
 };
 
-export const DELETE: APIRoute = async ({ request, locals, url }) => {
-  const env = locals.runtime?.env;
-  if (!env?.DB) return json(<ApiError>{ error: "db_unavailable" }, 503);
+export const DELETE: APIRoute = async ({ request, url }) => {
+  const env = await bindings();
+  if (!env.DB) return json(<ApiError>{ error: "db_unavailable" }, 503);
   if (!authorized(request, env)) return json(<ApiError>{ error: "unauthorized" }, 401);
-  if (!isSameOriginWrite(request, env.PUBLIC_SITE_URL)) {
+  if (!isSameOriginWrite(request, env.PUBLIC_SITE_URL ?? "")) {
     return json(<ApiError>{ error: "forbidden" }, 403);
   }
 

@@ -3,6 +3,7 @@ import { type Locale, t, localizePath } from "../i18n";
 import type { Post } from "../lib/posts";
 import { renderMarkdown, readingTimeMinutes } from "../lib/markdown";
 import { responsiveImageAttrs, parseVariants } from "../lib/images";
+import { bindings } from "../lib/cms/bindings";
 const { locale, post } = Astro.props as { locale: Locale; post: Post };
 const html = renderMarkdown(post.body);
 const mins = readingTimeMinutes(post.body);
@@ -10,7 +11,8 @@ const mins = readingTimeMinutes(post.body);
 // Cover render (§10.7 / A5). `PUBLIC_IMAGE_BASE` is empty in Stage A, so the
 // helper routes the cover through `/api/media/<key>` with NO srcset (variants
 // don't exist yet) — a graceful fallback that never 404s.
-const imageBase = Astro.locals.runtime?.env?.PUBLIC_IMAGE_BASE ?? "";
+const env = await bindings();
+const imageBase = env.PUBLIC_IMAGE_BASE ?? "";
 const cover = post.coverImage
   ? responsiveImageAttrs(imageBase, post.coverImage, parseVariants(null), {
       alt: post.title,

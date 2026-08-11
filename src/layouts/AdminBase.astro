@@ -6,6 +6,7 @@
  */
 import "../styles/tokens.css";
 import AdminNav from "../components/admin/AdminNav.astro";
+import { bindings } from "../lib/cms/bindings";
 
 interface Props {
   title: string;
@@ -19,7 +20,8 @@ const { title, userEmail } = Astro.props;
  * client can echo it as `x-admin-token` on writes. A cross-site attacker can
  * neither read this page (Access) nor set the header (no CORS grant).
  */
-const adminToken = Astro.locals.runtime?.env?.ADMIN_API_TOKEN ?? "";
+const env = await bindings();
+const adminToken = env.ADMIN_API_TOKEN ?? "";
 ---
 <!doctype html>
 <html lang="sv">

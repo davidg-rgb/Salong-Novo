@@ -1,7 +1,26 @@
+#
+# Cloudflare **Workers** config (with Static Assets) — NOT Pages.
+# @astrojs/cloudflare v14 dropped the Pages target; a `pages_build_output_dir` key
+# here makes wrangler treat the project as Pages and the build fails with
+# "The name 'ASSETS' is reserved in Pages projects".
+#
+# `main` and `[assets] directory` are intentionally ABSENT: @astrojs/cloudflare
+# generates the deployable worker entry + assets binding into dist/ at build time.
+# Declaring them here fails the build ("main field doesn't point to an existing
+# file") because the Vite plugin resolves the config before the entry exists. This
+# file declares the NAME, COMPAT and BINDINGS only.
 name = "salong-novo"
-compatibility_date = "2025-05-01"
+compatibility_date = "2026-07-30"
 compatibility_flags = ["nodejs_compat"]
-pages_build_output_dir = "./dist"
+
+# Static Assets sit IN FRONT of the worker and do their own URL handling, before
+# Astro ever sees the request. The default (`auto-trailing-slash`) 307-redirects
+# /blogg → /blogg/ because the file is at /blogg/index.html, which directly
+# contradicts astro.config.mjs `trailingSlash: "never"` and makes every internal
+# link cost an extra round trip. `drop-trailing-slash` serves /blogg from
+# /blogg/index.html with no redirect, matching Astro's own link generation.
+[assets]
+html_handling = "drop-trailing-slash"
 
 # D1 — blog posts. Create with:  wrangler d1 create novo_db
 # then paste the returned database_id below.
@@ -13,21 +32,26 @@ migrations_dir = "migrations"
 
 # R2 — uploaded images + generated variants. Create with:
 #   wrangler r2 bucket create novo-images
+# The binding is MEDIA (not IMAGES) because the Forge CMS core reads `env.MEDIA`.
 [[r2_buckets]]
-binding = "IMAGES"
+binding = "MEDIA"
 bucket_name = "novo-images"
 
-# Public vars (non-secret). Secrets (ADMIN_API_TOKEN) set via:
-#   wrangler pages secret put ADMIN_API_TOKEN
+# Public vars (non-secret). Secrets set via:  wrangler secret put ADMIN_API_TOKEN
 [vars]
 PUBLIC_SITE_URL = "https://salongnovo.se"
 # Stage A: empty → images serve same-origin via /api/media/*. Flip to
 # "https://img.salongnovo.se" only at the Stage-B R2-domain cutover (ARCHITECTURE §10.7).
 PUBLIC_IMAGE_BASE = ""
 PUBLIC_BOOKING_URL = "https://bokning.voady.se/novo"
-# Cloudflare Access (admin JWT verification, ARCHITECTURE §10.3). Empty locally
-# (the dev branch uses DEV_ADMIN_EMAIL from .dev.vars). Set the REAL values in the
-# Cloudflare Pages dashboard at deploy: ACCESS_AUD = the Access app's Audience tag,
-# ACCESS_TEAM_DOMAIN = "<team>.cloudflareaccess.com".
+# Cloudflare Access (admin JWT verification, ARCHITECTURE §10.3). The REAL values go
+# HERE, in this file — ACCESS_AUD = the Access app's Audience tag, ACCESS_TEAM_DOMAIN =
+# "<team>.cloudflareaccess.com". NOT in the dashboard: `wrangler deploy` treats this
+# [vars] block as the whole truth and re-blanks any plain-text var set through the
+# dashboard on every deploy, which fail-closes the admin to 403 for everyone the next
+# time anyone ships (RUNBOOK §4.3). They are not secrets (an Audience tag and a team
+# hostname are public identifiers), which is why they live in version control.
+# Locally these must stay shadowed to "" by .dev.vars, so dev falls through to
+# DEV_ADMIN_EMAIL instead of verifying a real Access JWT no local request carries.
 ACCESS_AUD = ""
 ACCESS_TEAM_DOMAIN = ""

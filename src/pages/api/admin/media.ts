@@ -2,6 +2,7 @@ export const prerender = false;
 import type { APIRoute } from "astro";
 import { listMedia, deleteMediaRow, mediaUsage } from "../../../lib/db";
 import { isSameOriginWrite } from "../../../lib/access";
+import { bindings } from "../../../lib/cms/bindings";
 import { variantKey, VARIANT_WIDTHS } from "../../../lib/images";
 import type {
   ApiError,
@@ -14,7 +15,7 @@ import type {
  * route at the edge; the token check is defense-in-depth and DELETE adds the
  * same-origin CSRF guard (§10.8).
  */
-function authorized(request: Request, env: App.Locals["runtime"]["env"]): boolean {
+function authorized(request: Request, env: Partial<Env>): boolean {
   const expected = env.ADMIN_API_TOKEN;
   if (!expected) return true;
   return request.headers.get("x-admin-token") === expected;
@@ -33,22 +34,22 @@ function intParam(value: string | null, fallback: number): number {
   return Number.isFinite(n) && n >= 0 ? Math.floor(n) : fallback;
 }
 
-export const GET: APIRoute = async ({ request, locals, url }) => {
-  const env = locals.runtime?.env;
-  if (!env?.DB) return json(<ApiError>{ error: "db_unavailable" }, 503);
+export const GET: APIRoute = async ({ request, url }) => {
+  const env = await bindings();
+  if (!env.DB) return json(<ApiError>{ error: "db_unavailable" }, 503);
   if (!authorized(request, env)) return json(<ApiError>{ error: "unauthorized" }, 401);
 
   const limit = intParam(url.searchParams.get("limit"), 100);
   const offset = intParam(url.searchParams.get("offset"), 0);
-  const media = await listMedia(env.DB, env.PUBLIC_IMAGE_BASE, limit, offset);
+  const media = await listMedia(env.DB, env.PUBLIC_IMAGE_BASE ?? "", limit, offset);
   return json(<ListMediaResponse>{ ok: true, media }, 200);
 };
 
-export const DELETE: APIRoute = async ({ request, locals, url }) => {
-  const env = locals.runtime?.env;
-  if (!env?.DB) return json(<ApiError>{ error: "db_unavailable" }, 503);
+export const DELETE: APIRoute = async ({ request, url }) => {
+  const env = await bindings();
+  if (!env.DB) return json(<ApiError>{ error: "db_unavailable" }, 503);
   if (!authorized(request, env)) return json(<ApiError>{ error: "unauthorized" }, 401);
-  if (!isSameOriginWrite(request, env.PUBLIC_SITE_URL)) {
+  if (!isSameOriginWrite(request, env.PUBLIC_SITE_URL ?? "")) {
     return json(<ApiError>{ error: "forbidden" }, 403);
   }
 
@@ -64,16 +65,19 @@ export const DELETE: APIRoute = async ({ request, locals, url }) => {
   }
 
   // Delete the R2 original + every known variant key (best-effort each).
-  try {
-    await env.IMAGES.delete(key);
-  } catch {
-    // idempotent: a missing object is fine.
-  }
-  for (const w of VARIANT_WIDTHS) {
+  if (env.MEDIA) {
+    const media = env.MEDIA;
     try {
-      await env.IMAGES.delete(variantKey(key, w));
+      await media.delete(key);
     } catch {
-      // best-effort: variant may not exist (pipeline deferred).
+      // idempotent: a missing object is fine.
+    }
+    for (const w of VARIANT_WIDTHS) {
+      try {
+        await media.delete(variantKey(key, w));
+      } catch {
+        // best-effort: variant may not exist (pipeline deferred).
+      }
     }
   }
   await deleteMediaRow(env.DB, key);

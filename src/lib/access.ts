@@ -238,7 +238,7 @@ export function isSameOriginWrite(
  * NEVER coexist (a dev bypass on a prod deploy would be an auth hole). Throws if
  * `DEV_ADMIN_EMAIL` is set alongside either `ACCESS_AUD` or `ACCESS_TEAM_DOMAIN`.
  */
-export function assertNoDevBypassInProd(env: CloudflareEnv): void {
+export function assertNoDevBypassInProd(env: Partial<Env>): void {
   if (env.DEV_ADMIN_EMAIL && (env.ACCESS_AUD || env.ACCESS_TEAM_DOMAIN)) {
     throw new Error(
       "Auth misconfiguration: DEV_ADMIN_EMAIL must not be set when ACCESS_AUD/ACCESS_TEAM_DOMAIN are configured (dev bypass + prod Access must never coexist).",

@@ -393,11 +393,11 @@ describe("isSameOriginWrite", () => {
 describe("assertNoDevBypassInProd", () => {
   const base = {
     DB: {} as D1Database,
-    IMAGES: {} as R2Bucket,
+    MEDIA: {} as R2Bucket,
     PUBLIC_SITE_URL: "https://salongnovo.se",
     PUBLIC_IMAGE_BASE: "",
     PUBLIC_BOOKING_URL: "https://bokning.voady.se/novo",
-  } as CloudflareEnv;
+  } as Env;
 
   it("does not throw with only dev bypass (local)", () => {
     expect(() =>

@@ -9,11 +9,13 @@ import AdminBase from "../../../layouts/AdminBase.astro";
 import PostEditor from "../../../components/admin/PostEditor.astro";
 import type { PostDraft } from "../../../lib/editor";
 import { getById } from "../../../lib/db";
+import { bindings } from "../../../lib/cms/bindings";
 import "../../../styles/admin.css";
 
-const db = Astro.locals.runtime?.env?.DB;
+const env = await bindings();
+const db = env.DB;
 const userEmail = Astro.locals.user?.email ?? null;
-const imageBase = Astro.locals.runtime?.env?.PUBLIC_IMAGE_BASE ?? "";
+const imageBase = env.PUBLIC_IMAGE_BASE ?? "";
 
 const idParam = Astro.params.id ?? "";
 const id = /^\d+$/.test(idParam) ? Number(idParam) : NaN;

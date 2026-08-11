@@ -2,6 +2,7 @@ import { defineMiddleware } from "astro:middleware";
 import type { APIContext } from "astro";
 import { resolveRedirect } from "./lib/redirects";
 import { verifyAccessJwt, type Jwk } from "./lib/access";
+import { bindings } from "./lib/cms/bindings";
 
 /** Matches the two Access-gated prefixes: `/admin*` and `/api/admin*`. */
 const ADMIN_RE = /^\/(admin|api\/admin)(\/|$)/;
@@ -85,7 +86,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   // 2) admin identity — only for the two Access-gated prefixes.
   if (ADMIN_RE.test(context.url.pathname)) {
-    const env = context.locals.runtime?.env;
+    const env = await bindings();
     const h = context.request.headers;
     const jwt = h.get("Cf-Access-Jwt-Assertion");
     const headerEmail = h.get("Cf-Access-Authenticated-User-Email");
