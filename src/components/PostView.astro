@@ -1,10 +1,11 @@
 ---
-import { type Locale, t, localizePath } from "../i18n";
+import { type Locale, useT, localizePath } from "../i18n";
 import type { Post } from "../lib/posts";
 import { renderMarkdown, readingTimeMinutes } from "../lib/markdown";
 import { responsiveImageAttrs, parseVariants } from "../lib/images";
 import { bindings } from "../lib/cms/bindings";
 const { locale, post } = Astro.props as { locale: Locale; post: Post };
+const t = useT(locale, (await Astro.locals.getCms()).kv);
 const html = renderMarkdown(post.body);
 const mins = readingTimeMinutes(post.body);
 
@@ -21,9 +22,9 @@ const cover = post.coverImage
   : null;
 ---
 <article class="post wrap">
-  <a class="back" href={localizePath("blog", locale)}>← {t(locale, "blog.back")}</a>
+  <a class="back" href={localizePath("blog", locale)}>← {t("blog.back")}</a>
   <p class="meta">
-    <span>{post.publishedAt?.slice(0, 10)}</span> · <span>{t(locale, "labels.readingTime", { n: mins })}</span>
+    <span>{post.publishedAt?.slice(0, 10)}</span> · <span>{t("labels.readingTime", { n: mins })}</span>
     {post.author && <> · <span>{post.author}</span></>}
   </p>
   <h1>{post.title}</h1>

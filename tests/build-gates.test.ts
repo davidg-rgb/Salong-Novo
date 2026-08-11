@@ -97,7 +97,7 @@ describe("build-time-bindings gate (P2-C1, complement form)", () => {
    * so a page that merely FORGETS the flag cannot slip past by being absent from
    * an allowlist.
    */
-  const CONTENT_READS = ["locals.getCms", "locals.db", "loadCollection"];
+  const CONTENT_READS = ["locals.getCms", "locals.db", "loadCollection", "resolveCollection"];
 
   it("no prerendered page reads request-time CMS content", () => {
     const pages = walk(p("src", "pages"), PAGE_EXTS);
@@ -109,6 +109,44 @@ describe("build-time-bindings gate (P2-C1, complement form)", () => {
       if (hits.length) offenders.push(`${rel(file)} → ${hits.join(", ")}`);
     }
     expect(offenders).toEqual([]);
+  });
+});
+
+describe("content routes are server-rendered (B2)", () => {
+  /**
+   * The complement gate above catches a page that reads content DIRECTLY. It
+   * cannot catch the case this project created by wiring the CMS into the shared
+   * layout: `Base.astro` loads the content bundle for its JSON-LD, and
+   * `SiteHeader`/`SiteFooter` translate through it, so EVERY page that renders a
+   * layout is a content reader whether its own frontmatter says so or not.
+   *
+   * Hence the blunt rule: every `.astro` page opts out of prerendering. The two
+   * `.ts` endpoints (`robots.txt`, `sitemap.xml`) are deliberately excluded —
+   * they render no layout and read no content, so they stay static.
+   */
+  const layout = read(p("src", "layouts", "Base.astro"));
+
+  it("the shared layout really is a content reader (the premise of the rule)", () => {
+    expect(layout).toContain("locals.getCms");
+  });
+
+  it("every .astro page under src/pages opts out of prerendering", () => {
+    const pages = walk(p("src", "pages"), [".astro"]);
+    expect(pages.length).toBeGreaterThan(20);
+    const missing = pages.filter(
+      (file) => !/export\s+const\s+prerender\s*=\s*false/.test(moduleSource(file)),
+    );
+    expect(missing.map(rel)).toEqual([]);
+  });
+
+  it("the static endpoints stay static, and stay content-free", () => {
+    // If either ever needs a client-edited value it must flip too — asserting
+    // the absence here is what makes that a failing test rather than stale HTML.
+    for (const file of ["robots.txt.ts", "sitemap.xml.ts"]) {
+      const source = read(p("src", "pages", file));
+      expect(source, file).not.toContain("prerender = false");
+      expect(source, file).not.toContain("getCms");
+    }
   });
 });
 

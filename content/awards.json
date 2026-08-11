@@ -1,5 +1,5 @@
 {
-  "_note": "Structured awards from live site (Årets Frisör 2026) + old build AWARDS_MAPPING.md (Årets Frisör 2025, Nordic Hairshot 2025). Image keys reference the assets migrated from the old build's public/awards/. Photographers credited where known.",
+  "_note": "Structured awards from live site (Årets Frisör 2026) + old build AWARDS_MAPPING.md (Årets Frisör 2025, Nordic Hairshot 2025). Image keys reference the assets migrated from the old build's public/awards/. Photographers credited where known. The former `headline_stats` block now lives in site.json — the homepage numbers are site facts, and the CMS resolves editable facts against that one document.",
   "awards": [
     {
       "year": 2026,
@@ -31,10 +31,5 @@
         { "category": "Final", "result": "Finalist (Sverige)", "people": ["Ola Oterkjaer", "Chriss Berner"], "location": "Köpenhamn, 25 oktober", "images": "awards/nordic-hairshot-2025/nordichairshotawards2025_*" }
       ]
     }
-  ],
-  "headline_stats": {
-    "arets_kollektion_wins": 3,
-    "stylists": 18,
-    "founded": 2013
-  }
+  ]
 }

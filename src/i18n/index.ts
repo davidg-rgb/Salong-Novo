@@ -2,10 +2,24 @@ import sv from "./ui.sv.json";
 import en from "./ui.en.json";
 import { type Locale, DEFAULT_LOCALE } from "./routes";
 import { copyKey, overrideSide, type KvMap } from "../lib/cms/content";
+import { pageCopyDict } from "../lib/pagecopy";
 
 export * from "./routes";
 
-const DICTS: Record<Locale, Record<string, unknown>> = { sv, en };
+/**
+ * TWO SOURCES, ONE LOOKUP. `ui.*.json` holds the chrome (nav, buttons, labels);
+ * `src/lib/pagecopy.ts` holds the long-form page copy, folded in here under its
+ * own namespaces (`home.*`, `about.*`, …). Merging them means there is a single
+ * key space for `t()`, and therefore a single override mechanism: `useT()` sees
+ * a `content_kv` row and beats the default, wherever that default came from.
+ *
+ * The two must not collide — `tests/content-cms.test.ts` asserts the namespaces
+ * are disjoint, since a shared top-level key would silently drop one side.
+ */
+const DICTS: Record<Locale, Record<string, unknown>> = {
+  sv: { ...sv, ...pageCopyDict("sv") },
+  en: { ...en, ...pageCopyDict("en") },
+};
 
 /** Look up a dotted key (e.g. "cta.book") in the locale dictionary. */
 function lookup(dict: Record<string, unknown>, key: string): string | undefined {

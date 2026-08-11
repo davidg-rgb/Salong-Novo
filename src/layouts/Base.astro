@@ -24,7 +24,11 @@ const siteUrl = Astro.site?.toString().replace(/\/$/, "") ?? "";
 const canonical = siteUrl + Astro.url.pathname;
 const alts = alternateLinks === undefined ? alternates(pageKey) : alternateLinks;
 const og = ogMeta({ title, description, canonical, locale, image });
-const jsonld = hairSalonJsonLd(siteUrl);
+// The structured data carries the salon's address and phone number, so this
+// layout is an SSR content reader like any other component. The bundle is
+// memoized per request — awaiting it here costs nothing extra.
+const { kv } = await Astro.locals.getCms();
+const jsonld = hairSalonJsonLd(siteUrl, kv);
 ---
 <!doctype html>
 <html lang={locale}>

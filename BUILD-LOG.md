@@ -85,3 +85,36 @@ hand-written nav (config-driven).
 arm the vacuous `cms-config` loops by authoring the real config; `mediaPrefix` stays `"blog/"`
 (media library lists by prefix — changing it would orphan every existing key); `posts/[id]` API is
 GET-only by design (writes go to `/api/admin/posts?id=`), not a regression.
+
+### 2026-08-11 17:08 — Phase B2 COMPLETE · B2-gate PASSED (orchestrator-verified)
+Builder `builder-b2` delivered the real content model: 4 site-fact groups / 19 fields (hours marked
+placeholderUntilEdited), 14 editableCopy pages / 59 keys (unrendered dictionary keys deliberately
+excluded), collections staff (8 fields / 18 JSON defaults) + services (bilingual `list` bullets —
+landmine 5 covered by a round-trip test) + awards (flattened from the nested JSON), 4 usageQueries.
+All 22 public pages flipped to SSR-from-D1 (Base.astro reads CMS for JSON-LD ⇒ every page is a
+content reader); only robots/sitemap stay static; build-gates extended to assert exactly that.
+`@astrojs/check` added — found 2 real .astro errors `tsc` cannot see; both fixed.
+
+**Recorded divergence:** `src/lib/collections.ts` wraps core `loadCollection` — zero rows falls back
+to JSON defaults (nicole seeds D1; the no-seed provenance model here needs the fallback or a fresh
+DB renders an empty team grid). One row ⇒ D1 wins entirely. Proven both directions.
+
+**Gate results (orchestrator-run):** `npm run test` → **529 passed / 25 files** · typecheck clean ·
+`npm run check` → 0 errors / 0 warnings / 6 pre-existing hints · `npx astro build` → Complete ·
+`prerender = false` files = 42 · `dist/client/admin` absent.
+Builder smoke (accepted): 22/22 routes 200 on defaults; provenance PUT→visible→DELETE→default for
+copy AND facts; staff 18→1→delete→18; bullets survive PUT; dashboard placeholder count ("Öppettider —
+3 fält kvar"); fail-closed 403 sweep; blog intact; UTF-8 byte-exact.
+
+**FINDING promoted to review phase — template trap:** core `mergeSiteOverrides` silently drops
+site-fact keys with <2 segments (`content.ts:284`) — a flat `site.json` (top-level scalars like
+`phone`) saves `{"ok":true}` yet changes nothing. NOVO worked around it by nesting facts under
+`brand`/`contact` + tests forbidding root scalars. `_templates/forge-cms` still carries the trap for
+the next consumer.
+
+**Deliberate deferrals (logged, not bugs):** `showPrices` stays a developer flag (no toggle renderer
+in FormField; string round-trip would corrupt the boolean); services/awards admin-editable but
+publicly unrendered (rendering would publish unconfirmed prices — design task); two homepage stat
+labels still hardcoded Swedish on EN (moving them changes EN output pre-signoff); unseeded
+collections show an empty admin list while public renders JSON defaults — a "Kopiera standardlistan"
+affordance is a worthy follow-up.

@@ -1,9 +1,13 @@
 ---
-import { type Locale, t } from "../i18n";
-import { getStaff, stylistBio, bookingUrl } from "../lib/content";
+import { type Locale, useT } from "../i18n";
+import { asStylist, stylistBio, bookingUrl } from "../lib/content";
+import { resolveCollection } from "../lib/collections";
+import { STAFF } from "../cms.config";
 const { locale } = Astro.props as { locale: Locale };
-const staff = getStaff();
-const booking = bookingUrl();
+const { kv } = await Astro.locals.getCms();
+const t = useT(locale, kv);
+const staff = (await resolveCollection(Astro.locals.db, STAFF)).items.map(asStylist);
+const booking = bookingUrl(kv);
 ---
 <ul class="staff-grid" role="list">
   {staff.map((s) => (
@@ -21,7 +25,7 @@ const booking = bookingUrl();
         <span class="frame" aria-hidden="true"><span class="mono">{s.name.charAt(0)}</span><span class="duo"></span></span>
         <b>{s.name}</b>
         <span class="role">{s.specialty !== "TODO" ? s.specialty : s.role}</span>
-        <span class="open">{t(locale, "labels.openProfile")} <span class="arr">→</span></span>
+        <span class="open">{t("labels.openProfile")} <span class="arr">→</span></span>
       </button>
     </li>
   ))}
@@ -30,7 +34,7 @@ const booking = bookingUrl();
 <div class="staff-modal" id="staffModal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="sm-name">
   <div class="sm-bg" data-close></div>
   <div class="sm-card">
-    <button class="sm-close" id="sm-close" type="button" data-close aria-label={t(locale, "labels.close")}>✕</button>
+    <button class="sm-close" id="sm-close" type="button" data-close aria-label={t("labels.close")}>✕</button>
     <span class="sm-role" id="sm-role"></span>
     <h3 id="sm-name"></h3>
     <p id="sm-bio"></p>
@@ -39,7 +43,7 @@ const booking = bookingUrl();
   </div>
 </div>
 
-<script define:vars={{ bookWith: t(locale, "cta.bookWith", { name: "%s" }) }}>
+<script define:vars={{ bookWith: t("cta.bookWith", { name: "%s" }) }}>
   const modal = document.getElementById("staffModal");
   const set = (id, txt) => { document.getElementById(id).textContent = txt; };
   function open(d) {

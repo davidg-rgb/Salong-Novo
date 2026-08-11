@@ -1,9 +1,11 @@
 ---
+export const prerender = false;
 import Base from "../../layouts/Base.astro";
 import StaffPage from "../../components/StaffPage.astro";
-import { t } from "../../i18n";
+import { useT } from "../../i18n";
 const locale = "en" as const;
+const t = useT(locale, (await Astro.locals.getCms()).kv);
 ---
-<Base locale={locale} pageKey="staff" title={`${t(locale, "nav.staff")} — Salong NOVO`} description="Meet NOVO's 18 award-winning stylists in Vasastan, Stockholm.">
+<Base locale={locale} pageKey="staff" title={`${t("nav.staff")} — Salong NOVO`} description={t("staff.metaDescription")}>
   <StaffPage locale={locale} />
 </Base>

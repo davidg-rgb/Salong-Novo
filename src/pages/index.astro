@@ -1,9 +1,15 @@
 ---
+export const prerender = false;
+// SSR (ADR-02 / P2-C1): every string on this page is client-editable and read
+// from D1 at request time, so a save in /admin is live on the next request with
+// no rebuild. Prerendering would bake the developer's local database into the
+// shipped HTML — `tests/build-gates.test.ts` enforces both halves of that.
 import Base from "../layouts/Base.astro";
 import Home from "../components/Home.astro";
-import { home } from "../lib/pagecopy";
+import { useT } from "../i18n";
 const locale = "sv" as const;
+const t = useT(locale, (await Astro.locals.getCms()).kv);
 ---
-<Base locale={locale} pageKey="home" title="Salong NOVO — Frisör i Vasastan, Stockholm" description={home.sub[locale]}>
+<Base locale={locale} pageKey="home" title={t("home.metaTitle")} description={t("home.sub")}>
   <Home locale={locale} />
 </Base>

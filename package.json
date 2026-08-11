@@ -10,6 +10,7 @@
     "preview": "astro build && wrangler dev --config dist/server/wrangler.json --persist-to .wrangler/state",
     "astro": "astro",
     "typecheck": "tsc --noEmit",
+    "check": "astro check",
     "test": "vitest run",
     "test:watch": "vitest",
     "db:migrate:local": "wrangler d1 migrations apply novo_db --local",
@@ -21,6 +22,7 @@
     "markdown-it": "^14.1.0"
   },
   "devDependencies": {
+    "@astrojs/check": "^0.9.10",
     "@cloudflare/workers-types": "^5.20260730.1",
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^26.1.2",

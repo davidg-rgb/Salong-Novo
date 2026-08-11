@@ -1,10 +1,17 @@
 {
-  "_note": "Global site data — verified from live salongnovo.se 2026-05-31. geo coordinates are APPROXIMATE (Rörstrandsgatan/S:t Eriksplan area) — verify exact lat/lng before using in schema.org + map.",
-  "name": "Salong NOVO",
-  "tagline_sv": "Stockholms mest prisbelönta frisörsalong",
-  "tagline_en": "Stockholm's most awarded hair salon",
-  "founded": 2013,
-  "positioning": "Schwarzkopf flaggskepp / flagship",
+  "_note": "Global site data — verified from live salongnovo.se 2026-05-31. geo coordinates are APPROXIMATE (Rörstrandsgatan/S:t Eriksplan area) — verify exact lat/lng before using in schema.org + map. `stats` moved here from awards.json 2026-08-11.",
+  "_shape": "EVERY FACT LIVES UNDER A CONTAINER — `brand.name`, never a top-level `name`. `mergeSiteOverrides` only applies a `site.<container>.<leaf>` override, so a scalar at the root would be editable in the admin and silently inert on the page. Keep new facts nested.",
+  "brand": {
+    "name": "Salong NOVO",
+    "tagline_sv": "Stockholms mest prisbelönta frisörsalong",
+    "tagline_en": "Stockholm's most awarded hair salon",
+    "founded": 2013,
+    "positioning": "Schwarzkopf flaggskepp / flagship"
+  },
+  "stats": {
+    "arets_kollektion_wins": 3,
+    "stylists": 18
+  },
   "address": {
     "street": "Rörstrandsgatan 39C",
     "postal": "113 40",
@@ -13,11 +20,13 @@
   },
   "geo": { "lat": null, "lng": null, "_verify": "approx 59.339, 18.041 — confirm before use" },
   "transit": { "metro": "S:t Eriksplan", "line_note": "T-bana grön linje" },
-  "phone": "+46 8 663 30 14",
-  "phone_display": "08-663 30 14",
-  "email": "info@salongnovo.se",
-  "instagram": "https://www.instagram.com/salongnovo",
-  "instagram_handle": "@salongnovo",
+  "contact": {
+    "phone": "+46 8 663 30 14",
+    "phone_display": "08-663 30 14",
+    "email": "info@salongnovo.se",
+    "instagram": "https://www.instagram.com/salongnovo",
+    "instagram_handle": "@salongnovo"
+  },
   "booking": { "provider": "Voady", "url": "https://bokning.voady.se/novo" },
   "hours": {
     "_verify": "DRAFT — live site only states 'även öppet på kvällar och helger'. Confirm exact hours with salon.",

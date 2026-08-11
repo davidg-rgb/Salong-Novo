@@ -1,13 +1,18 @@
 ---
-import { type Locale, t, localizePath } from "../i18n";
-import { getStaff, getStats, stylistBio } from "../lib/content";
-import { home, about } from "../lib/pagecopy";
+import { type Locale, useT, localizePath } from "../i18n";
+import { asStylist, getStats, stylistBio } from "../lib/content";
+import { resolveCollection } from "../lib/collections";
+import { STAFF } from "../cms.config";
 import BookingButton from "./BookingButton.astro";
 import Logo from "./Logo.astro";
 const { locale } = Astro.props as { locale: Locale };
-const stats = getStats();
-const staff = getStaff();
-const staffLabel = t(locale, "nav.staff");
+const { kv } = await Astro.locals.getCms();
+const t = useT(locale, kv);
+const stats = getStats(kv);
+// The roster is a collection: the JSON defaults render until the client edits
+// the list, and from her first stylist onward the list in D1 is the roster.
+const staff = (await resolveCollection(Astro.locals.db, STAFF)).items.map(asStylist);
+const staffLabel = t("nav.staff");
 // Section order is client-confirmed (ARCHITECTURE §2A.2): hero → Boka tid → hair strip →
 // founders story → team (hover/focus/tap bios). Pending assets (salon video, hair photos,
 // owners photo, stylist texts) slot into these existing slots without layout changes.
@@ -19,12 +24,12 @@ const staffLabel = t(locale, "nav.staff");
   <div class="hero-soft" aria-hidden="true"></div>
   <Logo tone="black" class="hero-logo" height="clamp(220px, 46vh, 520px)" decorative />
   <div class="wrap hero-inner">
-    <p class="kicker">{home.kicker[locale]}</p>
-    <h1>{home.heading[locale]}</h1>
-    <p class="sub">{home.sub[locale]}</p>
+    <p class="kicker">{t("home.kicker")}</p>
+    <h1>{t("home.heading")}</h1>
+    <p class="sub">{t("home.sub")}</p>
     <div class="cta">
       <BookingButton locale={locale} />
-      <a class="btn btn--ghost" href={localizePath("staff", locale)}>{t(locale, "cta.meetTeam")}</a>
+      <a class="btn btn--ghost" href={localizePath("staff", locale)}>{t("cta.meetTeam")}</a>
     </div>
   </div>
 </section>
@@ -47,10 +52,10 @@ const staffLabel = t(locale, "nav.staff");
   <div class="wrap story-grid">
     <div class="story-media" aria-hidden="true"><span class="story-frame"><span class="mono">N</span></span></div>
     <div class="story-copy">
-      <p class="kicker">{t(locale, "nav.about")}</p>
-      <h2>{about.heading[locale]}</h2>
-      <p>{about.body[locale][0]}</p>
-      <a class="story-more" href={localizePath("about", locale)}>{t(locale, "cta.readStory")} <span class="arr">→</span></a>
+      <p class="kicker">{t("nav.about")}</p>
+      <h2>{t("about.heading")}</h2>
+      <p>{t("about.body1")}</p>
+      <a class="story-more" href={localizePath("about", locale)}>{t("cta.readStory")} <span class="arr">→</span></a>
       <ul class="story-stats" role="list">
         <li><b><span class="u">×</span>{stats.arets_kollektion_wins}</b><span>Årets Kollektion</span></li>
         <li><b>{stats.stylists}</b><span>{staffLabel}</span></li>
@@ -68,8 +73,8 @@ const staffLabel = t(locale, "nav.staff");
   <div class="wrap">
     <div class="team-head">
       <p class="kicker">{staffLabel}</p>
-      <h2>{home.teamHeading[locale]}</h2>
-      <a class="team-all" href={localizePath("staff", locale)}>{t(locale, "cta.allTeam")} <span class="arr">→</span></a>
+      <h2>{t("home.teamHeading")}</h2>
+      <a class="team-all" href={localizePath("staff", locale)}>{t("cta.allTeam")} <span class="arr">→</span></a>
     </div>
     <ul class="team-grid" role="list">
       {staff.map((s) => {

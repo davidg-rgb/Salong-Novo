@@ -4,11 +4,23 @@ import type { Locale } from "../i18n/routes";
  * Localized long-form page copy, reworked from the live site (verified
  * 2026-05-31). EN is a DRAFT pending client sign-off. Design-independent —
  * pages consume this regardless of visual direction. Mirrors content/copy.md.
+ *
+ * THIS FILE IS THE DEVELOPER DEFAULT LAYER, and stays that even now that the
+ * copy is client-editable: `pageCopyDict()` at the foot of the module folds
+ * every export into the i18n dictionary, so `t()` — and therefore the kv-aware
+ * `useT()` — reads these strings, and `content_kv` overrides them per key.
+ * Nothing else changed: no row means the string below is what renders, which is
+ * the whole provenance model (§6.6). Pages never import these objects directly
+ * any more; they translate `home.heading`, `about.body1`, and so on.
  */
 type Bi = Record<Locale, string>;
 type Para = Record<Locale, string[]>;
 
 export const home = {
+  metaTitle: {
+    sv: "Salong NOVO — Frisör i Vasastan, Stockholm",
+    en: "Salong NOVO — Hair salon in Vasastan, Stockholm",
+  } as Bi,
   kicker: { sv: "Schwarzkopf Flaggskepp · Vasastan", en: "Schwarzkopf Flagship · Vasastan" } as Bi,
   heading: { sv: "Stockholms mest prisbelönta frisörsalong.", en: "Stockholm's most awarded hair salon." } as Bi,
   sub: {
@@ -57,7 +69,23 @@ export const work = {
   } as Para,
 };
 
+// Team page (grid → modal). The heading is the nav label; only the intro is prose.
+export const staff = {
+  intro: {
+    sv: "18 stylister, ett kollektiv. Klicka på en stylist för bio och bokning.",
+    en: "18 stylists, one collective. Tap a stylist to view and book.",
+  } as Bi,
+  metaDescription: {
+    sv: "Möt NOVO:s 18 prisbelönta stylister i Vasastan, Stockholm.",
+    en: "Meet NOVO's 18 award-winning stylists in Vasastan, Stockholm.",
+  } as Bi,
+};
+
 export const contact = {
+  metaDescription: {
+    sv: "Rörstrandsgatan 39C, Stockholm. T-bana S:t Eriksplan. 08-663 30 14.",
+    en: "Rörstrandsgatan 39C, Stockholm. Metro S:t Eriksplan. +46 8 663 30 14.",
+  } as Bi,
   heading: { sv: "Hitta hit.", en: "Find us." } as Bi,
   directions: {
     sv: "Från T-bana S:t Eriksplan är det en kort promenad (ca 3–5 min). Ta uppgången mot Sankt Eriksgatan/Torsgatan och följ Rörstrandsgatan till nr 39C. Salongen ligger i gatuplan.",
@@ -104,3 +132,84 @@ export const brands = {
     en: "As a Schwarzkopf flagship we work with the industry's leading products and colour systems. A full overview of the brands we carry is coming soon.",
   } as Bi,
 };
+
+// Footer-only page. The heading is the dictionary's `footer.privacy`, so it is
+// editable once rather than twice.
+export const privacy = {
+  metaDescription: {
+    sv: "Så hanterar Salong NOVO personuppgifter.",
+    en: "How Salong NOVO handles personal data.",
+  } as Bi,
+  body: {
+    sv: [
+      "Denna sida beskriver hur Salong NOVO behandlar personuppgifter. Fullständig integritetspolicy publiceras inför lansering.",
+      "Vi samlar endast in de uppgifter som behövs för att besvara förfrågningar och förbättra webbplatsen. Bokning hanteras av Voady enligt deras villkor.",
+    ],
+    en: [
+      "This page describes how Salong NOVO processes personal data. The full privacy policy will be published before launch.",
+      "We only collect the data needed to respond to enquiries and improve the website. Booking is handled by Voady under their terms.",
+    ],
+  } as Para,
+};
+
+/**
+ * Every page-copy group, keyed by the namespace it occupies in the dictionary.
+ *
+ * The keys are `PageKey`s wherever a page owns the copy (`pricing`, not
+ * `pricingPage`), so an admin form, a route and a dictionary namespace all read
+ * the same word. `closing` is the one exception: the champagne band belongs to
+ * the footer, which is on every page.
+ */
+export const PAGE_COPY = {
+  home,
+  closing,
+  about,
+  staff,
+  contact,
+  competitions,
+  pricing: pricingPage,
+  education,
+  brands,
+  work,
+  privacy,
+} as const;
+
+export type PageCopyGroup = keyof typeof PAGE_COPY;
+
+/**
+ * The bridge into `src/i18n/index.ts`: one locale's slice of the copy above, in
+ * the nested shape `t()` walks.
+ *
+ * A `Para` (an array of paragraphs) expands to NUMBERED keys — `about.body`
+ * becomes `about.body1`, `about.body2`, `about.body3` — because `content_kv`
+ * stores one string per key and the client edits one paragraph at a time. Use
+ * `paraKeys()` to render them back in order rather than hardcoding the count.
+ */
+export function pageCopyDict(locale: Locale): Record<string, Record<string, string>> {
+  const dict: Record<string, Record<string, string>> = {};
+  for (const [group, fields] of Object.entries(PAGE_COPY)) {
+    const bucket: Record<string, string> = {};
+    for (const [name, value] of Object.entries(fields as Record<string, Bi | Para>)) {
+      const localized = value[locale];
+      if (Array.isArray(localized)) {
+        localized.forEach((paragraph, index) => (bucket[`${name}${index + 1}`] = paragraph));
+      } else {
+        bucket[name] = localized;
+      }
+    }
+    dict[group] = bucket;
+  }
+  return dict;
+}
+
+/**
+ * The dictionary keys a multi-paragraph field expands to, in order — the count
+ * comes from the default itself, so adding a paragraph to `about.body` above is
+ * the only edit needed to render (and allowlist) it.
+ */
+export function paraKeys(group: PageCopyGroup, field: string): string[] {
+  const value = (PAGE_COPY[group] as Record<string, Bi | Para>)[field];
+  const paragraphs = value?.sv;
+  if (!Array.isArray(paragraphs)) return [`${group}.${field}`];
+  return paragraphs.map((_, index) => `${group}.${field}${index + 1}`);
+}

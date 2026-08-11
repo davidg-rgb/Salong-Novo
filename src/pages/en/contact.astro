@@ -1,9 +1,11 @@
 ---
+export const prerender = false;
 import Base from "../../layouts/Base.astro";
 import ContactPage from "../../components/ContactPage.astro";
-import { t } from "../../i18n";
+import { useT } from "../../i18n";
 const locale = "en" as const;
+const t = useT(locale, (await Astro.locals.getCms()).kv);
 ---
-<Base locale={locale} pageKey="contact" title={`${t(locale, "nav.contact")} — Salong NOVO`} description="Rörstrandsgatan 39C, Stockholm. Metro S:t Eriksplan. +46 8 663 30 14.">
+<Base locale={locale} pageKey="contact" title={`${t("nav.contact")} — Salong NOVO`} description={t("contact.metaDescription")}>
   <ContactPage locale={locale} />
 </Base>

@@ -1,15 +1,19 @@
 ---
-import { type Locale, t } from "../i18n";
+import { type Locale, useT } from "../i18n";
 import { bookingUrl } from "../lib/content";
 interface Props { locale: Locale; label?: string; ghost?: boolean; }
 const { locale, label, ghost } = Astro.props;
+// The bundle is memoized per request, so every component that needs content
+// asks for it directly rather than being handed it through props (§6.4).
+const { kv } = await Astro.locals.getCms();
+const t = useT(locale, kv);
 ---
 <a
   class:list={["btn", { "btn--ghost": ghost }]}
-  href={bookingUrl()}
+  href={bookingUrl(kv)}
   target="_blank"
   rel="noopener"
   data-booking
 >
-  {label ?? t(locale, "cta.book")}
+  {label ?? t("cta.book")}
 </a>

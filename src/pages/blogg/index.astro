@@ -4,12 +4,13 @@ import Base from "../../layouts/Base.astro";
 import BlogList from "../../components/BlogList.astro";
 import { listPublished } from "../../lib/db";
 import { bindings } from "../../lib/cms/bindings";
-import { t } from "../../i18n";
+import { useT } from "../../i18n";
 const locale = "sv" as const;
 const env = await bindings();
 const db = env.DB;
 const posts = db ? await listPublished(db, locale).catch(() => []) : [];
+const t = useT(locale, (await Astro.locals.getCms()).kv);
 ---
-<Base locale={locale} pageKey="blog" title={`${t(locale, "blog.title")} — Salong NOVO`} description={t(locale, "blog.intro")}>
+<Base locale={locale} pageKey="blog" title={`${t("blog.title")} — Salong NOVO`} description={t("blog.intro")}>
   <BlogList locale={locale} posts={posts} />
 </Base>

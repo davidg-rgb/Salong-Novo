@@ -2,7 +2,7 @@
 import {
   type Locale,
   type PageKey,
-  t,
+  useT,
   localizePath,
   LOCALES,
 } from "../i18n";
@@ -11,6 +11,8 @@ import Logo from "./Logo.astro";
 
 interface Props { locale: Locale; pageKey: PageKey; }
 const { locale, pageKey } = Astro.props;
+const { kv } = await Astro.locals.getCms();
+const t = useT(locale, kv);
 
 // Primary nav = the seven client-confirmed tabs, in client order (ARCHITECTURE §2A.1).
 // about + blog live in the footer (SiteFooter), not here.
@@ -29,7 +31,7 @@ const otherLocale = LOCALES.find((l) => l !== locale)!;
             <a
               href={localizePath(key, locale)}
               aria-current={key === pageKey ? "page" : undefined}
-            >{t(locale, `nav.${key}`)}</a>
+            >{t(`nav.${key}`)}</a>
           </li>
         ))}
       </ul>
@@ -47,9 +49,9 @@ const otherLocale = LOCALES.find((l) => l !== locale)!;
         data-nav-toggle
         aria-controls="mobile-nav"
         aria-expanded="false"
-        aria-label={t(locale, "labels.menu")}
-        data-label-open={t(locale, "labels.menu")}
-        data-label-close={t(locale, "labels.close")}
+        aria-label={t("labels.menu")}
+        data-label-open={t("labels.menu")}
+        data-label-close={t("labels.close")}
       >
         <span class="nav-toggle-bars" aria-hidden="true"><span></span><span></span><span></span></span>
       </button>
@@ -63,7 +65,7 @@ const otherLocale = LOCALES.find((l) => l !== locale)!;
           <a
             href={localizePath(key, locale)}
             aria-current={key === pageKey ? "page" : undefined}
-          >{t(locale, `nav.${key}`)}</a>
+          >{t(`nav.${key}`)}</a>
         </li>
       ))}
     </ul>

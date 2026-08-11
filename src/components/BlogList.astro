@@ -1,17 +1,18 @@
 ---
-import { type Locale, t, localizePath } from "../i18n";
+import { type Locale, useT, localizePath } from "../i18n";
 import type { Post } from "../lib/posts";
 const { locale, posts } = Astro.props as { locale: Locale; posts: Post[] };
+const t = useT(locale, (await Astro.locals.getCms()).kv);
 const blogBase = localizePath("blog", locale);
 ---
 <section class="blog wrap">
   <header class="shead">
-    <p class="kicker">{t(locale, "blog.title")}</p>
-    <h1>{t(locale, "blog.title")}</h1>
-    <p class="intro">{t(locale, "blog.intro")}</p>
+    <p class="kicker">{t("blog.title")}</p>
+    <h1>{t("blog.title")}</h1>
+    <p class="intro">{t("blog.intro")}</p>
   </header>
   {posts.length === 0 ? (
-    <p class="empty">{t(locale, "blog.empty")}</p>
+    <p class="empty">{t("blog.empty")}</p>
   ) : (
     <ul class="post-list" role="list">
       {posts.map((p) => (
@@ -20,7 +21,7 @@ const blogBase = localizePath("blog", locale);
             <span class="date">{p.publishedAt?.slice(0, 10)}</span>
             <h2>{p.title}</h2>
             <p>{p.excerpt}</p>
-            <span class="more">{t(locale, "cta.readMore")} <span class="arr">→</span></span>
+            <span class="more">{t("cta.readMore")} <span class="arr">→</span></span>
           </a>
         </li>
       ))}

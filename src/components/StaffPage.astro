@@ -1,13 +1,15 @@
 ---
-import { type Locale, t } from "../i18n";
+import { type Locale, useT } from "../i18n";
 import StaffGrid from "./StaffGrid.astro";
 const { locale } = Astro.props as { locale: Locale };
+const { kv } = await Astro.locals.getCms();
+const t = useT(locale, kv);
 ---
 <section class="wrap staff-page">
   <header class="shead">
-    <p class="kicker">N° 02 — {t(locale, "nav.staff")}</p>
-    <h1>{t(locale, "nav.staff")}</h1>
-    <p class="intro">{locale === "en" ? "18 stylists, one collective. Tap a stylist to view and book." : "18 stylister, ett kollektiv. Klicka på en stylist för bio och bokning."}</p>
+    <p class="kicker">N° 02 — {t("nav.staff")}</p>
+    <h1>{t("nav.staff")}</h1>
+    <p class="intro">{t("staff.intro")}</p>
   </header>
   <StaffGrid locale={locale} />
 </section>

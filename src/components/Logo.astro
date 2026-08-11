@@ -32,11 +32,19 @@ function clean(raw: string): string {
     .trim();
 }
 const svg = clean(tone === "white" ? whiteRaw : blackRaw);
-const a11y = decorative
-  ? { "aria-hidden": "true" }
-  : { role: "img", "aria-label": "Salong NOVO" };
 ---
-<span class:list={["novo-logo", className]} style={`--logo-h:${height}`} {...a11y} set:html={svg}></span>
+<!-- The a11y attributes are written out rather than spread from a conditional
+     object: a spread of a union type is untypeable against HTMLAttributes, and
+     `astro check` is right to reject it. Astro drops an undefined attribute, so
+     each placement still emits exactly one of the two sets. -->
+<span
+  class:list={["novo-logo", className]}
+  style={`--logo-h:${height}`}
+  role={decorative ? undefined : "img"}
+  aria-label={decorative ? undefined : "Salong NOVO"}
+  aria-hidden={decorative ? "true" : undefined}
+  set:html={svg}
+></span>
 
 <style>
   .novo-logo { display: inline-flex; line-height: 0; }

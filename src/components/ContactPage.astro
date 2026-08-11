@@ -1,29 +1,30 @@
 ---
-import { type Locale, t } from "../i18n";
+import { type Locale, useT } from "../i18n";
 import { getSite } from "../lib/content";
-import { contact } from "../lib/pagecopy";
 import BookingButton from "./BookingButton.astro";
 const { locale } = Astro.props as { locale: Locale };
-const site = getSite();
+const { kv } = await Astro.locals.getCms();
+const t = useT(locale, kv);
+const site = getSite(kv);
 const mapQuery = encodeURIComponent(`${site.address.street}, ${site.address.postal} ${site.address.city}`);
 ---
 <section class="contact wrap">
   <div class="info">
-    <p class="kicker">N° 01 — {t(locale, "nav.contact")}</p>
-    <h1>{contact.heading[locale]}</h1>
+    <p class="kicker">N° 01 — {t("nav.contact")}</p>
+    <h1>{t("contact.heading")}</h1>
     <address>
       {site.address.street}<br />
       {site.address.postal} {site.address.city}<br />
       <span class="muted">T-bana {site.transit.metro}</span>
     </address>
-    <p class="dir">{contact.directions[locale]}</p>
+    <p class="dir">{t("contact.directions")}</p>
     <ul class="reach">
-      <li><a href={`tel:${site.phone.replace(/\s/g, "")}`}>{site.phone_display}</a></li>
-      <li><a href={`mailto:${site.email}`}>{site.email}</a></li>
-      <li><a href={site.instagram} target="_blank" rel="noopener">{site.instagram_handle}</a></li>
+      <li><a href={`tel:${site.contact.phone.replace(/\s/g, "")}`}>{site.contact.phone_display}</a></li>
+      <li><a href={`mailto:${site.contact.email}`}>{site.contact.email}</a></li>
+      <li><a href={site.contact.instagram} target="_blank" rel="noopener">{site.contact.instagram_handle}</a></li>
     </ul>
     <BookingButton locale={locale} />
-    <p class="cancel muted">{contact.cancellation[locale]}</p>
+    <p class="cancel muted">{t("contact.cancellation")}</p>
   </div>
   <div class="map">
     <iframe

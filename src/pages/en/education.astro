@@ -1,10 +1,11 @@
 ---
+export const prerender = false;
 import Base from "../../layouts/Base.astro";
 import ArticlePage from "../../components/ArticlePage.astro";
-import { education } from "../../lib/pagecopy";
-import { t } from "../../i18n";
+import { useT } from "../../i18n";
 const locale = "en" as const;
+const t = useT(locale, (await Astro.locals.getCms()).kv);
 ---
-<Base locale={locale} pageKey="education" title={`${t(locale, "nav.education")} — Salong NOVO`} description={education.note[locale]}>
-  <ArticlePage locale={locale} no="05" kicker={t(locale, "nav.education")} heading={education.heading[locale]} paragraphs={[education.note[locale]]} />
+<Base locale={locale} pageKey="education" title={`${t("nav.education")} — Salong NOVO`} description={t("education.note")}>
+  <ArticlePage locale={locale} no="05" kicker={t("nav.education")} heading={t("education.heading")} paragraphs={[t("education.note")]} />
 </Base>

@@ -1,13 +1,12 @@
 ---
+export const prerender = false;
 import Base from "../layouts/Base.astro";
 import ArticlePage from "../components/ArticlePage.astro";
-import { t } from "../i18n";
+import { useT } from "../i18n";
+import { paraKeys } from "../lib/pagecopy";
 const locale = "sv" as const;
-const paras = [
-  "Denna sida beskriver hur Salong NOVO behandlar personuppgifter. Fullständig integritetspolicy publiceras inför lansering.",
-  "Vi samlar endast in de uppgifter som behövs för att besvara förfrågningar och förbättra webbplatsen. Bokning hanteras av Voady enligt deras villkor.",
-];
+const t = useT(locale, (await Astro.locals.getCms()).kv);
 ---
-<Base locale={locale} pageKey="privacy" title="Integritetspolicy — Salong NOVO" description="Så hanterar Salong NOVO personuppgifter.">
-  <ArticlePage locale={locale} heading={t(locale, "footer.privacy")} paragraphs={paras} />
+<Base locale={locale} pageKey="privacy" title={`${t("footer.privacy")} — Salong NOVO`} description={t("privacy.metaDescription")}>
+  <ArticlePage locale={locale} heading={t("footer.privacy")} paragraphs={paraKeys("privacy", "body").map((key) => t(key))} />
 </Base>

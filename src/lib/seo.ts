@@ -1,18 +1,23 @@
 import { getSite } from "./content";
+import type { KvMap } from "./cms/content";
 
 /**
  * Build schema.org JSON-LD for the salon (HairSalon). Pure: takes the site
  * record + canonical URL, returns a plain object ready for JSON.stringify.
+ *
+ * The kv map is what keeps the structured data honest — an address the client
+ * corrects in the admin has to reach Google's copy of it too, not just the
+ * visible page.
  */
-export function hairSalonJsonLd(siteUrl: string) {
-  const site = getSite();
+export function hairSalonJsonLd(siteUrl: string, kv?: KvMap | null) {
+  const site = getSite(kv);
   const jsonld: Record<string, unknown> = {
     "@context": "https://schema.org",
     "@type": "HairSalon",
-    name: site.name,
+    name: site.brand.name,
     url: siteUrl,
-    telephone: site.phone,
-    email: site.email,
+    telephone: site.contact.phone,
+    email: site.contact.email,
     address: {
       "@type": "PostalAddress",
       streetAddress: site.address.street,
@@ -20,9 +25,9 @@ export function hairSalonJsonLd(siteUrl: string) {
       addressLocality: site.address.city,
       addressCountry: site.address.country,
     },
-    sameAs: [site.instagram],
+    sameAs: [site.contact.instagram],
     areaServed: "Stockholm",
-    foundingDate: String(site.founded),
+    foundingDate: String(site.brand.founded),
   };
 
   if (site.geo && site.geo.lat != null && site.geo.lng != null) {

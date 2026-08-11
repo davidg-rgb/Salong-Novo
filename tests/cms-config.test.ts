@@ -117,14 +117,46 @@ describe("CMS config — every key points at something real", () => {
     expect(unresolved).toEqual([]);
   });
 
-  it("the allowlist keeps mechanism out — no meta, form, nav, spec or placeholder keys", () => {
-    // Those are plumbing the page depends on, not copy: an override there breaks
-    // a page rather than rewording it (§6.14).
-    const forbidden = /^(meta|form|nav|spec|placeholder|category)\./;
+  it("the allowlist keeps mechanism out — no meta, form, spec or placeholder keys", () => {
+    // Those namespaces are plumbing a page depends on, not copy: an override
+    // there breaks a page rather than rewording it (§6.14). The reference
+    // project bans `nav.` too; here it is deliberately allowed, because routing
+    // goes through `ROUTES` in src/i18n/routes.ts keyed by `PageKey` — a nav
+    // label is a word on a link and nothing else.
+    const forbidden = /^(meta|form|spec|placeholder|category)\./;
     const leaked = CMS.editableCopy.flatMap((page) =>
       page.keys.map((entry) => entry.key).filter((key) => forbidden.test(key)),
     );
     expect(leaked).toEqual([]);
+  });
+
+  it("a key whose default interpolates carries a hint about the braces", () => {
+    // `cta.bookWith` is "Boka tid hos {name}". A client who rewrites it without
+    // the placeholder gets a button that reads "Boka tid hos" and stops, and
+    // nothing else in the system would notice — so the form has to say so.
+    const unwarned: string[] = [];
+    for (const page of CMS.editableCopy) {
+      for (const entry of page.keys) {
+        const interpolates = LOCALES.some((locale) => /\{\w+\}/.test(t(locale, entry.key)));
+        if (interpolates && !entry.hint) unwarned.push(entry.key);
+      }
+    }
+    expect(unwarned).toEqual([]);
+  });
+
+  it("every allowlisted key is a leaf, not a namespace", () => {
+    // `t()` returns the key itself for a branch node, which the resolution test
+    // above already catches — but only because it compares to the key. Asserting
+    // the resolved value is a real string keeps that honest if `t()` ever gains
+    // a different miss behaviour.
+    for (const page of CMS.editableCopy) {
+      for (const entry of page.keys) {
+        for (const locale of LOCALES) {
+          expect(typeof t(locale, entry.key), `${locale}:${entry.key}`).toBe("string");
+          expect(t(locale, entry.key).trim(), `${locale}:${entry.key} is blank`).not.toBe("");
+        }
+      }
+    }
   });
 
   it("copy keys are unique across every page group", () => {
@@ -143,11 +175,83 @@ describe("CMS config — every key points at something real", () => {
   });
 
   it("no jsonFallback leaks a `_`-prefixed provenance note into an editable field", () => {
-    // The seed script strips them; the fallback has to match, or the admin would
-    // render "PLACEHOLDER — needs Nicole's real number" as an editable value.
+    // A stored row never carries one, so a fallback that did would render the
+    // JSON's "DRAFT — confirm with the salon" note as an editable value.
     for (const collection of CMS.collections) {
       for (const item of collection.jsonFallback() as Record<string, unknown>[]) {
         expect(Object.keys(item).filter((key) => key.startsWith("_"))).toEqual([]);
+      }
+    }
+  });
+
+  it("every collection has defaults, and they are not empty lists", () => {
+    // A collection whose fallback is empty renders a blank section on a site
+    // nobody has edited yet — the defaults ARE the launch content here.
+    for (const collection of CMS.collections) {
+      expect(
+        (collection.jsonFallback() as unknown[]).length,
+        `${collection.name} has no defaults`,
+      ).toBeGreaterThan(0);
+    }
+  });
+
+  it("every property in a default item is declared by its collection's schema", () => {
+    // THE assertion the empty B1 loop could not make. Unknown keys are STRIPPED
+    // on save (§6.7), so a property the schema forgot is data that silently
+    // disappears the first time the client presses Spara — which is exactly how
+    // the bilingual `bullets` arrays would have been lost without the `list`
+    // kind.
+    const orphans: string[] = [];
+    for (const collection of CMS.collections) {
+      const declared = new Set(
+        collection.fields.flatMap((field) =>
+          field.bilingual ? [`${field.name}_sv`, `${field.name}_en`] : [field.name],
+        ),
+      );
+      for (const item of collection.jsonFallback() as Record<string, unknown>[]) {
+        for (const prop of Object.keys(item)) {
+          if (!declared.has(prop)) orphans.push(`${collection.name}.${prop}`);
+        }
+      }
+    }
+    expect([...new Set(orphans)]).toEqual([]);
+  });
+
+  it("a bilingual collection field is one whose defaults really are a locale pair", () => {
+    // Same disagreement the content groups can have, one layer down: a field
+    // flagged bilingual whose JSON holds a single value would render two inputs
+    // over one datum.
+    const mismatched: string[] = [];
+    for (const collection of CMS.collections) {
+      const [first] = collection.jsonFallback() as Record<string, unknown>[];
+      if (!first) continue;
+      for (const field of collection.fields) {
+        // Only judge a field the defaults actually carry: `price` and `photo`
+        // are new slots with no JSON behind them yet.
+        const present = field.bilingual
+          ? `${field.name}_sv` in first || `${field.name}_en` in first
+          : field.name in first;
+        if (!present) continue;
+        const paired = `${field.name}_sv` in first;
+        if (paired !== (field.bilingual === true)) {
+          mismatched.push(`${collection.name}.${field.name}`);
+        }
+      }
+    }
+    expect(mismatched).toEqual([]);
+  });
+
+  it("a readOnly field is one every default item can be identified by", () => {
+    // `readOnly` is carry-forward on update: the value has to exist on the
+    // stored row, or a save would drop the identity it was meant to protect.
+    for (const collection of CMS.collections) {
+      const keys = collection.fields.filter((field) => field.readOnly).map((field) => field.name);
+      for (const key of keys) {
+        const values = (collection.jsonFallback() as Record<string, unknown>[]).map(
+          (item) => item[key],
+        );
+        expect(values.every((value) => typeof value === "string" && value !== "")).toBe(true);
+        expect(new Set(values).size, `${collection.name}.${key} is not unique`).toBe(values.length);
       }
     }
   });

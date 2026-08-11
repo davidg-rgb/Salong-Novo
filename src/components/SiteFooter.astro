@@ -1,18 +1,19 @@
 ---
-import { type Locale, t, localizePath } from "../i18n";
+import { type Locale, useT, localizePath } from "../i18n";
 import { getSite } from "../lib/content";
-import { closing } from "../lib/pagecopy";
 import BookingButton from "./BookingButton.astro";
 import Logo from "./Logo.astro";
 const { locale } = Astro.props as { locale: Locale };
-const site = getSite();
+const { kv } = await Astro.locals.getCms();
+const t = useT(locale, kv);
+const site = getSite(kv);
 ---
 <!-- Champagne closing band — the live-site "warm band" above the black recognition bar
      (DESIGN-SYSTEM §128). Tonal descent: cream page → champagne band → black footer. -->
 <section class="footer-cta">
   <div class="wrap fc-inner">
-    <p class="fc-eyebrow">{closing.eyebrow[locale]}</p>
-    <h2 class="fc-head">{closing.heading[locale]}</h2>
+    <p class="fc-eyebrow">{t("closing.eyebrow")}</p>
+    <h2 class="fc-head">{t("closing.heading")}</h2>
     <BookingButton locale={locale} />
   </div>
 </section>
@@ -26,22 +27,22 @@ const site = getSite();
         <p class="muted">T-bana {site.transit.metro}</p>
       </div>
       <div>
-        <h4>{t(locale, "labels.address")}</h4>
-        <p><a href={`tel:${site.phone.replace(/\s/g, "")}`}>{site.phone_display}</a></p>
-        <p><a href={`mailto:${site.email}`}>{site.email}</a></p>
-        <p><a href={site.instagram} target="_blank" rel="noopener">{site.instagram_handle}</a></p>
+        <h4>{t("labels.address")}</h4>
+        <p><a href={`tel:${site.contact.phone.replace(/\s/g, "")}`}>{site.contact.phone_display}</a></p>
+        <p><a href={`mailto:${site.contact.email}`}>{site.contact.email}</a></p>
+        <p><a href={site.contact.instagram} target="_blank" rel="noopener">{site.contact.instagram_handle}</a></p>
         <p class="book"><BookingButton locale={locale} /></p>
       </div>
       <div>
-        <h4>{t(locale, "labels.hours")}</h4>
+        <h4>{t("labels.hours")}</h4>
         <p>{site.hours.mon_fri}<br />{site.hours.sat}</p>
-        <p class="muted">{t(locale, "footer.openingNote")}</p>
+        <p class="muted">{t("footer.openingNote")}</p>
       </div>
     </div>
-    <nav class="foot-nav" aria-label={t(locale, "labels.menu")}>
-      <a href={localizePath("blog", locale)}>{t(locale, "nav.blog")}</a>
-      <a href={localizePath("about", locale)}>{t(locale, "nav.about")}</a>
-      <a href={localizePath("privacy", locale)}>{t(locale, "footer.privacy")}</a>
+    <nav class="foot-nav" aria-label={t("labels.menu")}>
+      <a href={localizePath("blog", locale)}>{t("nav.blog")}</a>
+      <a href={localizePath("about", locale)}>{t("nav.about")}</a>
+      <a href={localizePath("privacy", locale)}>{t("footer.privacy")}</a>
     </nav>
     <div class="legal">
       <span>© 2026 Salong NOVO</span>
