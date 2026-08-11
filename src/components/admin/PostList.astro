@@ -1,0 +1,134 @@
+---
+/**
+ * Dashboard table (§10.6). Renders ALL posts (both locales, draft + published)
+ * server-side; `dashboard.client.ts` filters/searches over the already-rendered
+ * rows (no refetch) and drives the delete `<dialog>` + `DELETE /api/admin/posts`.
+ *
+ * Each row carries `data-title`, `data-status`, `data-locale` so the client can
+ * match without re-parsing the DOM. Columns: Titel (→ editor) · Språk (pill) ·
+ * Status (badge) · Uppdaterad (YYYY-MM-DD) · Åtgärder (Redigera · Ta bort ·
+ * Visa→live URL for published).
+ */
+import type { Post } from "../../lib/posts";
+import { ADMIN } from "../../lib/admin-strings";
+import { localizePath } from "../../i18n/routes";
+
+interface Props {
+  posts: Post[];
+}
+const { posts } = Astro.props;
+
+/** Public live URL for a published post (locale-aware blog path). */
+function liveUrl(post: Post): string {
+  return `${localizePath("blog", post.locale)}/${post.slug}`;
+}
+const ymd = (iso: string) => (iso ? iso.slice(0, 10) : "");
+---
+<section class="dashboard" data-dashboard>
+  <header class="dashboard__head">
+    <h1>{ADMIN.nav.dashboard}</h1>
+    <a class="btn-primary" href="/admin/posts/new">{ADMIN.nav.newPost}</a>
+  </header>
+
+  {posts.length === 0 ? (
+    <div class="empty-state">
+      <p>{ADMIN.dashboard.empty}</p>
+      <a class="btn-primary" href="/admin/posts/new">{ADMIN.dashboard.emptyCta}</a>
+    </div>
+  ) : (
+    <>
+      <div class="filter-bar" role="search">
+        <label class="filter-bar__search">
+          <span class="sr-only">{ADMIN.dashboard.searchPlaceholder}</span>
+          <input
+            type="search"
+            data-filter-search
+            placeholder={ADMIN.dashboard.searchPlaceholder}
+            autocomplete="off"
+          />
+        </label>
+
+        <div class="segmented" role="group" aria-label={ADMIN.dashboard.colStatus} data-filter-status>
+          <button type="button" class="seg seg--on" data-value="" aria-pressed="true">{ADMIN.dashboard.filterAll}</button>
+          <button type="button" class="seg" data-value="draft" aria-pressed="false">{ADMIN.dashboard.filterDraft}</button>
+          <button type="button" class="seg" data-value="published" aria-pressed="false">{ADMIN.dashboard.filterPublished}</button>
+        </div>
+
+        <div class="segmented" role="group" aria-label={ADMIN.dashboard.colLocale} data-filter-locale>
+          <button type="button" class="seg seg--on" data-value="" aria-pressed="true">{ADMIN.dashboard.localeAll}</button>
+          <button type="button" class="seg" data-value="sv" aria-pressed="false">{ADMIN.dashboard.localeSv}</button>
+          <button type="button" class="seg" data-value="en" aria-pressed="false">{ADMIN.dashboard.localeEn}</button>
+        </div>
+      </div>
+
+      <table class="post-table">
+        <thead>
+          <tr>
+            <th scope="col">{ADMIN.dashboard.colTitle}</th>
+            <th scope="col">{ADMIN.dashboard.colLocale}</th>
+            <th scope="col">{ADMIN.dashboard.colStatus}</th>
+            <th scope="col">{ADMIN.dashboard.colUpdated}</th>
+            <th scope="col" class="col-actions">{ADMIN.dashboard.colActions}</th>
+          </tr>
+        </thead>
+        <tbody data-rows>
+          {posts.map((post) => (
+            <tr
+              data-row
+              data-id={post.id}
+              data-title={post.title.toLowerCase()}
+              data-status={post.status}
+              data-locale={post.locale}
+            >
+              <td class="cell-title">
+                <a href={`/admin/posts/${post.id}`}>{post.title || "(utan titel)"}</a>
+              </td>
+              <td>
+                <span class="pill pill--locale">
+                  {post.locale === "en" ? ADMIN.dashboard.localeEn : ADMIN.dashboard.localeSv}
+                </span>
+              </td>
+              <td>
+                {post.status === "published" ? (
+                  <span class="badge badge--published">{ADMIN.dashboard.statusPublished}</span>
+                ) : (
+                  <span class="badge badge--draft">{ADMIN.dashboard.statusDraft}</span>
+                )}
+              </td>
+              <td class="cell-date">{ymd(post.updatedAt)}</td>
+              <td class="cell-actions">
+                <a class="row-action" href={`/admin/posts/${post.id}`}>{ADMIN.dashboard.edit}</a>
+                {post.status === "published" && (
+                  <a class="row-action" href={liveUrl(post)} target="_blank" rel="noopener">
+                    {ADMIN.dashboard.view}
+                  </a>
+                )}
+                <button
+                  type="button"
+                  class="row-action row-action--danger"
+                  data-delete
+                  data-id={post.id}
+                  data-title={post.title}
+                >{ADMIN.dashboard.delete}</button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <p class="no-results" data-no-results hidden>{ADMIN.dashboard.empty}</p>
+    </>
+  )}
+
+  <dialog class="confirm-dialog" data-delete-dialog>
+    <form method="dialog" class="confirm-dialog__inner">
+      <p class="confirm-dialog__msg" data-delete-msg></p>
+      <div class="confirm-dialog__actions">
+        <button type="button" class="btn-ghost" data-delete-cancel>Avbryt</button>
+        <button type="button" class="btn-danger" data-delete-confirm>{ADMIN.dashboard.delete}</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast" data-toast role="status" aria-live="polite" hidden></div>
+</section>

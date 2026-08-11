@@ -1,0 +1,10 @@
+---
+import Base from "../layouts/Base.astro";
+import ArticlePage from "../components/ArticlePage.astro";
+import { work } from "../lib/pagecopy";
+import { t } from "../i18n";
+const locale = "sv" as const;
+---
+<Base locale={locale} pageKey="work" title={`${t(locale, "nav.work")} — Salong NOVO`} description={work.body[locale][0]}>
+  <ArticlePage locale={locale} no="07" kicker={t(locale, "nav.work")} heading={work.heading[locale]} paragraphs={work.body[locale]} />
+</Base>

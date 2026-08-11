@@ -1,0 +1,37 @@
+{
+  "_note": "Global site data — verified from live salongnovo.se 2026-05-31. geo coordinates are APPROXIMATE (Rörstrandsgatan/S:t Eriksplan area) — verify exact lat/lng before using in schema.org + map.",
+  "name": "Salong NOVO",
+  "tagline_sv": "Stockholms mest prisbelönta frisörsalong",
+  "tagline_en": "Stockholm's most awarded hair salon",
+  "founded": 2013,
+  "positioning": "Schwarzkopf flaggskepp / flagship",
+  "address": {
+    "street": "Rörstrandsgatan 39C",
+    "postal": "113 40",
+    "city": "Stockholm",
+    "country": "SE"
+  },
+  "geo": { "lat": null, "lng": null, "_verify": "approx 59.339, 18.041 — confirm before use" },
+  "transit": { "metro": "S:t Eriksplan", "line_note": "T-bana grön linje" },
+  "phone": "+46 8 663 30 14",
+  "phone_display": "08-663 30 14",
+  "email": "info@salongnovo.se",
+  "instagram": "https://www.instagram.com/salongnovo",
+  "instagram_handle": "@salongnovo",
+  "booking": { "provider": "Voady", "url": "https://bokning.voady.se/novo" },
+  "hours": {
+    "_verify": "DRAFT — live site only states 'även öppet på kvällar och helger'. Confirm exact hours with salon.",
+    "mon_fri": "10:00–19:00",
+    "sat": "10:00–16:00",
+    "sun": "Stängt",
+    "note_sv": "Vi har även öppet på kvällar och helger",
+    "note_en": "We're also open evenings and weekends"
+  },
+  "cancellation_policy": {
+    "window_hours": 48,
+    "late_cancel_fee": "50%",
+    "no_show_fee": "100%",
+    "via": ["Voady portal", "info@salongnovo.se"]
+  },
+  "locales": { "default": "sv", "supported": ["sv", "en"] }
+}

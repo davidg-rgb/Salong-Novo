@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Salong NOVO — Direction E · Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{ --black:#000; --paper:#F2F1ED; --white:#fff; --accent:#1A1AE5; --grey:#777;
+    --disp:'Space Grotesk',system-ui,sans-serif; --mono:'Space Mono',monospace; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{background:var(--paper);color:var(--black);font-family:var(--disp);font-weight:300;line-height:1.55;-webkit-font-smoothing:antialiased}
+  img{display:block;max-width:100%}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1500px;margin:0 auto;padding:0 clamp(1rem,3vw,2.5rem)}
+  .mono{font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase}
+  .btn{display:inline-flex;align-items:center;gap:.5rem;font-family:var(--mono);font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:.9rem 1.6rem;background:var(--black);color:var(--white);border:2px solid var(--black);transition:none;cursor:pointer}
+  .btn:hover{background:var(--accent);border-color:var(--accent)}
+  .btn-o{background:transparent;color:var(--black)}
+  .btn-o:hover{background:var(--black);color:var(--white)}
+
+  header{position:sticky;top:0;z-index:50;background:var(--paper);border-bottom:2px solid var(--black)}
+  .nav{display:flex;align-items:center;justify-content:space-between;height:68px}
+  .logo img{height:26px;filter:brightness(0)}
+  .nav-links{display:flex;gap:0;font-family:var(--mono);font-size:.7rem;letter-spacing:.04em;text-transform:uppercase}
+  .nav-links a{padding:0 1.1rem;border-left:1px solid #d4d2cb}
+  .nav-links a:hover{color:var(--accent)}
+  .nav-right{display:flex;align-items:center;gap:1.2rem}
+  .lang{font-family:var(--mono);font-size:.7rem}.lang b{border-bottom:2px solid var(--accent)}
+
+  /* Hero */
+  .hero{border-bottom:2px solid var(--black)}
+  .hero-top{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;padding:.7rem 0;border-bottom:1px solid #d4d2cb}
+  .hero-main{padding:clamp(1.5rem,4vw,3rem) 0 clamp(1.5rem,3vw,2.5rem)}
+  .hero h1{font-family:var(--disp);font-weight:700;font-size:clamp(3rem,13vw,11rem);line-height:.86;letter-spacing:-.04em;text-transform:uppercase}
+  .hero h1 span{color:var(--paper);-webkit-text-stroke:2px var(--black)}
+  .hero-foot{display:grid;grid-template-columns:1fr auto;gap:2rem;align-items:end;border-top:2px solid var(--black);padding-top:1.2rem;margin-top:1.2rem}
+  .hero-foot p{max-width:44ch;font-size:1.05rem}
+  .hero-cta{display:flex;gap:.7rem;flex-wrap:wrap}
+
+  /* Stat grid */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:2px solid var(--black)}
+  .stat{padding:1.8rem clamp(1rem,2vw,1.6rem);border-right:1px solid #d4d2cb}
+  .stat:last-child{border-right:none}
+  .stat b{font-family:var(--disp);font-weight:700;font-size:clamp(2.2rem,4vw,3.6rem);line-height:.9;display:block}
+  .stat span{font-family:var(--mono);font-size:.64rem;text-transform:uppercase;color:var(--grey)}
+
+  section{padding:clamp(3rem,6vw,5rem) 0;border-bottom:2px solid var(--black)}
+  .sec-head{display:flex;align-items:baseline;gap:1rem;margin-bottom:2.4rem}
+  .sec-head h2{font-family:var(--disp);font-weight:700;font-size:clamp(1.8rem,4.5vw,3.4rem);text-transform:uppercase;letter-spacing:-.03em}
+  .sec-head .mono{margin-left:auto;color:var(--grey)}
+
+  .about{display:grid;grid-template-columns:1.1fr 1fr;gap:0;border:2px solid var(--black)}
+  .about .f{overflow:hidden;border-right:2px solid var(--black);min-height:340px}
+  .about .f img{width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.1)}
+  .about .t{padding:clamp(1.6rem,3vw,2.6rem)}
+  .about h2{font-family:var(--disp);font-weight:700;font-size:clamp(1.8rem,4vw,3rem);text-transform:uppercase;line-height:.95;letter-spacing:-.02em;margin:.6rem 0 1.2rem}
+  .about p{color:#333;margin-bottom:1rem;max-width:52ch}
+
+  /* Team grid w/ borders */
+  .team{display:grid;grid-template-columns:repeat(4,1fr);border:2px solid var(--black);border-bottom:none}
+  .card{cursor:pointer;background:none;border:none;border-right:2px solid var(--black);border-bottom:2px solid var(--black);padding:0;font:inherit;color:inherit;text-align:left;display:block}
+  .card:nth-child(4n){border-right:none}
+  .card .f{aspect-ratio:1/1;overflow:hidden;border-bottom:1px solid #d4d2cb}
+  .card img{width:100%;height:100%;object-fit:cover;filter:grayscale(1);transition:filter .3s,transform .6s}
+  .card:hover img{filter:grayscale(0);transform:scale(1.04)}
+  .card .c{padding:1rem 1.1rem;display:flex;justify-content:space-between;align-items:center;gap:.5rem}
+  .card b{font-family:var(--disp);font-weight:500;font-size:1.1rem;display:block}
+  .card span{font-family:var(--mono);font-size:.6rem;text-transform:uppercase;color:var(--grey)}
+  .card .plus{font-family:var(--mono);font-weight:700;font-size:1.1rem}
+  .card:hover .plus{color:var(--accent)}
+
+  /* Services index */
+  .svc{display:grid;grid-template-columns:auto 1fr auto;gap:1.5rem;align-items:baseline;padding:1.4rem 0;border-top:1px solid #d4d2cb}
+  .svc:first-of-type{border-top:none}
+  .svc .n{font-family:var(--mono);font-size:.72rem;color:var(--grey)}
+  .svc .name{font-family:var(--disp);font-weight:500;font-size:clamp(1.4rem,3vw,2.2rem);text-transform:uppercase;letter-spacing:-.01em}
+  .svc:hover .name{color:var(--accent)}
+  .svc .go{font-family:var(--mono);font-size:.68rem;text-transform:uppercase;color:var(--grey)}
+
+  .cta{text-align:center;border-bottom:2px solid var(--black)}
+  .cta h2{font-family:var(--disp);font-weight:700;font-size:clamp(2.6rem,10vw,8rem);line-height:.86;text-transform:uppercase;letter-spacing:-.04em;margin:.6rem 0 1.6rem}
+
+  footer{padding:2.5rem 0;font-family:var(--mono);font-size:.7rem;text-transform:uppercase;letter-spacing:.04em}
+  .foot{display:flex;justify-content:space-between;gap:1.5rem;flex-wrap:wrap;color:var(--grey)}
+  .foot b{color:var(--black)}.foot a:hover{color:var(--accent)}
+  .legal{margin-top:1.8rem;color:#aaa;font-size:.64rem}
+
+  .badge{position:fixed;left:14px;bottom:14px;z-index:99;background:var(--black);color:var(--white);font-family:var(--mono);font-size:.64rem;font-weight:700;letter-spacing:.06em;padding:.5rem .9rem;text-transform:uppercase}
+
+  /* Modal */
+  .modal{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;padding:1.5rem}
+  .modal.open{display:flex}
+  .modal-bg{position:absolute;inset:0;background:rgba(0,0,0,.6)}
+  .modal-card{position:relative;background:var(--paper);border:2px solid var(--black);max-width:720px;width:100%;display:grid;grid-template-columns:1fr 1.1fr}
+  .modal-card .mf{border-right:2px solid var(--black);overflow:hidden}
+  .modal-card .mf img{width:100%;height:100%;object-fit:cover;min-height:300px;filter:grayscale(1)}
+  .modal-body{padding:clamp(1.6rem,3vw,2.4rem)}
+  .modal-body .role{font-family:var(--mono);font-size:.66rem;text-transform:uppercase;color:var(--accent)}
+  .modal-body h3{font-family:var(--disp);font-weight:700;font-size:2rem;text-transform:uppercase;letter-spacing:-.02em;margin:.4rem 0 1rem}
+  .modal-body p{color:#333;font-size:.95rem;margin-bottom:1rem}
+  .modal-body .ig{font-family:var(--mono);font-size:.78rem;margin-bottom:1.5rem;display:inline-block}
+  .modal-close{position:absolute;top:0;right:0;width:42px;height:42px;background:var(--black);color:var(--white);border:none;cursor:pointer;font-family:var(--mono);z-index:2}
+
+  @media(max-width:900px){
+    .nav-links{display:none}.stats{grid-template-columns:repeat(2,1fr)}.stat:nth-child(2){border-right:none}
+    .about{grid-template-columns:1fr}.about .f{border-right:none;border-bottom:2px solid var(--black)}
+    .team{grid-template-columns:repeat(2,1fr)}.card:nth-child(2n){border-right:none}
+    .modal-card{grid-template-columns:1fr}.modal-card .mf{border-right:none;border-bottom:2px solid var(--black)}
+  }
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="badge">Direction E · Studio</div>
+
+<header>
+  <div class="wrap nav">
+    <a class="logo" href="#"><img src="assets/logo.svg" alt="Salong NOVO"></a>
+    <nav class="nav-links">
+      <a href="#">Om oss</a><a href="#">Personal</a><a href="#">Jobba på NOVO</a>
+      <a href="#">Awards</a><a href="#">Blogg</a><a href="#">Kontakt</a>
+    </nav>
+    <div class="nav-right"><span class="lang"><b>SV</b> / <a href="#">EN</a></span><a class="btn" href="https://bokning.voady.se/novo">Boka</a></div>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="wrap">
+    <div class="hero-top"><span>Salong NOVO — Studio</span><span>Rörstrandsgatan 39C / Vasastan</span><span>Est. 2013</span></div>
+    <div class="hero-main">
+      <h1>Hår<br><span>i fokus.</span></h1>
+      <div class="hero-foot">
+        <p>Schwarzkopf-flaggskepp i Vasastan. 18 stylister, tre gånger Årets Kollektion, en salong byggd som en studio.</p>
+        <div class="hero-cta">
+          <a class="btn" href="https://bokning.voady.se/novo">Boka tid →</a>
+          <a class="btn btn-o" href="#team">Teamet</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap"><div class="stats">
+  <div class="stat"><b>×3</b><span>Årets Kollektion</span></div>
+  <div class="stat"><b>18</b><span>Stylister</span></div>
+  <div class="stat"><b>2026</b><span>Årets Nykomling</span></div>
+  <div class="stat"><b>2025</b><span>Nordic Hairshot Final</span></div>
+</div></div>
+
+<section>
+  <div class="wrap">
+    <div class="about">
+      <div class="f"><img src="assets/kollektion-1.jpg" alt=""></div>
+      <div class="t">
+        <span class="mono" style="color:var(--accent)">№ 02 — Om NOVO</span>
+        <h2>Förnyelse<br>sedan 2013.</h2>
+        <p>NOVO betyder förnyelse. Vi riktar fokus framåt — i hantverket och i kulturen. 300 m² på Rörstrandsgatan, byggt för precision.</p>
+        <p>Våra stylister tävlar på nordisk toppnivå och tar den standarden till varje bokning.</p>
+        <a class="btn btn-o" href="#">Vår historia →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="team">
+  <div class="wrap">
+    <div class="sec-head"><h2>Personalen</h2><span class="mono">18 / Klicka för bio + bokning</span></div>
+    <div class="team">
+      <button class="card" data-name="Chriss Berner" data-role="Ägare · Avantgarde" data-ig="@thechrissberner" data-img="assets/avantgarde.jpg" data-bio="Delägare och färgkonstnär. Nominerad till Årets Färg, prisbelönt inom avantgarde och kollektion.">
+        <div class="f"><img src="assets/avantgarde.jpg" alt=""></div><div class="c"><span><b>Chriss Berner</b><span>Ägare · Avantgarde</span></span><span class="plus">+</span></div></button>
+      <button class="card" data-name="Ola Oterkjaer" data-role="Herr · Nordic Hairshot" data-ig="@olapolabandola" data-img="assets/herr.jpg" data-bio="Specialist på herrklippning. Representerade Sverige i Nordic Hairshot-finalen i Köpenhamn 2025.">
+        <div class="f"><img src="assets/herr.jpg" alt=""></div><div class="c"><span><b>Ola Oterkjaer</b><span>Herr · Nordic</span></span><span class="plus">+</span></div></button>
+      <button class="card" data-name="Isabella Valentino" data-role="Färg &amp; Slingor" data-ig="@hairbyvalentinoo" data-img="assets/dam.jpg" data-bio="Färgspecialist nominerad till Årets Herr. Mjuka balayage och dimensionsrik färg.">
+        <div class="f"><img src="assets/dam.jpg" alt=""></div><div class="c"><span><b>Isabella Valentino</b><span>Färg</span></span><span class="plus">+</span></div></button>
+      <button class="card" data-name="Emma Gahn" data-role="Bröllop &amp; Uppsättning" data-ig="@byemmagahn" data-img="assets/brud.jpg" data-bio="Bröllops- och uppsättningsexpert. Bidrag till Årets Kollektion.">
+        <div class="f"><img src="assets/brud.jpg" alt=""></div><div class="c"><span><b>Emma Gahn</b><span>Bröllop</span></span><span class="plus">+</span></div></button>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head"><h2>Tjänster</h2><a class="mono" href="https://bokning.voady.se/novo" style="margin-left:auto;color:var(--accent)">Boka →</a></div>
+    <div class="svc"><span class="n">01</span><span class="name">Klippning &amp; Styling</span><span class="go">Boka →</span></div>
+    <div class="svc"><span class="n">02</span><span class="name">Färg &amp; Slingor</span><span class="go">Boka →</span></div>
+    <div class="svc"><span class="n">03</span><span class="name">Balayage</span><span class="go">Boka →</span></div>
+    <div class="svc"><span class="n">04</span><span class="name">Uppsättning &amp; Bröllop</span><span class="go">Boka →</span></div>
+    <div class="svc"><span class="n">05</span><span class="name">Behandlingar</span><span class="go">Boka →</span></div>
+  </div>
+</section>
+
+<section class="cta">
+  <div class="wrap">
+    <span class="mono" style="color:var(--accent)">Redo</span>
+    <h2>Boka nu.</h2>
+    <a class="btn" href="https://bokning.voady.se/novo">Boka via Voady →</a>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot">
+      <span><b>NOVO</b> · Rörstrandsgatan 39C, 113 40 Stockholm</span>
+      <span><a href="tel:086633014">08-663 30 14</a> · <a href="#">@salongnovo</a></span>
+      <span>Mån–Fre 10–19 · Lör 10–16</span>
+    </div>
+    <div class="legal">© 2026 Salong NOVO — Integritetspolicy · Cookies</div>
+  </div>
+</footer>
+
+<div class="modal" id="modal" aria-hidden="true">
+  <div class="modal-bg" data-close></div>
+  <div class="modal-card" role="dialog" aria-modal="true">
+    <button class="modal-close" data-close aria-label="Stäng">✕</button>
+    <div class="mf"><img id="m-img" src="" alt=""></div>
+    <div class="modal-body">
+      <span class="role" id="m-role"></span>
+      <h3 id="m-name"></h3>
+      <p id="m-bio"></p>
+      <a class="ig mono" id="m-ig" href="#"></a><br>
+      <a class="btn" id="m-book" href="https://bokning.voady.se/novo">Boka hos <span id="m-book-name"></span> →</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  const modal=document.getElementById('modal');
+  function openModal(d){
+    document.getElementById('m-img').src=d.img;
+    document.getElementById('m-role').textContent=d.role;
+    document.getElementById('m-name').textContent=d.name;
+    document.getElementById('m-bio').textContent=d.bio;
+    const ig=document.getElementById('m-ig');ig.textContent=d.ig;ig.href='https://instagram.com/'+d.ig.replace('@','');
+    document.getElementById('m-book-name').textContent=d.name.split(' ')[0];
+    modal.classList.add('open');modal.setAttribute('aria-hidden','false');
+  }
+  function closeModal(){modal.classList.remove('open');modal.setAttribute('aria-hidden','true');}
+  document.querySelectorAll('.card').forEach(c=>c.addEventListener('click',()=>openModal(c.dataset)));
+  modal.querySelectorAll('[data-close]').forEach(e=>e.addEventListener('click',closeModal));
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
+</script>
+</body>
+</html>

@@ -1,0 +1,90 @@
+---
+/**
+ * Inline-image picker — a native `<dialog>` (showModal focus-trap + Esc). Two
+ * ways to pick: (1) upload a new file via the dropzone/file input with a REQUIRED
+ * alt text, or (2) reuse an already-uploaded image from the recent-media grid.
+ * The controller (`editor.client.ts`) opens it, performs the upload fetch
+ * (`POST /api/admin/upload`, `UploadResponse`), enforces the alt gate (insert
+ * disabled until alt is non-empty), then calls `editor.ts insertImage` at the
+ * caret. The recent grid is lazily filled from `GET /api/admin/media`.
+ * See ARCHITECTURE §10.6 / §10.7.
+ */
+import { ADMIN } from "../../lib/admin-strings";
+
+interface Props {
+  imageBase: string;
+}
+const { imageBase } = Astro.props;
+---
+<dialog class="img-picker" data-image-picker data-image-base={imageBase}>
+  <form method="dialog" class="img-picker__inner">
+    <header class="img-picker__head">
+      <h2 id="img-picker-title">Infoga bild</h2>
+      <button
+        type="button"
+        class="img-picker__close"
+        data-picker-cancel
+        aria-label="Stäng"
+      >×</button>
+    </header>
+
+    <div class="img-picker__body">
+      <label
+        class="dropzone"
+        data-dropzone
+        tabindex="0"
+      >
+        <input
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/avif"
+          data-picker-file
+          hidden
+        />
+        <span class="dropzone__icon" aria-hidden="true">⬆</span>
+        <span class="dropzone__text">Släpp en bild här eller klicka för att välja</span>
+        <span class="dropzone__hint">JPG, PNG, WebP · max 10 MB</span>
+      </label>
+
+      <figure class="img-picker__preview" data-picker-preview hidden>
+        <img alt="" data-picker-preview-img />
+      </figure>
+
+      <div class="field">
+        <label class="field__label" for="img-picker-alt">
+          Alt-text <span class="req" aria-hidden="true">*</span>
+        </label>
+        <input
+          id="img-picker-alt"
+          type="text"
+          class="field__input"
+          data-picker-alt
+          placeholder="Beskriv bilden för skärmläsare"
+          required
+        />
+        <p class="field__hint">Krävs innan bilden kan infogas.</p>
+      </div>
+
+      <p
+        class="img-picker__error"
+        data-picker-error
+        role="alert"
+        aria-live="polite"
+        hidden
+      ></p>
+
+      <section class="recent" aria-labelledby="recent-title">
+        <h3 id="recent-title" class="recent__title">Senaste bilder</h3>
+        <div class="recent__grid" data-picker-recent>
+          <p class="recent__empty" data-picker-recent-empty>Inga bilder ännu.</p>
+        </div>
+      </section>
+    </div>
+
+    <footer class="img-picker__actions">
+      <button type="button" class="btn-ghost" data-picker-cancel>Avbryt</button>
+      <button type="button" class="btn-primary" data-picker-insert disabled>
+        Infoga
+      </button>
+    </footer>
+  </form>
+</dialog>

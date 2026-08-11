@@ -1,0 +1,206 @@
+---
+import {
+  type Locale,
+  type PageKey,
+  t,
+  localizePath,
+  LOCALES,
+} from "../i18n";
+import BookingButton from "./BookingButton.astro";
+import Logo from "./Logo.astro";
+
+interface Props { locale: Locale; pageKey: PageKey; }
+const { locale, pageKey } = Astro.props;
+
+// Primary nav = the seven client-confirmed tabs, in client order (ARCHITECTURE §2A.1).
+// about + blog live in the footer (SiteFooter), not here.
+const navKeys: PageKey[] = ["contact", "staff", "pricing", "competitions", "education", "brands", "work"];
+const otherLocale = LOCALES.find((l) => l !== locale)!;
+---
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a href={localizePath("home", locale)} class="logo" aria-label="Salong NOVO">
+      <Logo tone="black" height="32px" decorative />
+    </a>
+    <nav class="nav-desktop" aria-label="Huvudmeny">
+      <ul>
+        {navKeys.map((key) => (
+          <li>
+            <a
+              href={localizePath(key, locale)}
+              aria-current={key === pageKey ? "page" : undefined}
+            >{t(locale, `nav.${key}`)}</a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+    <div class="header-right">
+      <a class="lang" href={localizePath(pageKey, otherLocale)} hreflang={otherLocale} aria-label={`Switch language to ${otherLocale.toUpperCase()}`}>
+        <span class="lang-current">{locale.toUpperCase()}</span>
+        <span class="lang-sep">/</span>
+        <span class="lang-other">{otherLocale.toUpperCase()}</span>
+      </a>
+      <BookingButton locale={locale} />
+      <button
+        type="button"
+        class="nav-toggle"
+        data-nav-toggle
+        aria-controls="mobile-nav"
+        aria-expanded="false"
+        aria-label={t(locale, "labels.menu")}
+        data-label-open={t(locale, "labels.menu")}
+        data-label-close={t(locale, "labels.close")}
+      >
+        <span class="nav-toggle-bars" aria-hidden="true"><span></span><span></span><span></span></span>
+      </button>
+    </div>
+  </div>
+
+  <nav id="mobile-nav" class="nav-mobile" aria-label="Huvudmeny" data-mobile-nav hidden>
+    <ul>
+      {navKeys.map((key) => (
+        <li>
+          <a
+            href={localizePath(key, locale)}
+            aria-current={key === pageKey ? "page" : undefined}
+          >{t(locale, `nav.${key}`)}</a>
+        </li>
+      ))}
+    </ul>
+    <div class="nav-mobile-foot">
+      <a class="lang" href={localizePath(pageKey, otherLocale)} hreflang={otherLocale} aria-label={`Switch language to ${otherLocale.toUpperCase()}`}>
+        <span class="lang-current">{locale.toUpperCase()}</span>
+        <span class="lang-sep">/</span>
+        <span class="lang-other">{otherLocale.toUpperCase()}</span>
+      </a>
+      <BookingButton locale={locale} />
+    </div>
+  </nav>
+</header>
+
+<script>
+  // Accessible mobile menu toggle (vanilla, ~20 lines). Hamburger ↔ panel with
+  // aria-expanded, label swap (Meny/Stäng), Esc-to-close, close-on-link, and a
+  // body scroll-lock while open. Desktop (≥820px) ignores all of this.
+  const toggle = document.querySelector<HTMLButtonElement>("[data-nav-toggle]");
+  const panel = document.querySelector<HTMLElement>("[data-mobile-nav]");
+  if (toggle && panel) {
+    const setOpen = (open: boolean) => {
+      panel.hidden = !open;
+      toggle.setAttribute("aria-expanded", String(open));
+      toggle.setAttribute(
+        "aria-label",
+        (open ? toggle.dataset.labelClose : toggle.dataset.labelOpen) ?? "",
+      );
+      toggle.classList.toggle("is-open", open);
+      document.body.style.overflow = open ? "hidden" : "";
+    };
+    toggle.addEventListener("click", () =>
+      setOpen(toggle.getAttribute("aria-expanded") !== "true"),
+    );
+    panel.addEventListener("click", (e) => {
+      if ((e.target as HTMLElement).closest("a")) setOpen(false);
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && toggle.getAttribute("aria-expanded") === "true") {
+        setOpen(false);
+        toggle.focus();
+      }
+    });
+    // If resized up to desktop while open, reset to a clean state.
+    const mq = window.matchMedia("(min-width: 1181px)");
+    mq.addEventListener("change", (e) => {
+      if (e.matches) setOpen(false);
+    });
+  }
+</script>
+
+<style>
+  /* Sticky glass header — high-opacity white blur, hairline base (DESIGN-SYSTEM §6 Nav). */
+  .site-header {
+    position: sticky; top: 0; z-index: 60;
+    background: rgba(255, 255, 255, 0.82);
+    backdrop-filter: blur(14px) saturate(1.3);
+    -webkit-backdrop-filter: blur(14px) saturate(1.3);
+    border-bottom: 1px solid var(--hairline);
+  }
+  .header-inner { display: flex; align-items: center; justify-content: space-between; height: 74px; gap: 1.5rem; }
+  .logo { display: inline-flex; align-items: center; }
+  .nav-desktop ul { display: flex; align-items: center; gap: clamp(18px, 2.4vw, 40px); list-style: none; }
+  /* Block-level anchor so a wrapped two-line label (e.g. "BOKNING &" / "PRISER")
+     stays one box: the ::after underline spans the FULL item, not just the last
+     line. Stays text-wrappable (block, not inline-flex) so the 7 li flex-items
+     still shrink toward min-content and the nav fits without overflowing. */
+  .nav-desktop a {
+    position: relative; display: block; padding: 6px 0;
+    text-align: center; text-wrap: balance; line-height: 1.45;
+    font-size: 12px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--on-variant); transition: color 0.3s;
+  }
+  .nav-desktop a::after {
+    content: ""; position: absolute; left: 0; bottom: 0; height: 1px; width: 0;
+    background: var(--bronze); transition: width 0.35s ease;
+  }
+  .nav-desktop a:hover, .nav-desktop a[aria-current="page"] { color: var(--ink); }
+  .nav-desktop a:hover::after, .nav-desktop a[aria-current="page"]::after { width: 100%; }
+  .header-right { display: flex; align-items: center; gap: 22px; }
+  .lang {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.1em; color: var(--on-variant);
+    min-height: 44px;
+  }
+  .lang-current { color: var(--ink); }
+  .lang-sep { color: var(--hairline); font-weight: 400; }
+  .lang-other { color: var(--on-variant); transition: color 0.3s; }
+  .lang:hover .lang-other { color: var(--ink); }
+
+  /* ── Mobile menu (hamburger + slide-down panel) ─────────────────── */
+  .nav-toggle {
+    display: none; /* desktop: hidden */
+    align-items: center; justify-content: center;
+    width: 44px; height: 44px; padding: 0; margin-right: -8px;
+    background: transparent; border: 0; cursor: pointer; color: var(--ink);
+  }
+  .nav-toggle-bars { display: inline-flex; flex-direction: column; gap: 5px; width: 24px; }
+  .nav-toggle-bars > span {
+    display: block; height: 1.5px; width: 100%; background: currentColor;
+    transition: transform 0.3s ease, opacity 0.2s ease;
+  }
+  .nav-toggle.is-open .nav-toggle-bars > span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+  .nav-toggle.is-open .nav-toggle-bars > span:nth-child(2) { opacity: 0; }
+  .nav-toggle.is-open .nav-toggle-bars > span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+
+  .nav-mobile {
+    border-top: 1px solid var(--hairline);
+    background: rgba(255, 255, 255, 0.97);
+    backdrop-filter: blur(14px) saturate(1.3);
+    -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  }
+  .nav-mobile[hidden] { display: none; }
+  .nav-mobile ul { list-style: none; padding: 8px var(--gutter, 1.5rem) 4px; }
+  .nav-mobile li { border-bottom: 1px solid var(--hairline); }
+  .nav-mobile li:last-child { border-bottom: 0; }
+  .nav-mobile a {
+    display: block; padding: 16px 2px;
+    font-size: 15px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--ink);
+  }
+  .nav-mobile a[aria-current="page"] { color: var(--bronze-dark); }
+  .nav-mobile-foot {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 18px var(--gutter, 1.5rem) 24px; border-top: 1px solid var(--hairline);
+  }
+
+  /* Seven tabs with longer SV labels (Bokning & priser, Utbildning & kurser) need more room,
+     so the hamburger takes over below 1180px instead of 820px. */
+  @media (max-width: 1180px) {
+    .nav-desktop { display: none; }
+    .nav-toggle { display: inline-flex; }
+    /* Top bar on mobile = logo · BOKA (primary CTA stays, per §11) · hamburger.
+       The language toggle moves into the panel to keep the bar uncluttered. */
+    .header-right > .lang { display: none; }
+  }
+  @media (min-width: 1181px) {
+    .nav-mobile { display: none; }
+  }
+</style>

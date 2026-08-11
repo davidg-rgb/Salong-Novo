@@ -1,0 +1,13 @@
+---
+import Base from "../../layouts/Base.astro";
+import ArticlePage from "../../components/ArticlePage.astro";
+import { t } from "../../i18n";
+const locale = "en" as const;
+const paras = [
+  "This page describes how Salong NOVO processes personal data. The full privacy policy will be published before launch.",
+  "We only collect the data needed to respond to enquiries and improve the website. Booking is handled by Voady under their terms.",
+];
+---
+<Base locale={locale} pageKey="privacy" title="Privacy policy — Salong NOVO" description="How Salong NOVO handles personal data.">
+  <ArticlePage locale={locale} heading={t(locale, "footer.privacy")} paragraphs={paras} />
+</Base>

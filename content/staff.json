@@ -1,0 +1,24 @@
+{
+  "_note": "Salong NOVO stylist roster — captured from live salongnovo.se/personal 2026-05-31. Instagram handles are public (promotional). Personal emails intentionally omitted from repo for privacy; booking is via Voady, not email. `specialty`/`bio` marked TODO need salon input. `bookingUrl` is the shared Voady link until per-stylist deep links are confirmed.",
+  "bookingUrlDefault": "https://bokning.voady.se/novo",
+  "stylists": [
+    { "name": "Chriss Berner", "slug": "chriss-berner", "role": "Delägare", "specialty": "Avantgarde · Färg", "instagram": "@thechrissberner", "awards": ["Nominerad Årets Färg 2026", "Avantgarde", "Årets Kollektion"], "bio_sv": "TODO", "bio_en": "TODO" },
+    { "name": "Jannie Olofsson", "slug": "jannie-olofsson", "role": "Delägare", "specialty": "TODO", "instagram": "@hairbyjannie", "awards": ["Årets Kollektion"], "bio_sv": "TODO", "bio_en": "TODO" },
+    { "name": "Fanny Wallén", "slug": "fanny-wallen", "role": "Frisör", "specialty": "TODO", "instagram": "@by.fwallen", "awards": [], "bio_sv": "TODO", "bio_en": "TODO" },
+    { "name": "Kristiana Buta", "slug": "kristiana-buta", "role": "Frisör", "specialty": "TODO", "instagram": "@stylebykristiana", "awards": [], "bio_sv": "TODO", "bio_en": "TODO" },
+    { "name": "Ola Oterkjaer", "slug": "ola-oterkjaer", "role": "Frisör", "specialty": "Herr", "instagram": "@olapolabandola", "awards": ["Nominerad Årets Herr", "Nordic Hairshot Final 2025", "Årets Kollektion"], "bio_sv": "TODO", "bio_en": "TODO" },
+    { "name": "Isabella Valentino", "slug": "isabella-valentino", "role": "Frisör", "specialty": "Färg & Slingor", "instagram": "@hairbyvalentinoo", "awards": ["Nominerad Årets Herr 2026"], "bio_sv": "TODO", "bio_en": "TODO" },
+    { "name": "Emma Gahn", "slug": "emma-gahn", "role": "Frisör", "specialty": "Bröllop & Uppsättning", "instagram": "@byemmagahn", "awards": ["Bidrag Årets Kollektion"], "bio_sv": "TODO", "bio_en": "TODO" },
+    { "name": "Caroline Olofsson", "slug": "caroline-olofsson", "role": "Frisör", "specialty": "TODO", "instagram": "@work.by.co", "awards": [], "bio_sv": "TODO", "bio_en": "TODO" },
+    { "name": "Linnéa Widman", "slug": "linnea-widman", "role": "Frisör", "specialty": "TODO", "instagram": "@hair.by.lineaw", "awards": [], "bio_sv": "TODO", "bio_en": "TODO" },
+    { "name": "Therese Frieberg", "slug": "therese-frieberg", "role": "Frisör", "specialty": "TODO", "instagram": "@theresefrieberg", "awards": [], "bio_sv": "TODO", "bio_en": "TODO" },
+    { "name": "Michelle Kesen", "slug": "michelle-kesen", "role": "Frisör", "specialty": "TODO", "instagram": "@michellesthlm", "awards": [], "bio_sv": "TODO", "bio_en": "TODO" },
+    { "name": "Daniel Huynh", "slug": "daniel-huynh", "role": "Frisör", "specialty": "TODO", "instagram": "@bydanielhuynh", "awards": [], "bio_sv": "TODO", "bio_en": "TODO" },
+    { "name": "Iris Paula", "slug": "iris-paula", "role": "Frisör", "specialty": "TODO", "instagram": "@hairbyiris", "awards": [], "bio_sv": "TODO", "bio_en": "TODO" },
+    { "name": "Jasmina Rosengren", "slug": "jasmina-rosengren", "role": "Frisör", "specialty": "TODO", "instagram": "@jasse_rosengren", "awards": [], "bio_sv": "TODO", "bio_en": "TODO" },
+    { "name": "Ellen Rudd", "slug": "ellen-rudd", "role": "Frisör", "specialty": "TODO", "instagram": "@ellenrudd_hair", "awards": ["Vinnare Årets Nykomling 2026"], "bio_sv": "TODO", "bio_en": "TODO" },
+    { "name": "Linnéa Hellström", "slug": "linnea-hellstrom", "role": "Frisör", "specialty": "TODO", "instagram": "@hairinspolinnea", "awards": [], "bio_sv": "TODO", "bio_en": "TODO" },
+    { "name": "Merike Janson Ruuth", "slug": "merike-janson-ruuth", "role": "Frisör", "specialty": "TODO", "instagram": "@hairbymerike", "awards": [], "bio_sv": "TODO", "bio_en": "TODO" },
+    { "name": "Marianne", "slug": "marianne", "role": "Frisör", "specialty": "TODO", "instagram": null, "awards": [], "bio_sv": "TODO", "bio_en": "TODO" }
+  ]
+}

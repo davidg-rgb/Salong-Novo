@@ -1,0 +1,19 @@
+---
+import { type Locale, t } from "../i18n";
+import StaffGrid from "./StaffGrid.astro";
+const { locale } = Astro.props as { locale: Locale };
+---
+<section class="wrap staff-page">
+  <header class="shead">
+    <p class="kicker">N° 02 — {t(locale, "nav.staff")}</p>
+    <h1>{t(locale, "nav.staff")}</h1>
+    <p class="intro">{locale === "en" ? "18 stylists, one collective. Tap a stylist to view and book." : "18 stylister, ett kollektiv. Klicka på en stylist för bio och bokning."}</p>
+  </header>
+  <StaffGrid locale={locale} />
+</section>
+<style>
+  .staff-page { padding: var(--section) 0; }
+  .shead { margin-bottom: clamp(38px, 5vw, 68px); }
+  .staff-page h1 { margin: 18px 0 16px; }
+  .intro { color: var(--on-variant); max-width: 52ch; font-size: clamp(16px, 1.5vw, 19px); }
+</style>

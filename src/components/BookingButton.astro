@@ -1,0 +1,15 @@
+---
+import { type Locale, t } from "../i18n";
+import { bookingUrl } from "../lib/content";
+interface Props { locale: Locale; label?: string; ghost?: boolean; }
+const { locale, label, ghost } = Astro.props;
+---
+<a
+  class:list={["btn", { "btn--ghost": ghost }]}
+  href={bookingUrl()}
+  target="_blank"
+  rel="noopener"
+  data-booking
+>
+  {label ?? t(locale, "cta.book")}
+</a>

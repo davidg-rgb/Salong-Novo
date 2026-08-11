@@ -1,0 +1,30 @@
+{
+  "name": "salong-novo-v2",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Salong NOVO — booking-focused fashion-magazine brochure site (Astro + Cloudflare).",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "wrangler pages dev ./dist",
+    "astro": "astro",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:migrate:local": "wrangler d1 migrations apply novo_db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply novo_db --remote"
+  },
+  "dependencies": {
+    "@astrojs/cloudflare": "^12.6.0",
+    "astro": "^5.16.0",
+    "markdown-it": "^14.1.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250101.0",
+    "@types/markdown-it": "^14.1.2",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0",
+    "wrangler": "^4.0.0"
+  }
+}

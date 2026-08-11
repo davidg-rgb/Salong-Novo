@@ -1,0 +1,9 @@
+---
+import Base from "../layouts/Base.astro";
+import Home from "../components/Home.astro";
+import { home } from "../lib/pagecopy";
+const locale = "sv" as const;
+---
+<Base locale={locale} pageKey="home" title="Salong NOVO — Frisör i Vasastan, Stockholm" description={home.sub[locale]}>
+  <Home locale={locale} />
+</Base>

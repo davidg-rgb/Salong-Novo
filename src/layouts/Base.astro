@@ -1,0 +1,96 @@
+---
+import "../styles/tokens.css";
+import SiteHeader from "../components/SiteHeader.astro";
+import SiteFooter from "../components/SiteFooter.astro";
+import { type Locale, type PageKey, alternates } from "../i18n";
+import { hairSalonJsonLd, ogMeta } from "../lib/seo";
+
+interface Props {
+  title: string;
+  description: string;
+  locale: Locale;
+  pageKey: PageKey;
+  image?: string;
+  /**
+   * hreflang alternates. Defaults to both-locale alternates for `pageKey`.
+   * Pass `null` to suppress them on single-language pages (e.g. a blog post,
+   * which exists in one locale only — emitting alternates to the other locale's
+   * blog index would be a false translation signal).
+   */
+  alternateLinks?: { locale: Locale; path: string }[] | null;
+}
+const { title, description, locale, pageKey, image, alternateLinks } = Astro.props;
+const siteUrl = Astro.site?.toString().replace(/\/$/, "") ?? "";
+const canonical = siteUrl + Astro.url.pathname;
+const alts = alternateLinks === undefined ? alternates(pageKey) : alternateLinks;
+const og = ogMeta({ title, description, canonical, locale, image });
+const jsonld = hairSalonJsonLd(siteUrl);
+---
+<!doctype html>
+<html lang={locale}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..700;1,400..600&family=Hanken+Grotesk:wght@300..700&display=swap"
+    />
+    <link rel="canonical" href={canonical} />
+    {alts && alts.map((a) => (
+      <link rel="alternate" hreflang={a.locale} href={siteUrl + a.path} />
+    ))}
+    {alts && alts[0] && (
+      <link rel="alternate" hreflang="x-default" href={siteUrl + alts[0].path} />
+    )}
+    {Object.entries(og).map(([k, v]) => (
+      <meta property={k} content={v} />
+    ))}
+    <link rel="icon" href="/favicon.ico" />
+    <script type="application/ld+json" set:html={JSON.stringify(jsonld)} />
+    <style is:global>
+      /* ── Editorial type scale + rhythm (LOCKED 2026-06-01) ──
+         Global layer that every page/component inherits. Component-specific
+         styling stays scoped in each .astro file. */
+      :root {
+        --mx: clamp(24px, 6vw, 80px);
+        --section: clamp(88px, 13vw, 170px);
+        --gutter: clamp(20px, 3vw, 36px);
+      }
+      body {
+        font-size: clamp(16px, 1.1vw, 18px);
+        text-rendering: optimizeLegibility;
+        overflow-x: hidden;
+      }
+      ::selection { background: var(--bronze); color: #fff; }
+      h1 { font-size: clamp(40px, 8vw, 118px); line-height: 1.0; letter-spacing: -0.02em; }
+      h2 { font-size: clamp(28px, 4.4vw, 62px); line-height: 1.04; letter-spacing: -0.02em; }
+      h3 { font-size: clamp(18px, 2vw, 24px); line-height: 1.1; letter-spacing: -0.01em; }
+      em { font-style: italic; }
+      /* full-bleed page gutter — replaces the scaffold's narrow .wrap padding */
+      .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 var(--mx); }
+      /* eyebrow / kicker — editorial label-caps */
+      .kicker {
+        display: inline-flex; align-items: center; gap: 14px;
+        font-family: var(--font-sans); font-size: 11px; font-weight: 600;
+        letter-spacing: 0.22em; text-transform: uppercase;
+        /* --bronze-dark (6.1:1 on cream) — passes WCAG AA for this 11px bold label.
+           --bronze-muted (#8c7352) was ~4.3:1 and failed (review 2026-06-01). */
+        color: var(--bronze-dark);
+      }
+      .kicker::before {
+        content: ""; width: 40px; height: 1px; background: var(--bronze);
+      }
+    </style>
+  </head>
+  <body>
+    <SiteHeader locale={locale} pageKey={pageKey} />
+    <main id="main">
+      <slot />
+    </main>
+    <SiteFooter locale={locale} />
+  </body>
+</html>

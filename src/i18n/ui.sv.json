@@ -1,0 +1,47 @@
+{
+  "nav": {
+    "home": "Hem",
+    "staff": "Team",
+    "pricing": "Bokning & priser",
+    "competitions": "Tävlingar",
+    "education": "Utbildning & kurser",
+    "brands": "Våra brands",
+    "work": "Jobba hos oss",
+    "contact": "Kontakta oss",
+    "blog": "Blogg",
+    "about": "Om oss"
+  },
+  "cta": {
+    "book": "Boka tid",
+    "bookWith": "Boka tid hos {name}",
+    "meetTeam": "Möt teamet",
+    "readMore": "Läs mer",
+    "readStory": "Läs vår historia",
+    "allTeam": "Hela teamet"
+  },
+  "labels": {
+    "menu": "Meny",
+    "close": "Stäng",
+    "openProfile": "Visa & boka",
+    "language": "Språk",
+    "phone": "Telefon",
+    "email": "E-post",
+    "address": "Adress",
+    "hours": "Öppettider",
+    "findUs": "Hitta hit",
+    "readingTime": "{n} min läsning",
+    "published": "Publicerad",
+    "comingSoon": "Innehåll kommer snart"
+  },
+  "blog": {
+    "title": "Journalen",
+    "intro": "Trender, tekniker och liv på salongen — skrivet av våra stylister.",
+    "empty": "Inga inlägg ännu.",
+    "back": "Tillbaka till journalen"
+  },
+  "footer": {
+    "openingNote": "Vi har även öppet på kvällar och helger",
+    "privacy": "Integritetspolicy",
+    "cookies": "Cookies"
+  }
+}

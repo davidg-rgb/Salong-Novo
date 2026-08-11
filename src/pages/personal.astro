@@ -1,0 +1,9 @@
+---
+import Base from "../layouts/Base.astro";
+import StaffPage from "../components/StaffPage.astro";
+import { t } from "../i18n";
+const locale = "sv" as const;
+---
+<Base locale={locale} pageKey="staff" title={`${t(locale, "nav.staff")} — Salong NOVO`} description="Möt NOVO:s 18 prisbelönta stylister i Vasastan, Stockholm.">
+  <StaffPage locale={locale} />
+</Base>

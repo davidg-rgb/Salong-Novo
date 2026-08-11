@@ -1,0 +1,34 @@
+---
+/**
+ * Admin dashboard (§10.2 / §10.6). SSR-lists every post (both locales, all
+ * statuses) via `listAll(DB)` and renders the `PostList` table inside the admin
+ * shell. The dashboard client filters/searches over the rendered rows and drives
+ * the delete `<dialog>` — no framework, one script.
+ */
+export const prerender = false;
+import AdminBase from "../../layouts/AdminBase.astro";
+import PostList from "../../components/admin/PostList.astro";
+import { listAll } from "../../lib/db";
+import "../../styles/admin.css";
+
+const db = Astro.locals.runtime?.env?.DB;
+const userEmail = Astro.locals.user?.email ?? null;
+const posts = db ? await listAll(db).catch(() => []) : [];
+---
+<AdminBase title="Dashboard" userEmail={userEmail}>
+  {!db ? (
+    <div class="db-warning">
+      <h1>Dashboard</h1>
+      <p>
+        Databasen är inte tillgänglig i den här miljön. Kör lokalt med
+        <code>wrangler pages dev</code> eller distribuera till Cloudflare.
+      </p>
+    </div>
+  ) : (
+    <PostList posts={posts} />
+  )}
+</AdminBase>
+
+<script>
+  import "../../admin/dashboard.client.ts";
+</script>

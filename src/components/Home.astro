@@ -1,0 +1,217 @@
+---
+import { type Locale, t, localizePath } from "../i18n";
+import { getStaff, getStats, stylistBio } from "../lib/content";
+import { home, about } from "../lib/pagecopy";
+import BookingButton from "./BookingButton.astro";
+import Logo from "./Logo.astro";
+const { locale } = Astro.props as { locale: Locale };
+const stats = getStats();
+const staff = getStaff();
+const staffLabel = t(locale, "nav.staff");
+// Section order is client-confirmed (ARCHITECTURE §2A.2): hero → Boka tid → hair strip →
+// founders story → team (hover/focus/tap bios). Pending assets (salon video, hair photos,
+// owners photo, stylist texts) slot into these existing slots without layout changes.
+---
+<!-- 1 ── HERO. "Nu kan vi ha loggan eller något snyggt mjukt" — soft brand hero now; a muted,
+     looped salon-ambience video drops in behind .hero-inner later (gated on prefers-reduced-motion
+     + Save-Data). The wordmark/soft wash is the permanent no-JS / reduced-motion fallback. -->
+<section class="hero">
+  <div class="hero-soft" aria-hidden="true"></div>
+  <Logo tone="black" class="hero-logo" height="clamp(220px, 46vh, 520px)" decorative />
+  <div class="wrap hero-inner">
+    <p class="kicker">{home.kicker[locale]}</p>
+    <h1>{home.heading[locale]}</h1>
+    <p class="sub">{home.sub[locale]}</p>
+    <div class="cta">
+      <BookingButton locale={locale} />
+      <a class="btn btn--ghost" href={localizePath("staff", locale)}>{t(locale, "cta.meetTeam")}</a>
+    </div>
+  </div>
+</section>
+
+<!-- 2 ── HAIR-GALLERY STRIP. "Sedan kan de rulla lite fina hårbilder i en rad." Horizontal
+     scroll-snap row; tonal placeholder tiles are durable stand-ins until real photos land.
+     Decorative for now → a plain <div>, not a named landmark (an aria-labelled region with only
+     aria-hidden tiles announces an empty region — review 2026-06-01). When real captioned photos
+     land, restore the landmark + per-tile <img alt> (home.galleryLabel is the name to use). -->
+<div class="strip">
+  <ul class="strip-track" role="list" aria-hidden="true">
+    {Array.from({ length: 8 }).map((_, i) => (
+      <li class="tile" style={`--i:${i}`}></li>
+    ))}
+  </ul>
+</div>
+
+<!-- 3 ── FOUNDERS STORY. "Bild på mig och Chriss och en story om oss och salongen." -->
+<section class="story">
+  <div class="wrap story-grid">
+    <div class="story-media" aria-hidden="true"><span class="story-frame"><span class="mono">N</span></span></div>
+    <div class="story-copy">
+      <p class="kicker">{t(locale, "nav.about")}</p>
+      <h2>{about.heading[locale]}</h2>
+      <p>{about.body[locale][0]}</p>
+      <a class="story-more" href={localizePath("about", locale)}>{t(locale, "cta.readStory")} <span class="arr">→</span></a>
+      <ul class="story-stats" role="list">
+        <li><b><span class="u">×</span>{stats.arets_kollektion_wins}</b><span>Årets Kollektion</span></li>
+        <li><b>{stats.stylists}</b><span>{staffLabel}</span></li>
+        <li><b>{stats.founded}</b><span>Est.</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 4 ── TEAM. "Vårat fantastiska team med bilder" + "när man drar pilen över varje bild … en kort
+     text om just den frisören." Bio reveals on hover (mouse), focus (keyboard), and first tap
+     (touch — via the script below toggling .is-revealed). The text is always in the DOM. Pending
+     stylist texts fall back to name + role. -->
+<section class="team">
+  <div class="wrap">
+    <div class="team-head">
+      <p class="kicker">{staffLabel}</p>
+      <h2>{home.teamHeading[locale]}</h2>
+      <a class="team-all" href={localizePath("staff", locale)}>{t(locale, "cta.allTeam")} <span class="arr">→</span></a>
+    </div>
+    <ul class="team-grid" role="list">
+      {staff.map((s) => {
+        const bio = stylistBio(s, locale);
+        const role = s.specialty !== "TODO" ? s.specialty : s.role;
+        return (
+          <li>
+            <a class="team-card" href={localizePath("staff", locale)} aria-label={`${s.name} — ${role}`}>
+              <span class="frame" aria-hidden="true">
+                <span class="mono">{s.name.charAt(0)}</span>
+                <span class="duo"></span>
+                {bio && <span class="bio"><span class="bio-inner">{bio}</span></span>}
+              </span>
+              <b>{s.name}</b>
+              <span class="role">{role}</span>
+            </a>
+          </li>
+        );
+      })}
+    </ul>
+  </div>
+</section>
+
+<style>
+  /* ── 1. Hero — soft, light, brand-forward (DESIGN-SYSTEM §6; client: "loggan eller något mjukt"). */
+  .hero {
+    position: relative; overflow: hidden;
+    min-height: clamp(520px, 82vh, 860px);
+    display: flex; flex-direction: column; justify-content: flex-end;
+    background: var(--cream);
+  }
+  .hero-soft {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(120% 90% at 80% 0%, rgba(176, 141, 107, 0.18), transparent 60%),
+      linear-gradient(180deg, #fbf8f2 0%, #f3ede3 60%, #efe7da 100%);
+  }
+  /* Faint brand mark behind the hero copy (black logo on the light cream surface). */
+  .hero-logo {
+    position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%);
+    opacity: 0.06; pointer-events: none; user-select: none; z-index: 1;
+  }
+  .hero-inner { position: relative; z-index: 2; padding-top: clamp(72px, 12vh, 140px); padding-bottom: clamp(48px, 8vh, 96px); }
+  .hero h1 { max-width: 17ch; margin: 24px 0 22px; font-weight: 400; color: var(--ink); }
+  .hero .sub { max-width: 48ch; color: var(--on-variant); margin-bottom: 32px; line-height: 1.55; }
+  .cta { display: flex; gap: 16px; flex-wrap: wrap; }
+
+  /* ── 2. Hair strip — horizontal scroll-snap row of tonal placeholders. */
+  .strip { border-top: 1px solid var(--hairline); border-bottom: 1px solid var(--hairline); background: var(--white); }
+  .strip-track {
+    list-style: none; display: flex; gap: 1px; overflow-x: auto; scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch; scrollbar-width: none;
+  }
+  .strip-track::-webkit-scrollbar { display: none; }
+  .tile {
+    flex: 0 0 clamp(220px, 26vw, 340px); aspect-ratio: 4/5; scroll-snap-align: start;
+    background: linear-gradient(150deg, #34302a, #1d1c19);
+    position: relative;
+  }
+  .tile::after {
+    content: ""; position: absolute; inset: 0;
+    background: var(--bronze); mix-blend-mode: color; opacity: calc(0.16 + (var(--i) * 0.03));
+  }
+
+  /* ── 3. Founders story — media + copy, hairline-gridded stat trio. */
+  .story { padding: var(--section) 0; }
+  .story-grid { display: grid; grid-template-columns: 0.85fr 1fr; gap: clamp(28px, 5vw, 72px); align-items: center; }
+  .story-frame {
+    display: grid; place-items: center; aspect-ratio: 4/5; width: 100%;
+    background: linear-gradient(160deg, #33302a, #1c1b18); position: relative; overflow: hidden;
+  }
+  .story-frame .mono { font-family: var(--font-serif); font-size: clamp(70px, 9vw, 140px); color: rgba(255,255,255,0.9); }
+  .story-copy h2 { font-weight: 400; margin: 14px 0 22px; max-width: 16ch; }
+  .story-copy p { color: var(--ink); line-height: 1.65; max-width: 54ch; margin-bottom: 22px; }
+  .story-more { display: inline-flex; align-items: center; gap: 8px; color: var(--bronze-dark); font-weight: 500; }
+  .story-more .arr { transition: transform 0.35s; }
+  .story-more:hover .arr { transform: translateX(5px); }
+  .story-stats { list-style: none; display: flex; gap: clamp(24px, 4vw, 56px); margin-top: clamp(30px, 4vw, 48px); }
+  .story-stats b { font-family: var(--font-serif); font-size: clamp(32px, 4vw, 48px); line-height: 1; display: block; color: var(--ink); }
+  .story-stats b .u { font-size: 0.42em; color: var(--bronze); vertical-align: super; margin-right: 2px; }
+  .story-stats span { display: block; margin-top: 10px; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--on-variant); }
+
+  /* ── 4. Team — editorial cards with hover/focus/tap bio reveal. */
+  .team { padding: 0 0 var(--section); }
+  .team-head { display: flex; align-items: baseline; justify-content: space-between; gap: 20px; flex-wrap: wrap; margin-bottom: clamp(26px, 3vw, 44px); }
+  .team-head h2 { font-weight: 400; flex: 1 1 auto; }
+  .team-all { color: var(--bronze-dark); font-weight: 500; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+  .team-all .arr { transition: transform 0.35s; }
+  .team-all:hover .arr { transform: translateX(5px); }
+  .team-grid { list-style: none; display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--gutter, 1.5rem) clamp(14px, 2vw, 28px); }
+  .team-card { display: flex; flex-direction: column; color: inherit; }
+  .team-card .frame {
+    position: relative; aspect-ratio: 3/4; overflow: hidden;
+    background: linear-gradient(160deg, #33302a, #1c1b18); display: grid; place-items: center;
+  }
+  .team-card .mono { font-family: var(--font-serif); font-size: clamp(40px, 5vw, 72px); color: rgba(255,255,255,0.92); }
+  .team-card .duo { position: absolute; inset: 0; background: var(--bronze); mix-blend-mode: color; opacity: 0.32; transition: opacity 0.8s ease; }
+  .team-card:hover .duo, .team-card:focus-visible .duo { opacity: 0; }
+  /* Bio overlay — always in the DOM; revealed on hover, keyboard focus, and tap (.is-revealed). */
+  .team-card .bio {
+    position: absolute; inset: 0; display: flex; align-items: flex-end;
+    padding: 16px; background: linear-gradient(to top, rgba(10,10,10,0.82), rgba(10,10,10,0.1));
+    opacity: 0; transition: opacity 0.4s ease;
+  }
+  /* Reveal on hover (mouse), focus (keyboard), and .is-revealed (first tap on touch — see script). */
+  .team-card:hover .bio,
+  .team-card:focus-within .bio,
+  .team-card:focus-visible .bio,
+  .team-card.is-revealed .bio { opacity: 1; }
+  .team-card.is-revealed .duo { opacity: 0; }
+  .bio-inner { color: #f3ede3; font-size: 12.5px; line-height: 1.5; }
+  .team-card b { font-family: var(--font-serif); font-weight: 500; font-size: 18px; margin-top: 15px; color: var(--ink); }
+  .team-card .role { font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--on-variant); margin-top: 5px; }
+
+  @media (max-width: 1000px) { .team-grid { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 820px) {
+    .story-grid { grid-template-columns: 1fr; }
+    .story-media { max-width: 420px; }
+  }
+  @media (max-width: 620px) { .team-grid { grid-template-columns: repeat(2, 1fr); } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tile::after, .team-card .duo, .team-card .bio, .story-more .arr, .team-all .arr { transition: none; }
+  }
+</style>
+
+<script>
+  /* Touch parity for the team bio reveal (§2A.2 / review 2026-06-01). On devices with no hover,
+     the first tap on a card that HAS a bio reveals it (instead of navigating); a second tap follows
+     the link to the full team page. Cards without a bio navigate on the first tap as normal.
+     Mouse/keyboard are untouched (handled by :hover / :focus-within in CSS). */
+  if (window.matchMedia("(hover: none)").matches) {
+    const cards = Array.from(document.querySelectorAll(".team-card"));
+    cards.forEach((card) => {
+      card.addEventListener("click", (e) => {
+        const hasBio = card.querySelector(".bio");
+        if (hasBio && !card.classList.contains("is-revealed")) {
+          e.preventDefault();
+          cards.forEach((c) => { if (c !== card) c.classList.remove("is-revealed"); });
+          card.classList.add("is-revealed");
+        }
+      });
+    });
+  }
+</script>

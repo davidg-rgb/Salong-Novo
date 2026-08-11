@@ -1,0 +1,38 @@
+---
+/**
+ * Markdown toolbar — static `role="toolbar"` buttons. Carries NO logic: each
+ * button declares a `data-cmd` that `editor.client.ts` maps to the matching pure
+ * `editor.ts` transform (read `{value,start,end}` → fn → write back). Roving
+ * tabindex + SV `aria-label`s are wired by the controller; the first button
+ * starts focusable. Keyboard shortcuts (Cmd/Ctrl+B/I/K) fire only when the body
+ * textarea is focused (also handled by the controller). See ARCHITECTURE §10.6.
+ */
+import { ADMIN } from "../../lib/admin-strings";
+
+// data-cmd values are the controller's switch keys. `key` documents the
+// shortcut so the aria-label can mention it; the controller binds it.
+const buttons = [
+  { cmd: "bold", label: ADMIN.aria.bold, glyph: "B", shortcut: "Ctrl+B" },
+  { cmd: "italic", label: ADMIN.aria.italic, glyph: "I", shortcut: "Ctrl+I" },
+  { cmd: "heading", label: ADMIN.aria.heading, glyph: "H2", shortcut: null },
+  { cmd: "quote", label: ADMIN.aria.quote, glyph: "”", shortcut: null },
+  { cmd: "bullet", label: ADMIN.aria.bulletList, glyph: "•", shortcut: null },
+  { cmd: "ordered", label: ADMIN.aria.orderedList, glyph: "1.", shortcut: null },
+  { cmd: "link", label: ADMIN.aria.link, glyph: "🔗", shortcut: "Ctrl+K" },
+  { cmd: "image", label: ADMIN.aria.image, glyph: "🖼", shortcut: null },
+] as const;
+---
+<div class="md-toolbar" role="toolbar" aria-label="Formatering" data-md-toolbar>
+  {buttons.map((b, i) => (
+    <button
+      type="button"
+      class="md-tool"
+      data-cmd={b.cmd}
+      aria-label={b.shortcut ? `${b.label} (${b.shortcut})` : b.label}
+      title={b.shortcut ? `${b.label} (${b.shortcut})` : b.label}
+      tabindex={i === 0 ? 0 : -1}
+    >
+      <span aria-hidden="true">{b.glyph}</span>
+    </button>
+  ))}
+</div>

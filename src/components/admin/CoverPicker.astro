@@ -1,0 +1,58 @@
+---
+/**
+ * Cover-image picker. Shows the current cover thumbnail (or an empty dropzone)
+ * with `Byt` / `Ta bort` controls. The controller uploads via
+ * `POST /api/admin/upload` with `kind=cover`, stores the returned R2 `key` in
+ * `draft.coverImage` (NOT inserted into the body), and re-renders the thumb.
+ * `coverImage` is the initial R2 key (or null); `imageBase` resolves the thumb
+ * URL the same way the public render does. See ARCHITECTURE §10.6 / §10.7.
+ */
+import { ADMIN } from "../../lib/admin-strings";
+import { responsiveImageAttrs, parseVariants } from "../../lib/images";
+
+interface Props {
+  coverImage: string | null;
+  imageBase: string;
+}
+const { coverImage, imageBase } = Astro.props;
+
+const initial = coverImage
+  ? responsiveImageAttrs(imageBase, coverImage, parseVariants(null))
+  : null;
+---
+<div class="cover-picker" data-cover-picker data-image-base={imageBase}>
+  <span class="field__label" id="cover-label">{ADMIN.editor.cover}</span>
+
+  <div class="cover-picker__frame">
+    <img
+      class="cover-picker__thumb"
+      data-cover-thumb
+      src={initial?.src ?? ""}
+      alt=""
+      hidden={initial ? undefined : true}
+    />
+    <button
+      type="button"
+      class="cover-picker__empty"
+      data-cover-add
+      hidden={initial ? true : undefined}
+    >
+      <span class="cover-picker__icon" aria-hidden="true">⬆</span>
+      <span>Lägg till omslagsbild</span>
+    </button>
+  </div>
+
+  <div class="cover-picker__actions" data-cover-actions hidden={initial ? undefined : true}>
+    <button type="button" class="btn-ghost btn-sm" data-cover-change>{ADMIN.editor.coverChange}</button>
+    <button type="button" class="btn-ghost btn-sm" data-cover-remove>{ADMIN.editor.coverRemove}</button>
+  </div>
+
+  <p class="cover-picker__error" data-cover-error role="alert" aria-live="polite" hidden></p>
+
+  <input
+    type="file"
+    accept="image/jpeg,image/png,image/webp,image/avif"
+    data-cover-file
+    hidden
+  />
+</div>

@@ -1,0 +1,108 @@
+---
+import { type Locale, t, localizePath } from "../i18n";
+import { getSite } from "../lib/content";
+import { closing } from "../lib/pagecopy";
+import BookingButton from "./BookingButton.astro";
+import Logo from "./Logo.astro";
+const { locale } = Astro.props as { locale: Locale };
+const site = getSite();
+---
+<!-- Champagne closing band — the live-site "warm band" above the black recognition bar
+     (DESIGN-SYSTEM §128). Tonal descent: cream page → champagne band → black footer. -->
+<section class="footer-cta">
+  <div class="wrap fc-inner">
+    <p class="fc-eyebrow">{closing.eyebrow[locale]}</p>
+    <h2 class="fc-head">{closing.heading[locale]}</h2>
+    <BookingButton locale={locale} />
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="foot">
+      <div class="brand">
+        <Logo tone="white" height="46px" class="wm" />
+        <p>{site.address.street}<br />{site.address.postal} {site.address.city}</p>
+        <p class="muted">T-bana {site.transit.metro}</p>
+      </div>
+      <div>
+        <h4>{t(locale, "labels.address")}</h4>
+        <p><a href={`tel:${site.phone.replace(/\s/g, "")}`}>{site.phone_display}</a></p>
+        <p><a href={`mailto:${site.email}`}>{site.email}</a></p>
+        <p><a href={site.instagram} target="_blank" rel="noopener">{site.instagram_handle}</a></p>
+        <p class="book"><BookingButton locale={locale} /></p>
+      </div>
+      <div>
+        <h4>{t(locale, "labels.hours")}</h4>
+        <p>{site.hours.mon_fri}<br />{site.hours.sat}</p>
+        <p class="muted">{t(locale, "footer.openingNote")}</p>
+      </div>
+    </div>
+    <nav class="foot-nav" aria-label={t(locale, "labels.menu")}>
+      <a href={localizePath("blog", locale)}>{t(locale, "nav.blog")}</a>
+      <a href={localizePath("about", locale)}>{t(locale, "nav.about")}</a>
+      <a href={localizePath("privacy", locale)}>{t(locale, "footer.privacy")}</a>
+    </nav>
+    <div class="legal">
+      <span>© 2026 Salong NOVO</span>
+      <span class="issue">N° 01 — MMXXVI</span>
+    </div>
+  </div>
+</footer>
+
+<style>
+  /* Champagne closing band — warm beige bar bridging the light page and the black footer. */
+  .footer-cta {
+    background: var(--champagne);
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    padding: clamp(56px, 8vw, 96px) 0;
+    text-align: center;
+  }
+  .fc-inner { display: flex; flex-direction: column; align-items: center; gap: 22px; }
+  .fc-eyebrow {
+    font-family: var(--font-sans); font-size: 11px; font-weight: 600;
+    letter-spacing: 0.22em; text-transform: uppercase; color: rgba(26, 26, 26, 0.66);
+  }
+  .fc-head {
+    font-weight: 400; color: var(--ink); max-width: 18ch; margin: 0;
+    font-size: clamp(30px, 4.4vw, 60px); line-height: 1.04;
+  }
+  .footer-cta :global(.btn) { margin-top: 6px; }
+
+  /* Recognition bar — black base + terracotta BOKA (DESIGN-SYSTEM §6); the champagne band above
+     now carries the warm-band signature, so the black bar drops its old 4px top line. */
+  .site-footer {
+    background: var(--black); color: var(--cream);
+    padding: clamp(64px, 8vw, 100px) 0 0;
+  }
+  .foot {
+    display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 40px;
+    padding-bottom: 60px; border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  }
+  .brand .wm { display: inline-flex; }
+  .foot h4 {
+    font-family: var(--font-sans); font-size: 10.5px; font-weight: 600;
+    letter-spacing: 0.2em; text-transform: uppercase; color: var(--champagne);
+    margin-bottom: 20px;
+  }
+  .foot p { margin-bottom: 11px; }
+  .brand p:first-of-type { margin-top: 22px; }
+  .foot p, .foot a { color: #cfc8bd; font-size: 14px; line-height: 1.6; transition: color 0.3s; }
+  .foot a:hover { color: #fff; }
+  .muted { color: #a9a298; }
+  .book { margin-top: 8px; }
+  /* Footer nav — blog + about (not in primary nav) + privacy. */
+  .foot-nav {
+    display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: center;
+    padding: 24px 0 4px;
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+  }
+  .foot-nav a { color: #cfc8bd; transition: color 0.3s; }
+  .foot-nav a:hover { color: var(--champagne); }
+  .legal {
+    display: flex; flex-wrap: wrap; gap: 14px 28px; justify-content: space-between; align-items: center;
+    padding: 12px 0 28px; font-size: 11px; letter-spacing: 0.08em; color: #8a8478;
+  }
+  .legal .issue { font-family: var(--font-serif); letter-spacing: 0.2em; }
+  @media (max-width: 820px) { .foot { grid-template-columns: 1fr; gap: 32px; } }
+</style>

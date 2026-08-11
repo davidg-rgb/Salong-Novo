@@ -1,0 +1,11 @@
+# .dev.vars.example — copy to .dev.vars (git-ignored; never commit the real file).
+# Loaded by `wrangler pages dev` / Astro's platformProxy into locals.runtime.env.
+# Cloudflare Access cannot gate localhost, so we synthesize the admin identity here.
+
+ADMIN_API_TOKEN="dev-local-token"        # echoed in admin write fetches locally (defense-in-depth)
+DEV_ADMIN_EMAIL="info@salongnovo.se"     # simulates the Access identity in dev (source:"dev")
+
+# ACCESS_AUD / ACCESS_TEAM_DOMAIN intentionally UNSET locally → the JWT verify
+# path is skipped in dev. Set them ONLY in the Cloudflare Pages prod env (from the
+# Access application). assertNoDevBypassInProd() throws if they coexist with
+# DEV_ADMIN_EMAIL, so never set both.

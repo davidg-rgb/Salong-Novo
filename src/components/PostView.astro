@@ -1,0 +1,61 @@
+---
+import { type Locale, t, localizePath } from "../i18n";
+import type { Post } from "../lib/posts";
+import { renderMarkdown, readingTimeMinutes } from "../lib/markdown";
+import { responsiveImageAttrs, parseVariants } from "../lib/images";
+const { locale, post } = Astro.props as { locale: Locale; post: Post };
+const html = renderMarkdown(post.body);
+const mins = readingTimeMinutes(post.body);
+
+// Cover render (§10.7 / A5). `PUBLIC_IMAGE_BASE` is empty in Stage A, so the
+// helper routes the cover through `/api/media/<key>` with NO srcset (variants
+// don't exist yet) — a graceful fallback that never 404s.
+const imageBase = Astro.locals.runtime?.env?.PUBLIC_IMAGE_BASE ?? "";
+const cover = post.coverImage
+  ? responsiveImageAttrs(imageBase, post.coverImage, parseVariants(null), {
+      alt: post.title,
+      sizes: "(max-width: 768px) 100vw, 720px",
+    })
+  : null;
+---
+<article class="post wrap">
+  <a class="back" href={localizePath("blog", locale)}>← {t(locale, "blog.back")}</a>
+  <p class="meta">
+    <span>{post.publishedAt?.slice(0, 10)}</span> · <span>{t(locale, "labels.readingTime", { n: mins })}</span>
+    {post.author && <> · <span>{post.author}</span></>}
+  </p>
+  <h1>{post.title}</h1>
+  {cover && (
+    <figure class="cover">
+      <img
+        src={cover.src}
+        srcset={cover.srcset}
+        sizes={cover.sizes}
+        alt={cover.alt}
+        loading={cover.loading}
+        decoding={cover.decoding}
+      />
+    </figure>
+  )}
+  <div class="body" set:html={html}></div>
+</article>
+
+<style>
+  .post { max-width: 720px; padding: var(--section) 0; }
+  .back { display: inline-block; margin-bottom: 1.5rem; font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--bronze-muted); transition: color 0.3s; }
+  .back:hover { color: var(--bronze-dark); }
+  .meta { color: var(--on-variant); font-size: 12px; letter-spacing: 0.06em; margin: 0 0 1rem; }
+  .post h1 { font-size: clamp(34px, 5.5vw, 62px); line-height: 1.04; margin-bottom: 2rem; }
+  .cover { margin: 0 0 2.5rem; }
+  .cover img { width: 100%; height: auto; border-radius: 2px; }
+  .body { font-size: clamp(16px, 1.2vw, 18px); }
+  .body :global(p) { color: var(--ink); margin-bottom: 1.4rem; line-height: 1.7; max-width: 68ch; }
+  .body :global(h2) { font-family: var(--font-serif); font-size: clamp(24px, 3vw, 34px); letter-spacing: -0.02em; margin: 2.4rem 0 1rem; }
+  .body :global(h3) { font-family: var(--font-serif); margin: 2rem 0 0.8rem; }
+  .body :global(a) { color: var(--bronze-dark); text-decoration: underline; text-underline-offset: 3px; }
+  .body :global(a:hover) { color: var(--bronze); }
+  .body :global(img) { margin: 2rem 0; }
+  .body :global(blockquote) { border-left: 2px solid var(--bronze); padding-left: 1.4rem; font-family: var(--font-serif); font-style: italic; font-size: clamp(20px, 2.4vw, 28px); line-height: 1.4; color: var(--bronze-dark); margin: 2rem 0; }
+  .body :global(ul), .body :global(ol) { margin: 0 0 1.4rem 1.2rem; color: var(--ink); }
+  .body :global(li) { margin-bottom: 0.5rem; line-height: 1.7; }
+</style>

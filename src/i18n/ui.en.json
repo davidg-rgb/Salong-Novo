@@ -1,0 +1,47 @@
+{
+  "nav": {
+    "home": "Home",
+    "staff": "Team",
+    "pricing": "Booking & prices",
+    "competitions": "Competitions",
+    "education": "Education & courses",
+    "brands": "Our brands",
+    "work": "Work with us",
+    "contact": "Contact",
+    "blog": "Blog",
+    "about": "About"
+  },
+  "cta": {
+    "book": "Book now",
+    "bookWith": "Book with {name}",
+    "meetTeam": "Meet the team",
+    "readMore": "Read more",
+    "readStory": "Read our story",
+    "allTeam": "The full team"
+  },
+  "labels": {
+    "menu": "Menu",
+    "close": "Close",
+    "openProfile": "View & book",
+    "language": "Language",
+    "phone": "Phone",
+    "email": "Email",
+    "address": "Address",
+    "hours": "Opening hours",
+    "findUs": "Find us",
+    "readingTime": "{n} min read",
+    "published": "Published",
+    "comingSoon": "Coming soon"
+  },
+  "blog": {
+    "title": "The Journal",
+    "intro": "Trends, techniques and life at the salon — written by our stylists.",
+    "empty": "No posts yet.",
+    "back": "Back to the journal"
+  },
+  "footer": {
+    "openingNote": "We're also open evenings and weekends",
+    "privacy": "Privacy policy",
+    "cookies": "Cookies"
+  }
+}

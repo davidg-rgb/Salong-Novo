@@ -1,0 +1,14 @@
+{
+  "_note": "DRAFT service list — NO PRICES shown on site (per decision). Treatments funnel to Voady booking. This standard salon set needs confirmation against the salon's real menu before the (deferred) Services page is built.",
+  "showPrices": false,
+  "bookingUrl": "https://bokning.voady.se/novo",
+  "services": [
+    { "slug": "klippning-styling", "name_sv": "Klippning & Styling", "name_en": "Cut & Styling", "desc_sv": "Form, fall och finish anpassat efter dig.", "desc_en": "Shape, movement and finish tailored to you." },
+    { "slug": "farg-slingor", "name_sv": "Färg & Slingor", "name_en": "Colour & Highlights", "desc_sv": "Dimension, lyster och precision.", "desc_en": "Dimension, shine and precision." },
+    { "slug": "balayage", "name_sv": "Balayage", "name_en": "Balayage", "desc_sv": "Mjuka, solkysta toner.", "desc_en": "Soft, sun-kissed tones." },
+    { "slug": "toning", "name_sv": "Toning & Glossing", "name_en": "Toning & Glossing", "desc_sv": "Färgfräschning och glans.", "desc_en": "Colour refresh and gloss." },
+    { "slug": "uppsattning-brollop", "name_sv": "Uppsättning & Bröllop", "name_en": "Updos & Bridal", "desc_sv": "För din stora dag.", "desc_en": "For your big day." },
+    { "slug": "behandlingar", "name_sv": "Schwarzkopf-behandlingar", "name_en": "Schwarzkopf Treatments", "desc_sv": "Exklusiva hårkurer och Fibreplex.", "desc_en": "Premium treatments and Fibreplex." },
+    { "slug": "konsultation", "name_sv": "Konsultation", "name_en": "Consultation", "desc_sv": "Vi hittar din look tillsammans.", "desc_en": "We find your look together." }
+  ]
+}

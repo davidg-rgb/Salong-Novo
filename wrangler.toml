@@ -1,0 +1,33 @@
+name = "salong-novo"
+compatibility_date = "2025-05-01"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "./dist"
+
+# D1 — blog posts. Create with:  wrangler d1 create novo_db
+# then paste the returned database_id below.
+[[d1_databases]]
+binding = "DB"
+database_name = "novo_db"
+database_id = "REPLACE_AFTER_d1_create"
+migrations_dir = "migrations"
+
+# R2 — uploaded images + generated variants. Create with:
+#   wrangler r2 bucket create novo-images
+[[r2_buckets]]
+binding = "IMAGES"
+bucket_name = "novo-images"
+
+# Public vars (non-secret). Secrets (ADMIN_API_TOKEN) set via:
+#   wrangler pages secret put ADMIN_API_TOKEN
+[vars]
+PUBLIC_SITE_URL = "https://salongnovo.se"
+# Stage A: empty → images serve same-origin via /api/media/*. Flip to
+# "https://img.salongnovo.se" only at the Stage-B R2-domain cutover (ARCHITECTURE §10.7).
+PUBLIC_IMAGE_BASE = ""
+PUBLIC_BOOKING_URL = "https://bokning.voady.se/novo"
+# Cloudflare Access (admin JWT verification, ARCHITECTURE §10.3). Empty locally
+# (the dev branch uses DEV_ADMIN_EMAIL from .dev.vars). Set the REAL values in the
+# Cloudflare Pages dashboard at deploy: ACCESS_AUD = the Access app's Audience tag,
+# ACCESS_TEAM_DOMAIN = "<team>.cloudflareaccess.com".
+ACCESS_AUD = ""
+ACCESS_TEAM_DOMAIN = ""

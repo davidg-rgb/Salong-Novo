@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+
+<html class="scroll-smooth" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>NOVO - Editorial Landing Page</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,100..900;1,100..900&amp;family=Playfair+Display:ital,wght@0,400..900;1,400..900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "surface-dim": "#dadada",
+                      "on-surface-variant": "#444748",
+                      "secondary-container": "#feddb4",
+                      "inverse-primary": "#c8c6c5",
+                      "surface-container-highest": "#e2e2e2",
+                      "secondary-fixed-dim": "#e0c29a",
+                      "tertiary": "#000000",
+                      "on-tertiary": "#ffffff",
+                      "error": "#ba1a1a",
+                      "hairline-gray": "#E5E5E5",
+                      "inverse-surface": "#2f3131",
+                      "tertiary-fixed": "#e6e2df",
+                      "secondary": "#725a3a",
+                      "off-white": "#F8F8F8",
+                      "surface-container-low": "#f3f3f4",
+                      "outline": "#747878",
+                      "surface-bright": "#f9f9f9",
+                      "inverse-on-surface": "#f0f1f1",
+                      "on-tertiary-fixed": "#1c1b1a",
+                      "primary": "#000000",
+                      "on-tertiary-container": "#868382",
+                      "error-container": "#ffdad6",
+                      "on-surface": "#1a1c1c",
+                      "outline-variant": "#c4c7c7",
+                      "on-error-container": "#93000a",
+                      "on-primary-fixed-variant": "#474746",
+                      "on-secondary-fixed-variant": "#584325",
+                      "on-primary": "#ffffff",
+                      "on-tertiary-fixed-variant": "#484645",
+                      "surface": "#f9f9f9",
+                      "primary-fixed": "#e5e2e1",
+                      "primary-fixed-dim": "#c8c6c5",
+                      "on-secondary": "#ffffff",
+                      "on-secondary-container": "#786040",
+                      "on-primary-fixed": "#1c1b1b",
+                      "on-secondary-fixed": "#281801",
+                      "surface-tint": "#5f5e5e",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-container": "#eeeeee",
+                      "on-primary-container": "#858383",
+                      "secondary-fixed": "#feddb4",
+                      "on-background": "#1a1c1c",
+                      "background": "#f9f9f9",
+                      "primary-container": "#1c1b1b",
+                      "surface-variant": "#e2e2e2",
+                      "on-error": "#ffffff",
+                      "bronze-muted": "#8C7352",
+                      "tertiary-fixed-dim": "#cac6c4",
+                      "surface-container-high": "#e8e8e8",
+                      "tertiary-container": "#1c1b1a"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "section-gap": "160px",
+                      "margin-desktop": "80px",
+                      "margin-mobile": "24px",
+                      "gutter": "32px",
+                      "unit": "8px"
+              },
+              "fontFamily": {
+                      "headline-md": [
+                              "Playfair Display"
+                      ],
+                      "label-caps": [
+                              "Hanken Grotesk"
+                      ],
+                      "display-lg": [
+                              "Playfair Display"
+                      ],
+                      "body-md": [
+                              "Hanken Grotesk"
+                      ],
+                      "headline-sm": [
+                              "Playfair Display"
+                      ],
+                      "display-lg-mobile": [
+                              "Playfair Display"
+                      ],
+                      "body-lg": [
+                              "Hanken Grotesk"
+                      ],
+                      "nav-link": [
+                              "Hanken Grotesk"
+                      ]
+              },
+              "fontSize": {
+                      "headline-md": [
+                              "32px",
+                              {
+                                      "lineHeight": "1.2",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-caps": [
+                              "12px",
+                              {
+                                      "lineHeight": "1.0",
+                                      "letterSpacing": "0.15em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display-lg": [
+                              "72px",
+                              {
+                                      "lineHeight": "1.1",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "1.6",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-sm": [
+                              "24px",
+                              {
+                                      "lineHeight": "1.3",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "display-lg-mobile": [
+                              "44px",
+                              {
+                                      "lineHeight": "1.1",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "1.6",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "nav-link": [
+                              "14px",
+                              {
+                                      "lineHeight": "1.0",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "500"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+    </script>
+<style>
+        body {
+            background-color: #FFFFFF;
+        }
+    </style>
+</head>
+<body class="font-body-md text-on-surface antialiased selection:bg-bronze-muted selection:text-white pt-20">
+<!-- TopNavBar -->
+<nav class="bg-surface/90 backdrop-blur-md dark:bg-on-surface/90 fixed top-0 w-full z-50 border-b border-hairline-gray dark:border-on-surface-variant flex justify-between items-center h-20 px-margin-desktop max-w-full mx-auto">
+<div class="font-display-lg text-headline-sm tracking-tighter text-primary dark:text-off-white" style="color: #A68B67;">
+            NOVO
+        </div>
+<div class="hidden md:flex gap-gutter items-center">
+<a class="font-nav-link text-nav-link tracking-widest text-on-surface-variant hover:text-primary transition-colors" href="#">COLLECTIONS</a>
+<a class="font-nav-link text-nav-link tracking-widest text-on-surface-variant hover:text-primary transition-colors" href="#">THE TEAM</a>
+<a class="font-nav-link text-nav-link tracking-widest text-on-surface-variant hover:text-primary transition-colors" href="#">ABOUT</a>
+<a class="font-nav-link text-nav-link tracking-widest text-on-surface-variant hover:text-primary transition-colors" href="#">CONTACT</a>
+</div>
+<div class="hidden md:block">
+<button class="bg-[#A68B67] text-white px-8 py-3 font-nav-link text-nav-link hover:opacity-80 transition-opacity scale-102 transition-transform duration-200" style="border-radius: 0px;">
+                BOKA
+            </button>
+</div>
+<button class="md:hidden text-primary">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</nav>
+<main>
+<!-- Hero Section -->
+<section class="relative w-full h-[819px] min-h-[600px] flex items-end pb-20 px-margin-desktop overflow-hidden bg-tertiary">
+<div class="absolute inset-0 z-0">
+<img alt="High fashion editorial photography of a model with sleek brown hair against a dark background, reflecting a premium salon experience." class="w-full h-full object-cover object-top opacity-80" data-alt="A striking high-fashion editorial portrait of a female model with perfectly styled, sleek brown hair with asymmetrical bangs. She is posed elegantly against a deep, moody, dark background. The lighting is sophisticated and dramatic, highlighting the texture and shine of her hair, creating a luxurious and avant-garde atmosphere consistent with a premium flagship salon. The overall palette is rich with deep shadows, subtle skin tones, and the lustrous brown of the hair." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCW3rNCTIOE6LYc74UFbNL0rx6b2oRxdf6LIrKgCEKeYzvUXK5tFeUmnHpOe8IUlRFK7umHGVIV-UvyaCYSP9bJ_jG6oiwia_LTDOTkiNw9UbED9m-6HHOqknClS3cIWXzdzZV3Je3CzM7KgAxGE3Yo7pZm0ekI6BaYEcn3xdph7v5vNJhYgUCK8kM57UstsM5IWAo6symLjFFEpa826T2YMfdJTmxgl_JKy4vxSjKY7JJ4XgCQ8aPrTEurK83Vohvy5eGyVtN_Bgg"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+</div>
+<div class="relative z-10 text-white max-w-4xl">
+<h1 class="font-display-lg text-display-lg md:text-[88px] leading-[1.0] tracking-tighter mb-4 text-white drop-shadow-sm">
+                    THE NOVO EDIT:<br/>
+                    DEFINING HAIR ARTISTRY
+                </h1>
+<p class="font-body-lg text-body-lg text-white/80" style="color: #A68B67;">
+                    Schwarzkopf Professional Flagship Salon
+                </p>
+</div>
+</section>
+<!-- Current Collections -->
+<section class="py-section-gap px-margin-desktop bg-white">
+<div class="text-center mb-16">
+<h2 class="font-display-lg text-[48px] text-[#A68B67] mb-2">CURRENT COLLECTIONS</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<!-- Collection Item 1 -->
+<div class="group cursor-pointer">
+<div class="relative aspect-[4/5] overflow-hidden mb-4">
+<img alt="Editorial portrait of a woman with voluminous wavy brown hair." class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="A high-end editorial portrait of a female model featuring voluminous, wavy brown hair with subtle reddish-brown highlights. The lighting is dramatic and moody, casting soft shadows that emphasize the hair's texture and volume. The background is a solid, dark, muted tone that contrasts elegantly with the model's skin and hair, adhering to a sophisticated, minimalist luxury salon aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCEjYBlUxf07YjWLTu6m11ksXHXjObiYaxctvoDIyKabM9xxKaP8MKMUAawfdBDp7DhEPh13PcUe8hcE9mtJB5WqCuVuHjQw8lGy8pKZz46vfxOlwhn5YAyGqQw5GwUmdxct4XHJvA-SKLcMw_nEVGyiHpwEI0k4h2I0jtpMlH9Kz7BAABT1qyo_0csx07HvVX6DtwrWuUcq18o9jXdfmBCToLBNS2ZOzi-abmNZKf_ixzp6jQ_Vfr68Z69yzse-t1rCeFTWP8Jt6w"/>
+<div class="absolute bottom-6 left-0 w-full text-center z-10">
+<h3 class="font-label-caps text-label-caps text-white tracking-widest uppercase">CHROMATIC DREAMS</h3>
+<div class="w-12 h-[1px] bg-white/50 mx-auto mt-2"></div>
+</div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-60"></div>
+</div>
+</div>
+<!-- Collection Item 2 -->
+<div class="group cursor-pointer">
+<div class="relative aspect-[4/5] overflow-hidden mb-4">
+<img alt="Editorial portrait of a woman with a sharp, structural short red haircut." class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="A striking editorial profile portrait of a female model showcasing a sharp, precision-cut, structural short pixie hairstyle in a vibrant auburn-red tone. She wears a high-necked black garment. The lighting is highly stylized, highlighting the sharp angles of the haircut and her facial structure against a deep, dark grey background. The mood is avant-garde, architectural, and fiercely modern." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBnR7L0latLYJ6noEOW5SmNJsOG4aQkZdYMzAHrXi6ipDc12r-FyxFmTaXIADlszxeXVOElCtk3Udj6oXXWqCdPxbRcIV5pJnlxid43Fg17h6wJGr5wRDxL4WYwLVNCNMXDHKd6fnkDftMUAHNZrOoqrCRkrIvX_K1EQ4pvaWU9ZOI0kWltWxsXIWe9ezlS-A1JPGIYSO9UPmjsvNoXy9PrB-dYEZkziDbfmuO9MR_x62Kn6gxU8lYxVjGZ-76oW2nOjxF8i-baP0w"/>
+<div class="absolute bottom-6 left-0 w-full text-center z-10">
+<h3 class="font-label-caps text-label-caps text-white tracking-widest uppercase">STRUCTURAL ELEGANCE</h3>
+<div class="w-12 h-[1px] bg-white/50 mx-auto mt-2"></div>
+</div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-60"></div>
+</div>
+</div>
+<!-- Collection Item 3 -->
+<div class="group cursor-pointer">
+<div class="relative aspect-[4/5] overflow-hidden mb-4">
+<img alt="Editorial portrait of a woman with long layered brunette hair and bangs." class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="A sophisticated editorial portrait of a female model with long, softly layered brunette hair featuring a modern fringe (bangs) and subtle blonde balayage at the ends. The lighting is soft and diffuse, creating a natural yet highly polished look. The background is a muted, earthy beige tone that complements the model's hair and black attire, exuding a refined, contemporary muse aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDF5INGzNiTFbAMH3q1EpnFPvcwwc3v9xEiOgSQJwML1khLHjt-zT_Pxui__2xbcUrp9vlXEk9UuY7G2Z549oZ2CUJp-gBX4J6PoWRIitxURh1SVt9kAXPPZpB0X2O9-siY7N5y-mbH2YuZ127ajI0RTQxqUQCXWK0lKJS041G3fUse1zBUOcfxbA4zvyYLT0THw6uevAVHhN4SBCnzQTiWt2OQmRDIMgrhaGNYdIy7-dGPSu9yzzYC-K-SjOY4zgd_6hW2q1EIPAo"/>
+<div class="absolute bottom-6 left-0 w-full text-center z-10">
+<h3 class="font-label-caps text-label-caps text-white tracking-widest uppercase">MODERN MUSE</h3>
+<div class="w-12 h-[1px] bg-white/50 mx-auto mt-2"></div>
+</div>
+<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-60"></div>
+</div>
+</div>
+</div>
+</section>
+<!-- The Team Section -->
+<section class="py-section-gap px-margin-desktop bg-white">
+<div class="text-center mb-16">
+<h2 class="font-display-lg text-[48px] text-primary mb-2">THE TEAM</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-gutter">
+<!-- Team Member 1 -->
+<div class="text-left">
+<div class="aspect-[3/4] overflow-hidden mb-6 bg-surface-dim">
+<img alt="Black and white portrait of Ellen Rudd, Creative Director" class="w-full h-full object-cover grayscale" data-alt="A professional, high-contrast black and white portrait of a female creative director with long wavy hair, wearing a dark blazer. She is looking directly at the camera with a confident, serene expression. The lighting is studio-quality, casting subtle shadows that emphasize her features against a mid-grey background. The aesthetic is clean, minimalist, and authoritative." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB4MqR8IdUX2Q3iea4vUHRPTE2fn2VwvmygIRT6-w1DdBeIZjRDxWg27mFv17czEvcm35QKqynT0gTOWXC6wStO1h2sPL61g8_QFXaL7aIBWHnt_Wm2r-qnd4VYu7D2gM-sEoiQ9FnxWcejZ95Y_dKWDR97GSzLZQ6vmT1L0sGKkB2HorrE3BnG5_06SSYrbA8Q1RgcVBIqtMHqCZu1PNXIK_VvthYwoHH35h1oT0JA2XzsGWvicyDmoQ4FGMMNEZrbihKdnJcDrLE"/>
+</div>
+<h3 class="font-headline-sm text-[20px] text-[#A68B67] mb-1">Ellen Rudd</h3>
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-3">Creative Director</p>
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-[16px]">photo_camera</span>
+</a>
+</div>
+<!-- Team Member 2 -->
+<div class="text-left">
+<div class="aspect-[3/4] overflow-hidden mb-6 bg-surface-dim">
+<img alt="Black and white portrait of Karyln Saken, Creative Director" class="w-full h-full object-cover grayscale" data-alt="A professional, high-contrast black and white portrait of a female creative director with shoulder-length textured hair, wearing a dark blazer with arms crossed. She is looking directly at the camera with a composed, strong expression. The lighting is studio-quality against a mid-grey background. The aesthetic is sleek, editorial, and professional." src="https://lh3.googleusercontent.com/aida-public/AB6AXuB2Ustx1b5DL_iyct8wXkjsBTQkxTbCkjVM9SUuXX0Tz3chfxOaPBvhaR7nHw9_A1-F1OsVd0MDIar46k8racKLHJinS4YpF4tLUdhe7VMwTs58Gun-3wzS4-82K4kgaaJfbBDB67UsdJp9VI37uBMCUdwSyQX3rDMWbPctgkuAHpIez3afk4Vl8SnVmtGi-AWQmli2yBUMY6YkhIwv6f-Pjpq9a9bzrLUQcZ-h1G1zHZgPWVqGF88KweIl93ge9gbhpUHsVVt8l14"/>
+</div>
+<h3 class="font-headline-sm text-[20px] text-[#A68B67] mb-1">Karyln Saken</h3>
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-3">Creative Director</p>
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-[16px]">photo_camera</span>
+</a>
+</div>
+<!-- Team Member 3 -->
+<div class="text-left">
+<div class="aspect-[3/4] overflow-hidden mb-6 bg-surface-dim">
+<img alt="Black and white portrait of Antonia Routt, Creative Stylist" class="w-full h-full object-cover grayscale" data-alt="A professional, high-contrast black and white portrait of a female creative stylist with wavy mid-length hair, wearing a dark v-neck top. She has a gentle, approachable yet professional gaze towards the camera. The studio lighting provides a classic editorial feel against a mid-grey background, maintaining a minimalist and elegant brand aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAoyxbu-Rit-vKSIaYfKCFlzGD6iGOs_K0qw684LH17IZYHhue4XVdTvIw5wLW8J2OLb3t6EDp3AP2H5AUq5IhULCIGW9YJ0gXtSHK8MVT-QSl7Vy-ofR2UeLNTOqrUlgUMjxl7Orr9s83PJhsH8PqrhPh5AKrytQ6ljkT3y3hquXzVJyfKR9NXi2x7Ia_Dz5Ai0jolBFqPFwpADiqwaIGBPVJcvVt3l6Hr6x0m9KgpZLHaBizE6kGqDIQ69g3tRuVb5vxIM6EcYx4"/>
+</div>
+<h3 class="font-headline-sm text-[20px] text-[#A68B67] mb-1">Antonia Routt</h3>
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-3">Creative Stylist</p>
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-[16px]">photo_camera</span>
+</a>
+</div>
+<!-- Team Member 4 -->
+<div class="text-left">
+<div class="aspect-[3/4] overflow-hidden mb-6 bg-surface-dim">
+<img alt="Black and white portrait of Many Hadwert, Creative Stylist" class="w-full h-full object-cover grayscale" data-alt="A professional, high-contrast black and white portrait of a male creative stylist with short dark hair and a neat beard, wearing a dark t-shirt and blazer. He looks confidently at the camera. The lighting is sophisticated and moody, typical of a high-end salon's editorial team page, set against a smooth mid-grey background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCIb-Y0Hi7vhJizjRyLiO7_Ti2xKJSHbPk1EHF1-gZhgjhed9ZdS4D12jWI3qVvEZ0zxb4kc29InS4drhTSmNUYAONVlxsHSJzO97YoX5qMHrZXkRKD-LgTAot36dVWz06YlHuDXbA2patFm9hCV0ECrP1BIPU13wW6X0Iw-ceEgfhqEizLiu8VOEnbhZwpBAzz5LJSeaNU4optAzLS6Rmgx7ij3U_xy9CwxuFpGuEVIGU8YSvSvp05Fq1fLNV1lgkao1bled5QvW8"/>
+</div>
+<h3 class="font-headline-sm text-[20px] text-[#A68B67] mb-1">Many Hadwert</h3>
+<p class="font-label-caps text-label-caps text-on-surface-variant mb-3">Creative Stylist</p>
+<a class="text-on-surface-variant hover:text-primary transition-colors" href="#">
+<span class="material-symbols-outlined text-[16px]">photo_camera</span>
+</a>
+</div>
+</div>
+</section>
+<!-- Our Philosophy Section -->
+<section class="py-[120px] px-margin-desktop bg-[#D1C4B2]">
+<div class="max-w-6xl mx-auto flex flex-col md:flex-row gap-16 md:gap-24">
+<div class="md:w-1/3 flex flex-col justify-start">
+<h2 class="font-display-lg text-[40px] md:text-[56px] text-primary mb-12 leading-tight">OUR PHILOSOPHY</h2>
+<!-- Abstract minimal icon placeholder -->
+<div class="w-24 h-24 border-[0.5px] border-primary rounded-full flex items-center justify-center relative overflow-hidden">
+<div class="absolute w-full h-[0.5px] bg-primary rotate-45"></div>
+<div class="absolute w-full h-[0.5px] bg-primary -rotate-12 top-1/3"></div>
+<div class="absolute w-full h-[0.5px] bg-primary rotate-75 left-1/4"></div>
+</div>
+</div>
+<div class="md:w-2/3 flex items-center">
+<p class="font-headline-md text-headline-md text-primary leading-relaxed">
+                        At NOVO, we believe in the transformative power of hair. Our flagship salon, powered by Schwarzkopf Professional, is an atelier of creativity and innovation. We merge artistry with precision to create bespoke looks that are as unique as you are, pushing the boundaries of fashion and beauty.
+                    </p>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-tertiary dark:bg-on-tertiary-fixed w-full py-20 px-margin-desktop border-t border-on-surface-variant">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-gutter max-w-full mx-auto items-center">
+<div class="font-display-lg text-[40px] text-[#A68B67]">
+                NOVO
+            </div>
+<div class="font-body-md text-body-md text-on-tertiary-container md:col-span-2 text-center text-sm">
+<p>Rörstrandsgatan 38C<br/>113 40 Stockholm</p>
+<p class="mt-4">
+                    Phone: <span class="text-white">08 - 663 30 14</span><br/>
+                    Email: <span class="text-[#A68B67]">info@salongnovo.se</span>
+</p>
+</div>
+<div class="flex justify-end gap-6 text-on-tertiary-container">
+<a class="hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">public</span>
+</a>
+<a class="hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">photo_camera</span>
+</a>
+<a class="hover:text-white transition-colors" href="#">
+<span class="material-symbols-outlined text-[20px]">play_circle</span>
+</a>
+</div>
+</div>
+<div class="w-full h-[1px] bg-on-surface-variant my-8"></div>
+<div class="text-center font-body-md text-[12px] text-on-tertiary-container">
+            Copyright © 2022 — info@salongnovo.se
+        </div>
+</footer>
+</body></html>

@@ -1,0 +1,44 @@
+---
+/**
+ * Salong NOVO logotype. Inlines the brand SVG so it stays crisp and adds no extra
+ * request. Two tones (the actual files in content/Logos are the source of truth):
+ *   - tone="white"  → white wordmark, for DARK surfaces (e.g. the footer)
+ *   - tone="black"  → black wordmark, for LIGHT surfaces (e.g. the header, hero)
+ * Size is controlled by `height` (the SVG keeps its aspect ratio via viewBox).
+ * `decorative` drops the a11y label for purely ornamental placements (hero mark);
+ * otherwise the logo is announced as "Salong NOVO".
+ */
+import whiteRaw from "../../content/Logos/novo_logo_white.svg?raw";
+import blackRaw from "../../content/Logos/novo_logo_black.svg?raw";
+
+interface Props {
+  tone?: "white" | "black";
+  height?: string; // any CSS length
+  class?: string;
+  decorative?: boolean;
+}
+const { tone = "black", height = "30px", class: className, decorative = false } = Astro.props;
+
+/** Inline-safe: drop the XML prolog/doctype/comments, strip fixed sizing + ids
+ *  (so multiple instances on a page don't collide), keep viewBox for scaling. */
+function clean(raw: string): string {
+  return raw
+    .replace(/<\?xml[\s\S]*?\?>/g, "")
+    .replace(/<!DOCTYPE[\s\S]*?>/g, "")
+    .replace(/<!--[\s\S]*?-->/g, "")
+    .replace(/\s+(?:id|enable-background)="[^"]*"/g, "")
+    .replace(/\s+(?:width|height|x|y)="[^"]*"/g, "")
+    .replace(/<svg /, '<svg aria-hidden="true" focusable="false" ')
+    .trim();
+}
+const svg = clean(tone === "white" ? whiteRaw : blackRaw);
+const a11y = decorative
+  ? { "aria-hidden": "true" }
+  : { role: "img", "aria-label": "Salong NOVO" };
+---
+<span class:list={["novo-logo", className]} style={`--logo-h:${height}`} {...a11y} set:html={svg}></span>
+
+<style>
+  .novo-logo { display: inline-flex; line-height: 0; }
+  .novo-logo :global(svg) { height: var(--logo-h); width: auto; display: block; }
+</style>

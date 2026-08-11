@@ -1,0 +1,47 @@
+---
+/**
+ * Access-gated draft preview (§10.2). Loads a post by id (ANY status, via
+ * `getById`) and renders it through the REAL public `PostView.astro` inside the
+ * admin shell, topped with a localized DRAFT banner. This is what "preview ==
+ * production" means at the page level — the editor's live pane covers the body;
+ * this route shows the whole post exactly as it will publish.
+ */
+export const prerender = false;
+import AdminBase from "../../../layouts/AdminBase.astro";
+import PostView from "../../../components/PostView.astro";
+import { getById } from "../../../lib/db";
+import "../../../styles/admin.css";
+
+const db = Astro.locals.runtime?.env?.DB;
+const userEmail = Astro.locals.user?.email ?? null;
+
+const idParam = Astro.params.id ?? "";
+const id = /^\d+$/.test(idParam) ? Number(idParam) : NaN;
+if (!db || Number.isNaN(id)) {
+  return new Response("Not found", { status: 404 });
+}
+const post = await getById(db, id).catch(() => null);
+if (!post) {
+  return new Response("Not found", { status: 404 });
+}
+
+const isDraft = post.status !== "published";
+const bannerText =
+  post.locale === "en"
+    ? isDraft
+      ? "Draft preview — not yet public"
+      : "Preview of a published post"
+    : isDraft
+      ? "Förhandsgranskning av utkast — inte publicerat"
+      : "Förhandsgranskning av publicerat inlägg";
+---
+<AdminBase title={`Förhandsgranska: ${post.title || "Utkast"}`} userEmail={userEmail}>
+  <div class="preview-banner" role="status">
+    <span class="preview-banner__dot" aria-hidden="true"></span>
+    <span>{bannerText}</span>
+    <a class="preview-banner__back" href={`/admin/posts/${post.id}`}>← Tillbaka till redigeraren</a>
+  </div>
+  <div class="preview-surface">
+    <PostView locale={post.locale} post={post} />
+  </div>
+</AdminBase>

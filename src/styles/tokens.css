@@ -1,0 +1,63 @@
+/*
+ * Salong NOVO v2 — design tokens + base reset.
+ * Direction LOCKED 2026-06-01 ("Haute Editorial" + live-site recognition layer).
+ * Authoritative spec: Planning/DESIGN-SYSTEM.md · summary: ARCHITECTURE.md §11.
+ * Keeps the scaffold's class/var names (.wrap/.btn/.btn--ghost/.kicker/--maxw and the
+ * --snow/--gold/--muted/--line aliases) so components restyle without rebuilding.
+ */
+:root {
+  /* core / editorial */
+  --charcoal: #161616;
+  --ink: #1a1a1a;
+  --white: #ffffff;
+  --cream: #f8f8f8;
+  --on-variant: #5b5a55;
+  --hairline: #e3e0da;
+  --clay: #d8cbb8;
+
+  /* bronze — texture only, NEVER a CTA fill */
+  --bronze: #a68b67;
+  --bronze-muted: #8c7352;
+  --bronze-dark: #725a3a;
+
+  /* recognition layer (exact live-site colors) */
+  --black: #000000;
+  --champagne: #c2a581;
+  --terracotta: #cc5a31;
+  --terracotta-deep: #b34a26;
+
+  /* aliases kept for existing components */
+  --snow: var(--cream);
+  --gold: var(--bronze);
+  --muted: var(--on-variant);
+  --line: var(--hairline);
+
+  --maxw: 1200px;
+  --font-sans: "Hanken Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --font-serif: "Playfair Display", Georgia, serif;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--white); color: var(--ink);
+  font-family: var(--font-sans); font-weight: 400; line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+img { display: block; max-width: 100%; }
+a { color: inherit; text-decoration: none; }
+h1, h2, h3 { font-family: var(--font-serif); font-weight: 400; line-height: 1.05; letter-spacing: -0.02em; }
+.wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 1.5rem; }
+.btn {
+  display: inline-flex; align-items: center; gap: .5rem; cursor: pointer;
+  font-size: .8rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
+  padding: .9rem 1.6rem; background: var(--terracotta); color: #fff;
+  border: 1px solid var(--terracotta); border-radius: 0;
+  transition: background .3s, transform .25s;
+}
+.btn:hover { background: var(--terracotta-deep); border-color: var(--terracotta-deep); transform: translateY(-1px); }
+.btn--ghost { background: transparent; color: var(--ink); border-color: var(--ink); }
+.btn--ghost:hover { background: var(--ink); color: #fff; }
+.kicker { font-size: .72rem; font-weight: 600; letter-spacing: .2em; text-transform: uppercase; color: var(--bronze-dark); }
+section { padding: clamp(88px, 13vw, 170px) 0; }
+:focus-visible { outline: 2px solid var(--terracotta); outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }

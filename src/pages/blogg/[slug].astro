@@ -1,0 +1,25 @@
+---
+export const prerender = false;
+import Base from "../../layouts/Base.astro";
+import PostView from "../../components/PostView.astro";
+import { getBySlug } from "../../lib/db";
+import { servedUrl } from "../../lib/media";
+const locale = "sv" as const;
+const { slug } = Astro.params;
+const db = Astro.locals.runtime?.env?.DB;
+const post = db && slug ? await getBySlug(db, locale, slug).catch(() => null) : null;
+if (!post) return new Response("Not found", { status: 404 });
+const desc = post.seoDesc ?? post.excerpt;
+// B6/A4: og:image must be ABSOLUTE. Resolve the cover R2 key to an absolute URL
+// (Stage A: siteUrl + servedUrl("", key) → siteUrl + /api/media/<key>).
+const siteUrl = Astro.site?.toString().replace(/\/$/, "") ?? "";
+const imageBase = Astro.locals.runtime?.env?.PUBLIC_IMAGE_BASE ?? "";
+const ogImage = post.coverImage
+  ? ((u) => (u.startsWith("http") ? u : siteUrl + u))(
+      servedUrl(imageBase, post.coverImage),
+    )
+  : undefined;
+---
+<Base locale={locale} pageKey="blog" title={`${post.seoTitle ?? post.title} — Salong NOVO`} description={desc} image={ogImage} alternateLinks={null}>
+  <PostView locale={locale} post={post} />
+</Base>

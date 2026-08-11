@@ -1,0 +1,78 @@
+---
+/**
+ * Admin top navigation: dashboard, new post, "view site", the Access email
+ * readout, and the Access logout link. No public chrome. Swedish-only (§10.2).
+ */
+interface Props {
+  userEmail?: string | null;
+}
+const { userEmail } = Astro.props;
+const path = Astro.url.pathname;
+const isActive = (href: string) =>
+  href === "/admin" ? path === "/admin" : path.startsWith(href);
+---
+<nav class="admin-nav" aria-label="Admin">
+  <div class="admin-nav__links">
+    <a href="/admin" aria-current={isActive("/admin") && path === "/admin" ? "page" : undefined}>
+      Dashboard
+    </a>
+    <a
+      href="/admin/posts/new"
+      aria-current={isActive("/admin/posts/new") ? "page" : undefined}
+    >
+      Nytt inlägg
+    </a>
+    <a href="/" target="_blank" rel="noopener">Visa sajt</a>
+  </div>
+  <div class="admin-nav__account">
+    {userEmail && <span class="admin-nav__email" title={userEmail}>{userEmail}</span>}
+    <a class="admin-nav__logout" href="/cdn-cgi/access/logout">Logga ut</a>
+  </div>
+</nav>
+
+<style>
+  .admin-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+    padding: 0.75rem 1.25rem;
+    background: var(--charcoal, #161616);
+    color: var(--white, #fff);
+    border-bottom: 1px solid var(--bronze-muted, #8c7352);
+  }
+  .admin-nav__links,
+  .admin-nav__account {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .admin-nav a {
+    color: var(--white, #fff);
+    text-decoration: none;
+    font-size: 0.95rem;
+  }
+  .admin-nav__links a[aria-current="page"] {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+  .admin-nav a:hover,
+  .admin-nav a:focus-visible {
+    color: var(--bronze, #a68b67);
+  }
+  .admin-nav__email {
+    font-size: 0.85rem;
+    opacity: 0.8;
+    max-width: 18rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .admin-nav__logout {
+    border: 1px solid var(--bronze-muted, #8c7352);
+    border-radius: 4px;
+    padding: 0.35rem 0.75rem;
+  }
+</style>

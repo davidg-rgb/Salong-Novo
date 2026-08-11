@@ -1,0 +1,53 @@
+---
+/**
+ * Admin shell — Swedish-only, `noindex`, dark token theme, NO public
+ * header/footer. Used by every `/admin/*` page (never the public Base.astro).
+ * See ARCHITECTURE §10.2 / §10.8.
+ */
+import "../styles/tokens.css";
+import AdminNav from "../components/admin/AdminNav.astro";
+
+interface Props {
+  title: string;
+  userEmail?: string | null;
+}
+const { title, userEmail } = Astro.props;
+
+/**
+ * Defense-in-depth write token (§10.8). Cloudflare Access is the real gate; this
+ * token is injected into the Access-gated, noindex admin page so the same-origin
+ * client can echo it as `x-admin-token` on writes. A cross-site attacker can
+ * neither read this page (Access) nor set the header (no CORS grant).
+ */
+const adminToken = Astro.locals.runtime?.env?.ADMIN_API_TOKEN ?? "";
+---
+<!doctype html>
+<html lang="sv">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <meta name="admin-token" content={adminToken} />
+    <title>{title} — Salong NOVO Admin</title>
+    <link rel="icon" href="/favicon.ico" />
+  </head>
+  <body class="admin">
+    <AdminNav userEmail={userEmail} />
+    <main id="main" class="admin-main wrap">
+      <slot />
+    </main>
+  </body>
+</html>
+
+<style>
+  :global(body.admin) {
+    background: var(--charcoal, #161616);
+    color: var(--cream, #f8f8f8);
+    min-height: 100vh;
+  }
+  .admin-main {
+    padding: 1.5rem 1.25rem 3rem;
+    max-width: var(--maxw, 1100px);
+    margin-inline: auto;
+  }
+</style>

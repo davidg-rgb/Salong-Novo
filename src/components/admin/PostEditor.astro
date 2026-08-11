@@ -1,0 +1,172 @@
+---
+/**
+ * Editor form shell (§10.6). A thin presentation layer: every interactive bit is
+ * driven by `editor.client.ts`, which reads the serialized draft from the
+ * `<script type="application/json" id="draft-data">` block below (no second fetch
+ * on edit). Two-pane on ≥960px, stacked on mobile.
+ *
+ * The shell renders the meta strip (title, slug chip, locale segmented, excerpt),
+ * the MarkdownToolbar + body textarea, the live-preview pane, the CoverPicker,
+ * the SEO fields with counters, and the action bar. Field state (counters,
+ * validation, slug chip, segmented toggles, save/publish/preview/delete) is all
+ * wired client-side against the pure `editor.ts`.
+ */
+import type { PostDraft } from "../../lib/editor";
+import { ADMIN } from "../../lib/admin-strings";
+import MarkdownToolbar from "./MarkdownToolbar.astro";
+import CoverPicker from "./CoverPicker.astro";
+import ImagePicker from "./ImagePicker.astro";
+
+interface Props {
+  draft: PostDraft;
+  mode: "create" | "edit";
+  imageBase: string;
+}
+const { draft, mode, imageBase } = Astro.props;
+
+const isPublished = draft.status === "published";
+// Slug chip path prefix mirrors the public blog route for the draft's locale.
+const slugPrefix = draft.locale === "en" ? "/en/blog/" : "/blogg/";
+---
+<form class="editor" data-editor data-mode={mode} novalidate>
+  <!-- Initial draft model — read once by editor.client.ts (no edit-load fetch). -->
+  <script type="application/json" id="draft-data" set:html={JSON.stringify(draft)} />
+
+  <div class="editor__main">
+    <!-- ── Meta strip ───────────────────────────────────────────── -->
+    <div class="meta-strip">
+      <div class="field field--title">
+        <label class="field__label" for="ed-title">{ADMIN.editor.title}</label>
+        <input
+          id="ed-title"
+          type="text"
+          class="field__input field__input--title"
+          data-field="title"
+          value={draft.title}
+          placeholder={ADMIN.editor.title}
+          autocomplete="off"
+        />
+      </div>
+
+      <div class="slug-chip" data-slug-chip>
+        <span class="slug-chip__prefix" data-slug-prefix>{slugPrefix}</span>
+        <span class="slug-chip__slug" data-slug-display>{draft.slug}</span>
+        <input
+          type="text"
+          class="slug-chip__input"
+          data-slug-input
+          value={draft.slug}
+          hidden
+          aria-label={ADMIN.editor.slug}
+        />
+        <button type="button" class="slug-chip__toggle" data-slug-toggle>
+          {draft.slugManual ? ADMIN.editor.slugAuto : ADMIN.editor.slugEdit}
+        </button>
+      </div>
+
+      <div class="field field--inline">
+        <span class="field__label" id="ed-locale-label">{ADMIN.editor.locale}</span>
+        <div class="segmented" role="group" aria-labelledby="ed-locale-label" data-field="locale">
+          <button type="button" class={`seg ${draft.locale === "sv" ? "seg--on" : ""}`} data-value="sv" aria-pressed={draft.locale === "sv"}>{ADMIN.editor.localeSv}</button>
+          <button type="button" class={`seg ${draft.locale === "en" ? "seg--on" : ""}`} data-value="en" aria-pressed={draft.locale === "en"}>{ADMIN.editor.localeEn}</button>
+        </div>
+      </div>
+
+      <div class="field field--excerpt">
+        <div class="field__row">
+          <label class="field__label" for="ed-excerpt">{ADMIN.editor.excerpt}</label>
+          <span class="counter" data-counter="excerpt" aria-live="polite"></span>
+          <button type="button" class="link-btn" data-excerpt-suggest>{ADMIN.editor.excerptSuggest}</button>
+        </div>
+        <textarea
+          id="ed-excerpt"
+          class="field__input field__textarea field__textarea--sm"
+          data-field="excerpt"
+          rows="2"
+          maxlength="400"
+        >{draft.excerpt}</textarea>
+      </div>
+    </div>
+
+    <!-- ── Body + live preview (two-pane) ───────────────────────── -->
+    <div class="editor__panes">
+      <div class="pane pane--write">
+        <MarkdownToolbar />
+        <textarea
+          id="md-body"
+          class="md-body"
+          data-field="body"
+          placeholder={ADMIN.editor.bodyPlaceholder}
+          spellcheck="true"
+        >{draft.body}</textarea>
+      </div>
+
+      <div class="pane pane--preview">
+        <div class="pane__head">
+          <span class="pane__title">Förhandsvisning</span>
+          <span class="preview-status" data-preview-status aria-live="polite"></span>
+        </div>
+        <div class="preview body" data-preview>
+          <p class="preview__placeholder">{ADMIN.editor.previewPlaceholder}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Sidebar: cover + SEO + actions ───────────────────────── -->
+  <aside class="editor__side">
+    <CoverPicker coverImage={draft.coverImage} imageBase={imageBase} />
+
+    <div class="field">
+      <div class="field__row">
+        <label class="field__label" for="ed-seo-title">{ADMIN.editor.seoTitle}</label>
+        <span class="counter" data-counter="seoTitle" aria-live="polite"></span>
+      </div>
+      <input
+        id="ed-seo-title"
+        type="text"
+        class="field__input"
+        data-field="seoTitle"
+        value={draft.seoTitle}
+        placeholder={draft.title || ADMIN.editor.title}
+        autocomplete="off"
+      />
+    </div>
+
+    <div class="field">
+      <div class="field__row">
+        <label class="field__label" for="ed-seo-desc">{ADMIN.editor.seoDesc}</label>
+        <span class="counter" data-counter="seoDesc" aria-live="polite"></span>
+      </div>
+      <textarea
+        id="ed-seo-desc"
+        class="field__input field__textarea field__textarea--sm"
+        data-field="seoDesc"
+        rows="3"
+      >{draft.seoDesc}</textarea>
+    </div>
+
+    <div class="validation-summary" data-validation role="alert" hidden></div>
+
+    <div class="action-bar">
+      {isPublished ? (
+        <>
+          <button type="button" class="btn-primary" data-action="save">{ADMIN.editor.saveChanges}</button>
+          <button type="button" class="btn-ghost" data-action="unpublish">{ADMIN.editor.unpublish}</button>
+        </>
+      ) : (
+        <>
+          <button type="button" class="btn-ghost" data-action="save">{ADMIN.editor.saveDraft}</button>
+          <button type="button" class="btn-primary" data-action="publish">{ADMIN.editor.publish}</button>
+        </>
+      )}
+      <button type="button" class="btn-ghost" data-action="preview">{ADMIN.editor.preview}</button>
+      <button type="button" class="btn-ghost btn-danger-ghost" data-action="delete">{ADMIN.editor.delete}</button>
+    </div>
+
+    <p class="save-status" data-save-status aria-live="polite"></p>
+  </aside>
+
+  <ImagePicker imageBase={imageBase} />
+  <div class="toast" data-toast role="status" aria-live="polite" hidden></div>
+</form>

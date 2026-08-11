@@ -1,0 +1,40 @@
+{
+  "_note": "Structured awards from live site (Årets Frisör 2026) + old build AWARDS_MAPPING.md (Årets Frisör 2025, Nordic Hairshot 2025). Image keys reference the assets migrated from the old build's public/awards/. Photographers credited where known.",
+  "awards": [
+    {
+      "year": 2026,
+      "competition": "Årets Frisör",
+      "items": [
+        { "category": "Årets Nykomling", "result": "Vinnare", "people": ["Ellen Rudd"], "photographer": "Ellen Rudd" },
+        { "category": "Årets Herr", "result": "Nominerad", "people": ["Isabella Valentino"], "photographer": "Ellen Simone" },
+        { "category": "Årets Färg", "result": "Nominerad", "people": ["Chriss Berner"], "photographer": "Fredrik Hjerling" },
+        { "category": "Årets Avantgarde", "result": "Nominerad", "people": ["Ola Oterkjaer"], "photographer": "Fredrik Hjerling" }
+      ]
+    },
+    {
+      "year": 2025,
+      "competition": "Årets Frisör",
+      "items": [
+        { "category": "Årets Kollektion", "result": "Vinnare", "people": ["Chriss Berner", "Jannie Olofsson", "Ola Oterkjaer"], "photographer": "Andreas Lundberg", "note": "Vinst tredje året i rad", "images": "awards/arets-frisor-2025/kollektion1_*" },
+        { "category": "Årets Herr", "result": "Nominerad", "people": ["Isabella Valentino"], "photographer": "Ellen Simone", "images": "awards/arets-frisor-2025/herr2_*" },
+        { "category": "Årets Herr", "result": "Nominerad", "people": ["Ola Oterkjaer"], "photographer": "Andreas Lundberg", "images": "awards/arets-frisor-2025/herr1_*" },
+        { "category": "Årets Kollektion", "result": "Bidrag", "people": ["Isabella Valentino", "Emma Gahn"], "photographer": "Ellen Simone", "images": "awards/arets-frisor-2025/kollektion2_*" },
+        { "category": "Årets Avantgarde", "result": "Bidrag", "people": [], "images": "awards/arets-frisor-2025/avantgarde_*" },
+        { "category": "Årets Brud", "result": "Bidrag", "people": [], "images": "awards/arets-frisor-2025/brud_*" },
+        { "category": "Årets Dam", "result": "Bidrag", "people": [], "images": "awards/arets-frisor-2025/dam_*" }
+      ]
+    },
+    {
+      "year": 2025,
+      "competition": "Nordic Hairshot Awards",
+      "items": [
+        { "category": "Final", "result": "Finalist (Sverige)", "people": ["Ola Oterkjaer", "Chriss Berner"], "location": "Köpenhamn, 25 oktober", "images": "awards/nordic-hairshot-2025/nordichairshotawards2025_*" }
+      ]
+    }
+  ],
+  "headline_stats": {
+    "arets_kollektion_wins": 3,
+    "stylists": 18,
+    "founded": 2013
+  }
+}

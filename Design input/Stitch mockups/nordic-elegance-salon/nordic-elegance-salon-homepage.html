@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Nordic Elegance Salon</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&amp;family=Work+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Theme Configuration -->
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "primary": "#a8b5a1",
+              "primary-hover": "#94a28d",
+              "background-light": "#FAF9F7", 
+              "background-dark": "#191a18",
+              "charcoal": "#141513",
+              "taupe": "#8a8682",
+              "champagne": "#d4c5a9",
+            },
+            fontFamily: {
+              "display": ["Work Sans", "sans-serif"],
+              "serif": ["Cormorant Garamond", "serif"],
+            },
+            borderRadius: {
+                "DEFAULT": "0.375rem", // rounded-md
+                "lg": "0.5rem", 
+                "xl": "0.75rem", 
+                "2xl": "1rem",
+                "full": "9999px"
+            },
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            font-family: "Work Sans", sans-serif;
+            background-color: #FAF9F7;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            font-family: "Cormorant Garamond", serif;
+        }
+        /* Smooth transitions */
+        a, button {
+            transition: all 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-charcoal dark:text-white antialiased">
+<!-- Sticky Navigation -->
+<div class="fixed top-0 left-0 right-0 z-50 bg-background-light/90 dark:bg-background-dark/90 backdrop-blur-sm border-b border-[#edeeec] dark:border-neutral-800">
+<div class="max-w-[1280px] mx-auto px-4 sm:px-8 lg:px-12">
+<header class="flex items-center justify-between h-20">
+<!-- Logo -->
+<div class="flex items-center gap-2 group cursor-pointer">
+<span class="material-symbols-outlined text-primary text-2xl group-hover:rotate-12 transition-transform duration-500">spa</span>
+<h2 class="text-charcoal dark:text-white text-2xl font-bold tracking-tight font-serif italic">Nordic Elegance</h2>
+</div>
+<!-- Desktop Menu -->
+<nav class="hidden md:flex items-center gap-8">
+<a class="text-charcoal dark:text-gray-300 text-sm font-medium hover:text-primary transition-colors" href="#">Home</a>
+<a class="text-charcoal dark:text-gray-300 text-sm font-medium hover:text-primary transition-colors" href="#services">Services</a>
+<a class="text-charcoal dark:text-gray-300 text-sm font-medium hover:text-primary transition-colors" href="#team">Team</a>
+<a class="text-charcoal dark:text-gray-300 text-sm font-medium hover:text-primary transition-colors" href="#gallery">Gallery</a>
+<a class="text-charcoal dark:text-gray-300 text-sm font-medium hover:text-primary transition-colors" href="#about">About</a>
+<a class="text-charcoal dark:text-gray-300 text-sm font-medium hover:text-primary transition-colors" href="#contact">Contact</a>
+</nav>
+<!-- CTA -->
+<button class="hidden md:flex bg-primary hover:bg-primary-hover text-white dark:text-black text-sm font-bold px-6 py-2.5 rounded-lg shadow-sm hover:shadow-md">
+                    Book Now
+                </button>
+<!-- Mobile Menu Button -->
+<button class="md:hidden text-charcoal dark:text-white">
+<span class="material-symbols-outlined">menu</span>
+</button>
+</header>
+</div>
+</div>
+<main class="pt-20">
+<!-- Hero Section -->
+<section class="relative min-h-[calc(100vh-80px)] flex items-center justify-center overflow-hidden">
+<div class="max-w-[1280px] w-full mx-auto px-4 sm:px-8 lg:px-12 py-12 lg:py-0">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+<!-- Text Content -->
+<div class="flex flex-col gap-8 order-2 lg:order-1 fade-in-up">
+<div class="space-y-4">
+<span class="text-primary tracking-[0.2em] uppercase text-xs font-bold font-display">Minimalist Hair Care</span>
+<h1 class="text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.1] text-charcoal dark:text-white tracking-tight">
+                                Refining Your <br/> <i class="font-serif font-light text-taupe">Natural Beauty</i>
+</h1>
+<p class="text-lg text-gray-600 dark:text-gray-400 font-display font-light max-w-md leading-relaxed">
+                                Stockholm's premier destination for sustainable luxury hair care. Experience the art of Nordic minimalism combined with expert craftsmanship.
+                            </p>
+</div>
+<div class="flex flex-wrap gap-4">
+<button class="bg-primary hover:bg-primary-hover text-white dark:text-black text-base font-medium px-8 py-3.5 rounded-lg shadow-sm hover:shadow-md">
+                                Book Appointment
+                            </button>
+<button class="flex items-center gap-2 text-charcoal dark:text-white hover:text-primary px-4 py-3.5 font-medium transition-colors">
+<span class="material-symbols-outlined text-xl">play_circle</span>
+                                See Our Work
+                            </button>
+</div>
+<div class="flex items-center gap-8 mt-4 pt-8 border-t border-gray-200 dark:border-neutral-800">
+<div>
+<p class="text-2xl font-serif font-bold text-charcoal dark:text-white">4.9/5</p>
+<p class="text-xs text-gray-500 font-display uppercase tracking-wide">Customer Rating</p>
+</div>
+<div>
+<p class="text-2xl font-serif font-bold text-charcoal dark:text-white">15+</p>
+<p class="text-xs text-gray-500 font-display uppercase tracking-wide">Awards Won</p>
+</div>
+</div>
+</div>
+<!-- Hero Image -->
+<div class="relative order-1 lg:order-2 h-[400px] lg:h-[700px] w-full">
+<div class="absolute inset-0 bg-primary/10 rounded-2xl transform rotate-3 scale-95 z-0"></div>
+<div class="relative h-full w-full rounded-2xl overflow-hidden shadow-xl z-10 bg-center bg-cover" data-alt="Editorial close-up of a woman with sleek, modern blonde hair styling looking serene" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBeZd3XYZhzCQnqoOnjQItFd4iDfQFQDlEGitMNiJ9hnc9NrSPSEG8LfpMnzF5LL41Ar5v0QR30johj8uxjl69hg7q4QPKQbP3KSZy_jPQtN867d0IK1-efSpojnBmBWILnFoZPUYp6tTAbZFPzWDv2j05SM1T47O_nICXoSnFcZou8dXCqhqGqmNvlPe40XX1zOAa0qGX4SvmPQAPDNaDehotR-a-LtkCToGs8JRYd-eIG4Ty10YVEn4-cKPXtTepcsumLvnVVl3Qn');">
+</div>
+<!-- Floating Badge -->
+<div class="absolute -bottom-6 -left-6 bg-background-light dark:bg-neutral-800 p-6 rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] max-w-[200px] z-20 hidden md:block">
+<div class="flex items-center gap-2 mb-2 text-primary">
+<span class="material-symbols-outlined text-sm">eco</span>
+<span class="text-xs font-bold uppercase tracking-wider">Sustainable</span>
+</div>
+<p class="text-sm text-charcoal dark:text-gray-300 font-serif leading-snug italic">
+                                "We use only organic, eco-friendly products for your hair."
+                            </p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Intro / Philosophy Section -->
+<section class="py-24 bg-white dark:bg-neutral-900" id="about">
+<div class="max-w-[1280px] mx-auto px-4 sm:px-8 lg:px-12">
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20">
+<!-- Left: Philosophy -->
+<div class="lg:col-span-5 flex flex-col justify-center">
+<div class="flex items-center gap-2 text-champagne mb-4">
+<span class="material-symbols-outlined">stars</span>
+<span class="uppercase tracking-widest text-xs font-bold text-charcoal dark:text-white">Our Philosophy</span>
+</div>
+<h2 class="text-4xl lg:text-5xl font-bold text-charcoal dark:text-white mb-6 leading-tight">
+                            Sustainable beauty &amp; <br/><span class="italic text-taupe font-serif">personalized care.</span>
+</h2>
+<p class="text-gray-600 dark:text-gray-400 text-lg font-light leading-relaxed mb-8">
+                            We believe that true elegance lies in simplicity. Our award-winning stylists are dedicated to bringing out the best version of you through precision cutting and color techniques that honor your natural texture.
+                        </p>
+<a class="text-primary hover:text-primary-hover font-medium underline underline-offset-4 decoration-1 decoration-primary/30 hover:decoration-primary transition-all inline-flex items-center gap-1 w-fit" href="#">
+                            Read Our Full Story
+                            <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</a>
+</div>
+<!-- Right: Features Grid -->
+<div class="lg:col-span-7 grid grid-cols-1 sm:grid-cols-3 gap-6">
+<!-- Card 1 -->
+<div class="bg-background-light dark:bg-neutral-800 p-8 rounded-xl border border-neutral-100 dark:border-neutral-700 flex flex-col gap-4 hover:border-primary/30 transition-colors group">
+<div class="h-12 w-12 rounded-full bg-champagne/20 flex items-center justify-center text-yellow-600 dark:text-yellow-400 group-hover:bg-champagne/40 transition-colors">
+<span class="material-symbols-outlined">emoji_events</span>
+</div>
+<div>
+<h3 class="text-xl font-serif font-bold text-charcoal dark:text-white mb-2">Award Winning</h3>
+<p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">Voted Best Salon 2023 in Stockholm for excellence in service.</p>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-background-light dark:bg-neutral-800 p-8 rounded-xl border border-neutral-100 dark:border-neutral-700 flex flex-col gap-4 hover:border-primary/30 transition-colors group">
+<div class="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center text-primary group-hover:bg-primary/40 transition-colors">
+<span class="material-symbols-outlined">spa</span>
+</div>
+<div>
+<h3 class="text-xl font-serif font-bold text-charcoal dark:text-white mb-2">Eco-Conscious</h3>
+<p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">Using only premium organic and sustainable hair products.</p>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-background-light dark:bg-neutral-800 p-8 rounded-xl border border-neutral-100 dark:border-neutral-700 flex flex-col gap-4 hover:border-primary/30 transition-colors group">
+<div class="h-12 w-12 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 group-hover:bg-slate-300 transition-colors">
+<span class="material-symbols-outlined">content_cut</span>
+</div>
+<div>
+<h3 class="text-xl font-serif font-bold text-charcoal dark:text-white mb-2">Expert Stylists</h3>
+<p class="text-sm text-gray-500 dark:text-gray-400 leading-relaxed">A team of master colorists trained in global techniques.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Services Section -->
+<section class="py-24 bg-background-light dark:bg-background-dark" id="services">
+<div class="max-w-[1280px] mx-auto px-4 sm:px-8 lg:px-12">
+<div class="text-center max-w-3xl mx-auto mb-16">
+<span class="text-primary tracking-[0.2em] uppercase text-xs font-bold font-display">Tailored Treatments</span>
+<h2 class="text-4xl lg:text-5xl font-bold text-charcoal dark:text-white mt-3 mb-6">Our Premium Services</h2>
+<div class="h-1 w-20 bg-champagne mx-auto rounded-full"></div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<!-- Service 1 -->
+<div class="group cursor-pointer">
+<div class="relative overflow-hidden rounded-xl aspect-[4/5] mb-6">
+<div class="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors z-10"></div>
+<div class="h-full w-full bg-cover bg-center transform group-hover:scale-105 transition-transform duration-700" data-alt="Close up of hairdresser cutting hair with scissors in a bright salon" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBifrYCKI-H01SYsC1H_UxZtD0VWjena_IZ_6a1xmTPd7uKWVX4G-eBgRyg4NZM0RqzdLbMO_TmYNIUpCvewUT_-5ugjFJNdlWMW4FOtY2fL_LvNYhcQZK-6hwNyCWHEucUbeatIErUGxpINzvYnU4UB1hhUC9MEuXXcVKqJsS1E85QbIfc2vgKUATPOnlm_uS1vNlnSn7MTVurq9IfNpkhnAaLOHyMHWkRNmbbcIGd2ON2qJrx5b8yFVy6gT52jxDubOI3-Mpm1Tm-');">
+</div>
+</div>
+<div class="text-center">
+<h3 class="text-2xl font-serif font-bold text-charcoal dark:text-white mb-2 group-hover:text-primary transition-colors">Hair Styling</h3>
+<p class="text-gray-500 dark:text-gray-400 text-sm mb-4 max-w-xs mx-auto">Precision cuts, blowouts, and elegant updos tailored to your face shape.</p>
+<span class="text-xs font-bold uppercase tracking-wider text-charcoal dark:text-white border-b border-primary/50 pb-1">View Menu</span>
+</div>
+</div>
+<!-- Service 2 -->
+<div class="group cursor-pointer mt-0 md:-mt-8"> <!-- Staggered effect -->
+<div class="relative overflow-hidden rounded-xl aspect-[4/5] mb-6 shadow-xl">
+<div class="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors z-10"></div>
+<div class="h-full w-full bg-cover bg-center transform group-hover:scale-105 transition-transform duration-700" data-alt="Woman getting hair colored with foil highlights in a professional salon" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDbd_POhwbJHmp0OQgGCB3AERRBMaHlRtOQtrWwjcllFUFqBhhZLh_ehAERJIyKlOW4CLdSU33f0SDhpZeLi3P5Do0jiLGO1tW8Dt4aEooA7CoJchr9pHODmq4CcpJJkM5lYhFGUhOQRXIyaNxD7_FbsdiIR4D3cc6D_d0ZPLMcb9D554Zlbvnzal7Bji-bYkgfcTLGm-WDnNWQ3Cd1KImy1vpgDBXi3_s_UfDVH3EDYJdz-uTYbvQoOYug9ArY-7ZdheAN-fmKog59');">
+</div>
+<div class="absolute top-4 right-4 bg-white/90 dark:bg-black/80 backdrop-blur text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide z-20">Popular</div>
+</div>
+<div class="text-center">
+<h3 class="text-2xl font-serif font-bold text-charcoal dark:text-white mb-2 group-hover:text-primary transition-colors">Color &amp; Highlights</h3>
+<p class="text-gray-500 dark:text-gray-400 text-sm mb-4 max-w-xs mx-auto">Balayage, corrective color, and tints using ammonia-free formulas.</p>
+<span class="text-xs font-bold uppercase tracking-wider text-charcoal dark:text-white border-b border-primary/50 pb-1">View Menu</span>
+</div>
+</div>
+<!-- Service 3 -->
+<div class="group cursor-pointer">
+<div class="relative overflow-hidden rounded-xl aspect-[4/5] mb-6">
+<div class="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors z-10"></div>
+<div class="h-full w-full bg-cover bg-center transform group-hover:scale-105 transition-transform duration-700" data-alt="Spa treatment for hair with water rinse in a relaxing environment" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuATvUrMIyj_WrkYrvQsF_rBl7Oxs9FUvcQzuyrqsJf7CME17j9GBGzKKdyJtUd-S51UFS4dQNyBSPIciRQ9OeaabYBA8e5zxXv56mF2RwAD87dB5plJNxzaAtbVQ79Ttf5sUgA_mglSvU0XBkJUZW45WGagsBr9p6RGDn_8BDYXZ_X9I6f7gSNhDB1ZJCcIeqdCfBjD48rx13iMSFMsbibcCOMrTR5Wkbnsp0UENwIqsMIVgSYXQd1dwQy5ATkJp9dhUYyhjsAtIH-B');">
+</div>
+</div>
+<div class="text-center">
+<h3 class="text-2xl font-serif font-bold text-charcoal dark:text-white mb-2 group-hover:text-primary transition-colors">Treatments</h3>
+<p class="text-gray-500 dark:text-gray-400 text-sm mb-4 max-w-xs mx-auto">Restorative keratin, scalp care, and deep hydration therapies.</p>
+<span class="text-xs font-bold uppercase tracking-wider text-charcoal dark:text-white border-b border-primary/50 pb-1">View Menu</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Gallery / Lookbook -->
+<section class="py-24 bg-white dark:bg-neutral-900 overflow-hidden" id="gallery">
+<div class="max-w-[1280px] mx-auto px-4 sm:px-8 lg:px-12">
+<div class="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+<div>
+<h2 class="text-4xl lg:text-5xl font-bold text-charcoal dark:text-white mb-4">The Lookbook</h2>
+<p class="text-gray-500 dark:text-gray-400 font-light max-w-md">Explore our latest styles and texture-focused transformations from our master stylists.</p>
+</div>
+<button class="px-6 py-2 border border-gray-300 dark:border-gray-700 rounded-full text-sm font-medium hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors">
+                        Follow on Instagram
+                    </button>
+</div>
+<!-- Masonry Grid -->
+<div class="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
+<!-- Item 1 -->
+<div class="break-inside-avoid relative group rounded-lg overflow-hidden">
+<img alt="Portrait of a woman with curly hair looking sideways" class="w-full h-auto object-cover transform group-hover:scale-105 transition-transform duration-700" data-alt="Portrait of a woman with curly hair looking sideways" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA0Nfjo27e8bjxHIUdsBNSL_UCEsA4ElF1Pe5dkHQ2FiKl5z6FpKk54FQeShk0rz8mtlZJwf-FjUCBwJvV-Y-Smpv89BD1BxF7yXzyxMC-2rZCUhOwSi52m6RtlI7Gner43bcUTN7KMrLD6oyEjBN-_uygv6c_LqpKLOIfL9gPX42kVAR6k8SzeLkA-8NeRw4KV-iQxnmWPkDIpiQc2Ix88du0NmRyVKUGp_grVMBWNwfhier2NbisuL6be5m4QbfLK9Lq_eZn8bwjJ"/>
+<div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-end p-6 opacity-0 group-hover:opacity-100">
+<p class="text-white font-serif italic text-lg">Natural Texture</p>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="break-inside-avoid relative group rounded-lg overflow-hidden">
+<img alt="Back view of long blonde wavy hair style" class="w-full h-auto object-cover transform group-hover:scale-105 transition-transform duration-700" data-alt="Back view of long blonde wavy hair style" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCyZmtCDq1mJO-Obbg8a4KBwFlcM9YUxhxMDKq0dgZfcOEJTednkD_wwWCkgB5MtUN7R8nkRa8N_Zz5WiCxNb6SsdRBqqVfDSxwyIjeZA8GSaz9Ti37mURFAw_WrWoSL0ddh8x2kihtuX16hKXcvkiE4AdLTlg3-4rIGl5MftP22vW0zyNPMjDF_5ZKJOPZ4d-sXBNOm_dHCKHPx6CuFFrdpgmXf718i8v5e-Eeu_QXJ7aCVg8VE-RGFYrIxfFIRt-rdVot8cI5W442"/>
+<div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-end p-6 opacity-0 group-hover:opacity-100">
+<p class="text-white font-serif italic text-lg">Nordic Blonde</p>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="break-inside-avoid relative group rounded-lg overflow-hidden">
+<img alt="Artistic shot of braided hair with flowers" class="w-full h-auto object-cover transform group-hover:scale-105 transition-transform duration-700" data-alt="Artistic shot of braided hair with flowers" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDUP8KloZRLH-e9VNfL8Lrj4aHr75T6a7w0E1bYS-Mttz63iK4aXx5e673A_M2W6moleIJ7d6242bAx_WYeztfHVTRkR734mqDUF33VcDDraQISO5d1ll8BHd3lhs0D4LO1j7mkYxB5h61J5_tsQ6CCDODtsWCjuqmFfit1ixB3gLoi0xtK2_cDuqxN7orZpXDEu49BEsmWTj7SjRr5vox283odg9AFtfY4q45RcmfKSDoBTuyoMyf4Ci7wGzn7jfX6t140zglegITN"/>
+<div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-end p-6 opacity-0 group-hover:opacity-100">
+<p class="text-white font-serif italic text-lg">Bridal Styling</p>
+</div>
+</div>
+<!-- Item 4 -->
+<div class="break-inside-avoid relative group rounded-lg overflow-hidden">
+<img alt="Modern short bob haircut on dark hair" class="w-full h-auto object-cover transform group-hover:scale-105 transition-transform duration-700" data-alt="Modern short bob haircut on dark hair" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBl0Wo2l-m51hy_Ofv9m9xFsgk5d2WHB6qT8C3GHrjnf_pIjvmaLbKIv60dI1azWqpCKl5FSXArfqDIOPfD0WyPIeLhwM9oWhAtE5wSvszbXQp0PnkbOdI8YR2QZyLtFhRoYMU7Jq5-vW5iEi1iwvsoZolSm20rRmrF2-FEVNb-HHM3iI6qyyFcoW2tbcwYvX7TLj-cue78w_GhsDqrHOGkwe5aJQjrrp3uWI9vGd38sE6k7r26Fz08zLaLT8VJvgOtEQSphy7ZBEA_"/>
+<div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-end p-6 opacity-0 group-hover:opacity-100">
+<p class="text-white font-serif italic text-lg">Precision Bob</p>
+</div>
+</div>
+<!-- Item 5 -->
+<div class="break-inside-avoid relative group rounded-lg overflow-hidden">
+<img alt="Stylist applying hair product to a client" class="w-full h-auto object-cover transform group-hover:scale-105 transition-transform duration-700" data-alt="Stylist applying hair product to a client" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDKFsXtcFgblCgDnwdlj3R_yAWCz0vgmB2JlwaSY1yJl6TdPRzd7P_f3oae9y2L-Dp1gmBGAzxjMa2XUn8rYc6ORn-xqfh03lvkUg8m0RNOL7w4hzEibNiTar6NPzZYkQ1t-GuTRwp5ISvOtlIqVXw_SBSN850edNfyAXsBM7Z9Ltvd8dhSiFFRq152Z9FKYgh2-eJhhuBSVEn8i5pq4aTAbj4XN6dNUboSGtXfuMuGW8uRCBlb03ZV0SNT_zhd6tPsJcuW7R_uQdch"/>
+<div class="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-end p-6 opacity-0 group-hover:opacity-100">
+<p class="text-white font-serif italic text-lg">Scalp Care</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- CTA Section -->
+<section class="py-20 bg-primary/10 dark:bg-neutral-800">
+<div class="max-w-[960px] mx-auto px-4 text-center">
+<h2 class="text-4xl lg:text-5xl font-serif font-bold text-charcoal dark:text-white mb-6">Ready for your transformation?</h2>
+<p class="text-lg text-gray-600 dark:text-gray-400 mb-8 max-w-xl mx-auto">Book your appointment today and let our expert team craft the perfect look for you.</p>
+<div class="flex flex-col sm:flex-row justify-center gap-4">
+<button class="bg-charcoal hover:bg-black dark:bg-white dark:hover:bg-gray-200 text-white dark:text-black text-base font-bold px-8 py-3 rounded-lg shadow-lg">
+                        Book Online Now
+                    </button>
+<button class="bg-transparent border border-charcoal dark:border-white hover:bg-charcoal/5 dark:hover:bg-white/10 text-charcoal dark:text-white text-base font-bold px-8 py-3 rounded-lg">
+                        Call (08) 555-0123
+                    </button>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-white dark:bg-background-dark border-t border-gray-100 dark:border-neutral-800 pt-16 pb-8">
+<div class="max-w-[1280px] mx-auto px-4 sm:px-8 lg:px-12">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+<!-- Brand -->
+<div class="col-span-1 md:col-span-1">
+<div class="flex items-center gap-2 mb-6">
+<span class="material-symbols-outlined text-primary text-xl">spa</span>
+<h2 class="text-charcoal dark:text-white text-xl font-bold font-serif italic">Nordic Elegance</h2>
+</div>
+<p class="text-gray-500 dark:text-gray-400 text-sm leading-relaxed mb-6">
+                        Sustainable luxury hair care in the heart of Stockholm. Elevating natural beauty through minimalist principles.
+                    </p>
+<div class="flex gap-4">
+<a class="text-gray-400 hover:text-primary transition-colors" href="#">
+<svg aria-hidden="true" class="h-5 w-5" fill="currentColor" viewbox="0 0 24 24"><path clip-rule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" fill-rule="evenodd"></path></svg>
+</a>
+<a class="text-gray-400 hover:text-primary transition-colors" href="#">
+<svg aria-hidden="true" class="h-5 w-5" fill="currentColor" viewbox="0 0 24 24"><path clip-rule="evenodd" d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.067.06 1.407.06 4.123v.08c0 2.643-.012 2.987-.06 4.043-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.067.048-1.407.06-4.123.06h-.08c-2.643 0-2.987-.012-4.043-.06-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.772-1.153 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.047-1.024-.06-1.379-.06-3.808v-.63c0-2.43.013-2.784.06-3.808.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772 4.902 4.902 0 011.772-1.153c.636-.247 1.363-.416 2.427-.465 1.067-.047 1.409-.06 3.809-.06s2.742.013 3.766.06h.041c.015 0 .029 0 .043.002zM12 6.865a5.135 5.135 0 110 10.27 5.135 5.135 0 010-10.27zm0 1.802a3.333 3.333 0 100 6.666 3.333 3.333 0 000-6.666zm5.338-3.205a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4z" fill-rule="evenodd"></path></svg>
+</a>
+</div>
+</div>
+<!-- Links -->
+<div class="col-span-1">
+<h3 class="font-bold text-charcoal dark:text-white mb-4">Explore</h3>
+<ul class="space-y-3">
+<li><a class="text-sm text-gray-500 hover:text-primary transition-colors" href="#">Services</a></li>
+<li><a class="text-sm text-gray-500 hover:text-primary transition-colors" href="#">Our Team</a></li>
+<li><a class="text-sm text-gray-500 hover:text-primary transition-colors" href="#">Gallery</a></li>
+<li><a class="text-sm text-gray-500 hover:text-primary transition-colors" href="#">Book Online</a></li>
+</ul>
+</div>
+<!-- Contact -->
+<div class="col-span-1">
+<h3 class="font-bold text-charcoal dark:text-white mb-4">Contact</h3>
+<ul class="space-y-3">
+<li class="flex items-start gap-2 text-sm text-gray-500">
+<span class="material-symbols-outlined text-primary text-base mt-0.5">location_on</span>
+<span>Drottninggatan 12,<br/>111 51 Stockholm, Sweden</span>
+</li>
+<li class="flex items-center gap-2 text-sm text-gray-500">
+<span class="material-symbols-outlined text-primary text-base">call</span>
+<span>+46 8 555 0123</span>
+</li>
+<li class="flex items-center gap-2 text-sm text-gray-500">
+<span class="material-symbols-outlined text-primary text-base">mail</span>
+<span>hello@nordicelegance.se</span>
+</li>
+</ul>
+</div>
+<!-- Hours -->
+<div class="col-span-1">
+<h3 class="font-bold text-charcoal dark:text-white mb-4">Hours</h3>
+<ul class="space-y-2 text-sm text-gray-500">
+<li class="flex justify-between"><span>Mon - Fri</span> <span>10:00 - 19:00</span></li>
+<li class="flex justify-between"><span>Saturday</span> <span>10:00 - 17:00</span></li>
+<li class="flex justify-between"><span>Sunday</span> <span>Closed</span></li>
+</ul>
+</div>
+</div>
+<div class="border-t border-gray-100 dark:border-neutral-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+<p class="text-xs text-gray-400">© 2024 Nordic Elegance Salon. All rights reserved.</p>
+<div class="flex gap-6 text-xs text-gray-400">
+<a class="hover:text-primary" href="#">Privacy Policy</a>
+<a class="hover:text-primary" href="#">Terms of Service</a>
+</div>
+</div>
+</div>
+</footer>
+</body></html>

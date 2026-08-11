@@ -1,0 +1,51 @@
+---
+/**
+ * Editor — EDIT mode (§10.2). SSR-loads the post by id (any status, via
+ * `getById`); 404 if absent. The loaded row is mapped into a `PostDraft` and
+ * serialized into the editor — no client-side edit-load fetch.
+ */
+export const prerender = false;
+import AdminBase from "../../../layouts/AdminBase.astro";
+import PostEditor from "../../../components/admin/PostEditor.astro";
+import type { PostDraft } from "../../../lib/editor";
+import { getById } from "../../../lib/db";
+import "../../../styles/admin.css";
+
+const db = Astro.locals.runtime?.env?.DB;
+const userEmail = Astro.locals.user?.email ?? null;
+const imageBase = Astro.locals.runtime?.env?.PUBLIC_IMAGE_BASE ?? "";
+
+const idParam = Astro.params.id ?? "";
+const id = /^\d+$/.test(idParam) ? Number(idParam) : NaN;
+if (!db || Number.isNaN(id)) {
+  return new Response("Not found", { status: 404 });
+}
+const post = await getById(db, id).catch(() => null);
+if (!post) {
+  return new Response("Not found", { status: 404 });
+}
+
+// A loaded post always has an explicit slug → treat it as a manual slug so the
+// chip shows the stored value and the (frozen-once-published) slug round-trips.
+const draft: PostDraft = {
+  id: post.id,
+  title: post.title,
+  slug: post.slug,
+  slugManual: true,
+  locale: post.locale,
+  excerpt: post.excerpt,
+  coverImage: post.coverImage,
+  body: post.body,
+  author: post.author,
+  seoTitle: post.seoTitle ?? "",
+  seoDesc: post.seoDesc ?? "",
+  status: post.status,
+};
+---
+<AdminBase title={post.title || "Redigera"} userEmail={userEmail}>
+  <PostEditor draft={draft} mode="edit" imageBase={imageBase} />
+</AdminBase>
+
+<script>
+  import "../../../admin/editor.client.ts";
+</script>

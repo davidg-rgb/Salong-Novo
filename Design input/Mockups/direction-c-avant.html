@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Salong NOVO — Direction C · Avant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,900&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,300&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --black:#0B0B0B; --white:#F6F4EF; --red:#FF3B2F; --gold:#C9A962; --mut:#8a8782;
+    --disp:'Playfair Display',Georgia,serif; --body:'Source Serif 4',Georgia,serif; --mono:'JetBrains Mono',monospace;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{background:var(--black);color:var(--white);font-family:var(--body);font-weight:300;line-height:1.6;-webkit-font-smoothing:antialiased}
+  img{display:block;max-width:100%}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1500px;margin:0 auto;padding:0 clamp(1.1rem,3.5vw,3rem)}
+  .mono{font-family:var(--mono);font-size:.68rem;font-weight:500;letter-spacing:.22em;text-transform:uppercase}
+  .red{color:var(--red)}
+  .btn{display:inline-flex;align-items:center;gap:.5rem;font-family:var(--mono);font-size:.7rem;font-weight:500;letter-spacing:.2em;text-transform:uppercase;padding:.9rem 1.7rem;background:var(--red);color:var(--white);border:1px solid var(--red);transition:none;cursor:pointer}
+  .btn:hover{background:var(--white);color:var(--black);border-color:var(--white)}
+  .btn-line{background:transparent;color:var(--white);border:1px solid currentColor}
+  .btn-line:hover{background:var(--white);color:var(--black)}
+
+  header{position:sticky;top:0;z-index:50;background:var(--black);border-bottom:1px solid rgba(255,255,255,.14)}
+  .nav{display:flex;align-items:center;justify-content:space-between;height:72px}
+  .logo img{height:30px;width:auto}
+  .nav-links{display:flex;gap:1.6rem;font-family:var(--mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:#cbc8c2}
+  .nav-links a:hover{color:var(--red)}
+  .nav-right{display:flex;align-items:center;gap:1.3rem}
+  .lang{font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;color:var(--mut)}
+  .lang b{color:var(--white)}
+
+  /* Hero — type as hero */
+  .hero{position:relative;padding:clamp(2.5rem,6vw,5rem) 0 clamp(2rem,4vw,3.5rem);border-bottom:1px solid rgba(255,255,255,.14);overflow:hidden}
+  .hero-meta{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.66rem;letter-spacing:.2em;text-transform:uppercase;color:var(--mut);margin-bottom:clamp(1.5rem,4vw,3rem)}
+  .hero h1{font-family:var(--disp);font-weight:900;font-size:clamp(3.5rem,17vw,15rem);line-height:.82;letter-spacing:-.03em;text-transform:uppercase}
+  .hero h1 .it{font-style:italic;font-weight:400;text-transform:none;color:var(--red)}
+  .hero h1 .out{color:transparent;-webkit-text-stroke:1.5px var(--white)}
+  .hero-foot{display:flex;justify-content:space-between;align-items:flex-end;gap:2rem;margin-top:clamp(1.5rem,4vw,2.6rem);flex-wrap:wrap}
+  .hero-foot p{font-size:1.05rem;max-width:38ch;color:#d8d5cf}
+  .hero-cta{display:flex;gap:.8rem;flex-wrap:wrap}
+
+  /* Stat band */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid rgba(255,255,255,.14)}
+  .stat{padding:2.4rem clamp(1rem,2vw,2rem);border-right:1px solid rgba(255,255,255,.14)}
+  .stat:last-child{border-right:none}
+  .stat b{font-family:var(--disp);font-weight:900;font-size:clamp(2.6rem,5vw,4.4rem);line-height:.9;display:block}
+  .stat span{font-family:var(--mono);font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;color:var(--mut)}
+  .stat b .red{color:var(--red)}
+
+  /* Inverted block */
+  .invert{background:var(--white);color:var(--black);padding:clamp(4rem,8vw,7rem) 0}
+  .invert .logo-mark{filter:none}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:clamp(2rem,5vw,4rem);align-items:center}
+  .split .frame{aspect-ratio:1/1;overflow:hidden}
+  .split img{width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.05);transition:filter .5s}
+  .split .frame:hover img{filter:grayscale(0)}
+  .split h2{font-family:var(--disp);font-weight:900;font-size:clamp(2.2rem,5vw,4rem);line-height:.92;text-transform:uppercase;letter-spacing:-.02em;margin:.8rem 0 1.4rem}
+  .split p{color:#3a3833;margin-bottom:1.1rem;max-width:50ch;font-size:1.02rem}
+  .invert .mono{color:var(--red)}
+
+  /* Team strip */
+  section{padding:clamp(4rem,8vw,7rem) 0}
+  .sec-head{display:flex;align-items:baseline;gap:1.2rem;margin-bottom:2.4rem}
+  .sec-head h2{font-family:var(--disp);font-weight:900;font-size:clamp(2rem,5vw,3.6rem);text-transform:uppercase;letter-spacing:-.02em}
+  .sec-head .mono{margin-left:auto;color:var(--mut)}
+  .team{display:grid;grid-template-columns:repeat(4,1fr);gap:0;border:1px solid rgba(255,255,255,.14)}
+  .st{position:relative;aspect-ratio:3/4;overflow:hidden;border-right:1px solid rgba(255,255,255,.14)}
+  .st:last-child{border-right:none}
+  .st img{width:100%;height:100%;object-fit:cover;filter:grayscale(1);transition:filter .4s,transform .8s}
+  .st:hover img{filter:grayscale(0);transform:scale(1.04)}
+  .st .m{position:absolute;left:0;bottom:0;right:0;padding:1rem;background:linear-gradient(transparent,rgba(11,11,11,.92))}
+  .st .m b{font-family:var(--disp);font-weight:700;font-size:1.3rem;display:block}
+  .st .m span{font-family:var(--mono);font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--red)}
+
+  /* Services huge */
+  .svc{display:grid;grid-template-columns:auto 1fr auto;gap:1.5rem;align-items:baseline;padding:1.6rem 0;border-top:1px solid rgba(255,255,255,.14)}
+  .svc:last-child{border-bottom:1px solid rgba(255,255,255,.14)}
+  .svc:hover .name{color:var(--red)}
+  .svc .n{font-family:var(--mono);font-size:.7rem;color:var(--mut)}
+  .svc .name{font-family:var(--disp);font-weight:700;font-size:clamp(1.6rem,3.4vw,2.6rem);text-transform:uppercase;letter-spacing:-.01em;transition:color .2s}
+  .svc .price{font-family:var(--mono);font-size:.78rem;color:var(--mut)}
+
+  .cta{border-top:1px solid rgba(255,255,255,.14);text-align:center}
+  .cta h2{font-family:var(--disp);font-weight:900;font-size:clamp(3rem,12vw,10rem);line-height:.85;text-transform:uppercase;letter-spacing:-.03em;margin:1rem 0 1.8rem}
+  .cta h2 .red{color:var(--red)}
+
+  footer{background:var(--black);padding:3.5rem 0 2.2rem;border-top:1px solid rgba(255,255,255,.14)}
+  .foot{display:flex;justify-content:space-between;gap:2rem;flex-wrap:wrap;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mut)}
+  .foot b{color:var(--white)}
+  .foot a:hover{color:var(--red)}
+  .legal{margin-top:2.5rem;font-family:var(--mono);font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:#5f5c57}
+
+  .badge{position:fixed;left:14px;bottom:14px;z-index:99;background:var(--red);color:#fff;font-family:var(--mono);font-size:.66rem;font-weight:500;letter-spacing:.12em;padding:.5rem .9rem;text-transform:uppercase}
+
+  @media(max-width:900px){
+    .nav-links{display:none}.stats{grid-template-columns:repeat(2,1fr)}.stat:nth-child(2){border-right:none}
+    .split,.team{grid-template-columns:1fr}.team{display:grid;grid-template-columns:repeat(2,1fr)}
+    .st{border-bottom:1px solid rgba(255,255,255,.14)}
+  }
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="badge">Direction C · Avant</div>
+
+<header>
+  <div class="wrap nav">
+    <a class="logo" href="#"><img src="assets/logo.svg" alt="Salong NOVO"></a>
+    <nav class="nav-links">
+      <a href="#">Om oss</a><a href="#">Personal</a><a href="#">Tjänster</a>
+      <a href="#">Jobba på NOVO</a><a href="#">Awards</a><a href="#">Blogg</a><a href="#">Kontakt</a>
+    </nav>
+    <div class="nav-right"><span class="lang"><b>SV</b> / EN</span><a class="btn" href="https://bokning.voady.se/novo">Boka</a></div>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="wrap">
+    <div class="hero-meta">
+      <span>Salong NOVO — Vasastan, Stockholm</span>
+      <span>Schwarzkopf Flagship / Est.</span>
+    </div>
+    <h1>Pris&shy;belönt<br><span class="out">hår</span> <span class="it">på riktigt.</span></h1>
+    <div class="hero-foot">
+      <p>18 stylister. Tre gånger Årets Kollektion. En salong som tävlar på catwalk-nivå — och klipper dig på torsdag.</p>
+      <div class="hero-cta">
+        <a class="btn" href="https://bokning.voady.se/novo">Boka tid →</a>
+        <a class="btn btn-line" href="#team">Teamet</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="stat"><b>×<span class="red">3</span></b><span>Årets Kollektion</span></div>
+  <div class="stat"><b>18</b><span>Stylister</span></div>
+  <div class="stat"><b>2026</b><span>Ellen Rudd · Nykomling</span></div>
+  <div class="stat"><b>2025</b><span>Nordic Hairshot · Final</span></div>
+</div>
+
+<div class="invert">
+  <div class="wrap">
+    <div class="split">
+      <div class="frame"><img src="assets/avantgarde.jpg" alt=""></div>
+      <div>
+        <span class="mono">№ 02 — Manifest</span>
+        <h2>Vi klipper<br>som vi tävlar.</h2>
+        <p>NOVO är ett Schwarzkopf-flaggskepp byggt av stylister som vinner priser för avantgarde och kollektion. Den nivån tar vi med till varje bokning.</p>
+        <p>Inget standardklipp. Komposition, proportion, attityd — hår som vågar.</p>
+        <a class="btn" href="#" style="margin-top:.6rem">Vår historia →</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section id="team">
+  <div class="wrap">
+    <div class="sec-head"><h2>Personalen</h2><span class="mono">18 / Stockholm</span></div>
+    <div class="team">
+      <div class="st"><img src="assets/avantgarde.jpg" alt=""><div class="m"><span>Avantgarde</span><b>Chriss Berner</b></div></div>
+      <div class="st"><img src="assets/herr.jpg" alt=""><div class="m"><span>Herr · Nordic</span><b>Ola Oterkjaer</b></div></div>
+      <div class="st"><img src="assets/dam.jpg" alt=""><div class="m"><span>Färg</span><b>Isabella V.</b></div></div>
+      <div class="st"><img src="assets/brud.jpg" alt=""><div class="m"><span>Bröllop</span><b>Emma Gahn</b></div></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head"><h2>Tjänster</h2><a class="mono red" href="https://bokning.voady.se/novo" style="margin-left:auto">Boka →</a></div>
+    <div class="svc"><span class="n">01</span><span class="name">Klippning &amp; Styling</span><span class="price">från 695 kr</span></div>
+    <div class="svc"><span class="n">02</span><span class="name">Färg &amp; Slingor</span><span class="price">från 1 295 kr</span></div>
+    <div class="svc"><span class="n">03</span><span class="name">Balayage</span><span class="price">från 2 195 kr</span></div>
+    <div class="svc"><span class="n">04</span><span class="name">Uppsättning &amp; Bröllop</span><span class="price">offert</span></div>
+    <div class="svc"><span class="n">05</span><span class="name">Behandlingar</span><span class="price">från 395 kr</span></div>
+  </div>
+</section>
+
+<section class="cta">
+  <div class="wrap">
+    <span class="mono red">Redo</span>
+    <h2>Boka<br>nu<span class="red">.</span></h2>
+    <a class="btn" href="https://bokning.voady.se/novo">Boka via Voady →</a>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="foot">
+      <span><b>NOVO</b> · Rörstrandsgatan, Vasastan, Stockholm</span>
+      <span><a href="tel:086633014">08-663 30 14</a> · <a href="#">@salongnovo</a></span>
+      <span>Mån–Fre 10–19 · Lör 10–16</span>
+    </div>
+    <div class="legal">© 2026 Salong NOVO — Integritetspolicy · Cookies</div>
+  </div>
+</footer>
+</body>
+</html>

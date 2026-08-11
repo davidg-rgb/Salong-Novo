@@ -1,0 +1,14 @@
+# Cloudflare Pages headers (ARCHITECTURE §10.8) — defense-in-depth alongside the
+# admin branch of src/middleware.ts. Admin surfaces are never indexed, never
+# framed, never cached, and run under a strict CSP.
+
+/admin/*
+  X-Robots-Tag: noindex, nofollow
+  X-Frame-Options: DENY
+  Content-Security-Policy: default-src 'self'; img-src 'self' https://img.salongnovo.se data:; style-src 'self' 'unsafe-inline'; script-src 'self'; form-action 'self'; frame-ancestors 'none'
+  Referrer-Policy: same-origin
+  Cache-Control: no-store
+
+/api/admin/*
+  X-Robots-Tag: noindex
+  Cache-Control: no-store
