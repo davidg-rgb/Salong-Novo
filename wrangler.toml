@@ -27,7 +27,7 @@ html_handling = "drop-trailing-slash"
 [[d1_databases]]
 binding = "DB"
 database_name = "novo_db"
-database_id = "REPLACE_AFTER_d1_create"
+database_id = "61a664e1-97a6-4fec-b53e-8c4525ea32bd"
 migrations_dir = "migrations"
 
 # R2 — uploaded images + generated variants. Create with:

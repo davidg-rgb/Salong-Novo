@@ -140,6 +140,34 @@ Remaining before launch is ops + content, not code: Cloudflare account provision
 per RUNBOOK §5), client content per the 2026-06-01 IA (CLAUDE.md §12 page migration is a separate
 design/build task), imagery, DNS.
 
+### 2026-08-11 19:45 — FIRST CLOUD DEPLOY (David's test account) — LIVE
+Deployed to David's personal Cloudflare account (test/staging; migrates to Salong NOVO's account
+at handover — nothing account-specific in code). URL: **https://salong-novo.david-geborek.workers.dev**
+
+Provisioned per RUNBOOK §5 pattern: D1 `novo_db` created (EEUR, id `61a664e1…` now in
+wrangler.toml), migrations 0001–0003 applied remote (6 tables verified), R2 `novo-images` created
+(account R2 = FREE TIER: 10 GB / 1M Class A / 10M Class B per month — shared budget across ALL
+projects on this account), `ADMIN_API_TOKEN` secret set (random, never recorded anywhere — the
+admin page injects it server-side; local dev uses its own via .dev.vars).
+
+**Deploy command of record:** `npm run build` then
+`npx wrangler deploy --config dist/server/wrangler.json` (the adapter-generated config; auth via
+`CLOUDFLARE_API_TOKEN`/`CLOUDFLARE_ACCOUNT_ID` env vars sourced from the workspace `.env.local`).
+
+**Live verification:** ALL 22 public routes 200 · robots/sitemap 200 · `/admin` + `/api/admin/*`
+403 fail-closed (correct: Access can only gate a ZONE, not *.workers.dev — cloud admin testing
+needs a real domain added; RUNBOOK §5.5) · `/api/media/<missing>` 404 · today's staff bios
+confirmed live (Emma's maternity note renders on /personal).
+
+**Gotcha for the file:** ~2 min after first-ever deploy, three routes (/blogg, /en/staff, /admin)
+returned correct BODIES with status 404 — first-deploy edge propagation on a brand-new Worker,
+NOT a build defect (same artifact locally via `wrangler dev --config dist/server/wrangler.json`
+was correct; remote self-healed minutes later). Don't debug status anomalies in the first minutes
+after a first deploy.
+
+**Cosmetic on test deploy:** canonical URLs/JSON-LD reference `https://salongnovo.se` (from
+wrangler.toml [vars]) — correct at DNS cutover, harmless meanwhile.
+
 **Deliberate deferrals (logged, not bugs):** `showPrices` stays a developer flag (no toggle renderer
 in FormField; string round-trip would corrupt the boolean); services/awards admin-editable but
 publicly unrendered (rendering would publish unconfirmed prices — design task); two homepage stat
