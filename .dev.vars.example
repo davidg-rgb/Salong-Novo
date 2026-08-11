@@ -1,11 +1,26 @@
 # .dev.vars.example — copy to .dev.vars (git-ignored; never commit the real file).
-# Loaded by `wrangler pages dev` / Astro's platformProxy into locals.runtime.env.
-# Cloudflare Access cannot gate localhost, so we synthesize the admin identity here.
+#
+# Read by the Cloudflare Vite plugin that @astrojs/cloudflare v14 wires into
+# `astro dev`, so these reach the worker the same way a `wrangler secret` does in
+# production. NOT `.env.local`: only PUBLIC_-prefixed vars are inlined into the
+# bundle, so a server secret that lives only in `.env.local` is `undefined` at
+# request time on Workers (RUNBOOK §4.9). Not hot-reloaded either — restart the
+# dev server after every edit (§4.2).
+#
+# Cloudflare Access cannot gate localhost, so the admin identity is synthesized
+# here instead.
 
-ADMIN_API_TOKEN="dev-local-token"        # echoed in admin write fetches locally (defense-in-depth)
-DEV_ADMIN_EMAIL="info@salongnovo.se"     # simulates the Access identity in dev (source:"dev")
+ADMIN_API_TOKEN="dev-local-token"        # echoed as x-admin-token on admin writes (defense-in-depth)
+DEV_ADMIN_EMAIL="info@salongnovo.se"     # stands in for the Access identity in dev (source:"dev")
 
-# ACCESS_AUD / ACCESS_TEAM_DOMAIN intentionally UNSET locally → the JWT verify
-# path is skipped in dev. Set them ONLY in the Cloudflare Pages prod env (from the
-# Access application). assertNoDevBypassInProd() throws if they coexist with
-# DEV_ADMIN_EMAIL, so never set both.
+# These two look like decoration. They are load-bearing, and the trap is timed
+# (RUNBOOK §4.3): `wrangler.toml`'s [vars] also flow into local dev, so the
+# moment the real Access values are written there, every local /admin request
+# starts 403ing with `no_token` — and with DEV_ADMIN_EMAIL also set, the
+# coexistence tripwire throws first. `.dev.vars` WINS over wrangler.toml [vars]
+# locally, so pinning both to "" here is what keeps the dev admin alive across
+# that step. An empty string reads as UNSET everywhere in the auth code
+# ("set" means truthy-after-trim, never a presence check), which is what makes
+# these two lines prevent an outage rather than cause one.
+ACCESS_AUD=""
+ACCESS_TEAM_DOMAIN=""

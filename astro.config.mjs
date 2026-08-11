@@ -21,4 +21,11 @@ export default defineConfig({
   }),
   trailingSlash: "never",
   build: { format: "directory" },
+  // Astro sessions are OFF. Admin auth is a Cloudflare Access JWT, so nothing
+  // here uses a session — but @astrojs/cloudflare wants a KV namespace bound as
+  // SESSION and auto-provisions an unused one at deploy unless told otherwise.
+  // A boolean is only accepted on astro >= 7.2.0 + @astrojs/cloudflare >= 14.2.0
+  // (below that it fails config validation with `Expected type "object"`).
+  // RUNBOOK §5 step 10.
+  session: false,
 });

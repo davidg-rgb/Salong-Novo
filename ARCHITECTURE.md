@@ -26,8 +26,8 @@ creating the Cloudflare Access app + D1/R2 resources at deploy (§8).
 
 | Concern | Choice | Why |
 |---------|--------|-----|
-| Framework | **Astro 5** (`output: 'static'`) | Static-by-default marketing pages; opt-in server routes |
-| Hosting | **Cloudflare Pages** (`@astrojs/cloudflare`) | Cheap, fast, self-contained; same account as D1/R2/Access |
+| Framework | **Astro 7** (`output: 'static'`) | Static-by-default marketing pages; opt-in server routes |
+| Hosting | **Cloudflare Workers + Static Assets** (`@astrojs/cloudflare` v14) | Cheap, fast, self-contained; same account as D1/R2/Access. v14 dropped the Pages target. |
 | Database | **Cloudflare D1** (SQLite) | Blog posts + media; serverless, no external service |
 | Object storage | **Cloudflare R2** | Uploaded images + variants; no egress fees |
 | Admin auth | **Cloudflare Access** (Zero Trust) | Edge-enforced identity, zero app-side password to secure |
@@ -60,7 +60,7 @@ salong-novo-v2/
 │   ├── i18n/                       # routes + ui.sv/ui.en + t() resolver
 │   ├── middleware.ts               # 301 legacy redirects at the edge
 │   ├── styles/tokens.css           # placeholder → restyle per §11 / DESIGN-SYSTEM.md §8
-│   └── env.d.ts                    # Cloudflare runtime types (DB, IMAGES, vars)
+│   └── env.d.ts                    # Cloudflare binding types (DB, MEDIA, vars) + App.Locals
 ├── content/                        # staff.json, services.json, awards.json, site.json, copy.md
 ├── migrations/0001_init.sql        # posts + media tables
 ├── tests/                          # 9 suites, 62 tests
@@ -151,7 +151,7 @@ The home page is a sequence of full-width sections. Each maps to a component slo
 ## 3. Request / data flow
 
 ```
-Browser ─▶ Cloudflare Pages
+Browser ─▶ Cloudflare Workers
             │
             ├─ middleware.ts ─ resolveRedirect() ─▶ 301 (legacy URLs)
             │
@@ -222,12 +222,12 @@ locales + `x-default` from `alternates(pageKey)`.
 
 ---
 
-## 8. Deployment (Cloudflare Pages)
+## 8. Deployment (Cloudflare Workers)
 
 1. `wrangler d1 create novo_db` → paste id into `wrangler.toml`; `wrangler r2 bucket create novo-images`.
 2. `npm run db:migrate:remote`.
-3. Connect repo to Cloudflare Pages (build: `npm run build`, output: `dist`).
-4. Bind D1 (`DB`), R2 (`IMAGES`), set vars/secrets: `PUBLIC_SITE_URL` (apex), `PUBLIC_IMAGE_BASE`
+3. `npx astro build && npx wrangler deploy` (the adapter generates the worker entry + assets binding into `dist/`).
+4. Bind D1 (`DB`), R2 (`MEDIA`), set vars/secrets: `PUBLIC_SITE_URL` (apex), `PUBLIC_IMAGE_BASE`
    (`""` for Stage-A image serving — see §10.7), `PUBLIC_BOOKING_URL`, `ADMIN_API_TOKEN`.
    *(The admin-auth vars `ACCESS_AUD` / `ACCESS_TEAM_DOMAIN` and the `DEV_ADMIN_EMAIL`-absence
    guard `assertNoDevBypassInProd` arrive with the §10 admin build — not built yet.)*
@@ -424,7 +424,7 @@ src/
 ```
 
 **Route table.** Every admin route sets `export const prerender = false` and guards
-`Astro.locals.runtime?.env?.DB` exactly like the existing blog pages.
+`Astro.locals.db` (stamped by the middleware from `bindings()`) exactly like the existing blog pages.
 
 | Route | File | Renders / does |
 |-------|------|----------------|
@@ -471,7 +471,7 @@ Add → Self-hosted:
 Access path matching is prefix-based, so `/admin` and `/api/admin` are **distinct prefixes** — both
 must be declared (one rule does not cover the other). After creating the app, copy the **Application
 Audience (AUD) tag** (Overview) and note the team domain `https://<team>.cloudflareaccess.com`; both
-feed JWT verification below. The bucket/site is already orange-clouded (Cloudflare Pages), so no extra
+feed JWT verification below. The bucket/site is already orange-clouded (Cloudflare Workers), so no extra
 DNS work.
 
 **Middleware identity.** Extend the existing redirect-only `src/middleware.ts` with an admin gate that
@@ -494,7 +494,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   // 2) admin identity (only for admin surfaces)
   if (ADMIN_RE.test(context.url.pathname)) {
-    const env = context.locals.runtime.env;
+    const env = await bindings();
     const h = context.request.headers;
     const jwt = h.get("Cf-Access-Jwt-Assertion");
     const headerEmail = h.get("Cf-Access-Authenticated-User-Email");
@@ -537,15 +537,15 @@ export async function verifyAccessJwt(
 ): Promise<{ ok: true; identity: AccessIdentity } | { ok: false; reason: string }>;
 
 export function isSameOriginWrite(req: { headers: Headers }, siteUrl: string): boolean; // CSRF guard (§10.8)
-export function assertNoDevBypassInProd(env: CloudflareEnv): void;                       // misconfig tripwire
+export function assertNoDevBypassInProd(env: AccessEnv): void;                           // misconfig tripwire (CALLED from resolveAdminIdentity)
 ```
 
 `adminUnauthorized(context, reason)` returns `403 {error:"forbidden", reason}` (JSON) for
 `/api/admin/*`, or a 403 `noindex` HTML page for `/admin/*` — it only fires on a verifiably bad JWT,
 which Access itself normally prevents (distinct from the token's 401).
 
-**Dev bypass.** Access cannot gate `localhost`. Local `wrangler pages dev` / Astro's `platformProxy`
-load `.dev.vars` (git-ignored, hook-blocked) into `locals.runtime.env`. Set `DEV_ADMIN_EMAIL` to
+**Dev bypass.** Access cannot gate `localhost`. `astro dev` (the Cloudflare Vite plugin, no `platformProxy`)
+loads `.dev.vars` (git-ignored, hook-blocked) into the worker env. Set `DEV_ADMIN_EMAIL` to
 synthesize `locals.user` (`source:"dev"`); leave `ACCESS_AUD`/`ACCESS_TEAM_DOMAIN` **unset** so the
 JWT branch is skipped. A committed `.dev.vars.example` documents the shape:
 
@@ -678,7 +678,7 @@ non-empty string; other text fields coerced to string/null, `body` may be empty.
 - Fields: `file` (required), `alt` (string), `kind` (`"inline"|"cover"`, default `inline`), `postId` (optional → `media.post_id`).
 - Validation order: token → `file instanceof File` (400 `file_required`) → `ALLOWED.has(file.type)` (415 `unsupported_type`)
   → `size ≤ MAX_BYTES` (413 `too_large`) → **magic-byte sniff** `sniffImageType(bytes)` (415 `content_mismatch`).
-- Key = `blog/${crypto.randomUUID()}.${mimeToExt(file.type)}` (ext from validated MIME, not filename). `IMAGES.put`
+- Key = `${CMS.mediaPrefix}${crypto.randomUUID()}.${mimeToExt(sniffed)}` (ext from validated MIME, not filename). `MEDIA.put`
   with `httpMetadata.contentType` + `customMetadata.alt`. Insert media row (with `post_id` when supplied; `variants='[]'`).
 - **200 `UploadResponse`** — `media.url` is the served **original** via `servedUrl`; `markdown` is the ready-to-insert
   `![alt](url)` (inline) or `""` (cover); `altMissing` lets the editor block insertion. **`previewVariant` is removed**
@@ -693,7 +693,7 @@ non-empty string; other text fields coerced to string/null, `body` may be empty.
   `{ok:true, key, warning:"in_use", usedBy:[ids]}` and let the UI confirm. 400 `key_required`; 401. Idempotent.
 
 **`GET /api/media/[...key]`** — **public** R2 streaming (Stage-A serving; the thing that actually makes uploads viewable).
-- `env.IMAGES.get(key)`; 404 if null. Stream with `Content-Type` from `obj.httpMetadata.contentType`,
+- `env.MEDIA.get(key)`; 404 if null. Stream with `Content-Type` from `obj.httpMetadata.contentType`,
   `Cache-Control: public, max-age=31536000, immutable` (keys are content-unique UUIDs), `ETag: obj.httpEtag`,
   `If-None-Match` → 304. **No auth** — images are public content; only `/admin` + `/api/admin` are gated.
 
@@ -843,7 +843,7 @@ status badges pair color with text; reuse `:focus-visible { outline: 2px solid v
 
 **Lifecycle: upload → R2 → media row → insert → serve.**
 
-1. **Upload** (`POST /api/admin/upload`, §10.5): validate (incl. magic-byte sniff) → `IMAGES.put` original →
+1. **Upload** (`POST /api/admin/upload`, §10.5): validate (incl. magic-byte sniff) → `MEDIA.put` original →
    insert `media` row → return `UploadResponse` with `markdown` (`![alt](url)`) and the served `url`.
 2. **Insert.** Inline: the editor drops the returned `markdown` at the caret (`insertImage`). Cover: the returned
    `key` is stored in `draft.coverImage` (not inserted into the body).
@@ -896,7 +896,7 @@ is **not built**. Two changes make the deferral honest and the upgrade invisible
   exists (4d), the absolute form is `siteUrl + servedUrl("", key)`.
 
 - **Future Worker (spec only): `src/workers/variant-gen.ts`.** Triggered by an R2 PUT event on `blog/*`, it resizes the
-  original to `widthsFor(originalWidth)`, encodes WebP, `IMAGES.put(variantKey(key,w), …)`, and does the single write
+  original to `widthsFor(originalWidth)`, encodes WebP, `MEDIA.put(variantKey(key,w), …)`, and does the single write
   `UPDATE media SET variants=?, width=?, height=? WHERE r2_key=?`. It agrees with the front-end purely through the already
   unit-tested `variantKey()` + the `variants` column — **no caller changes when it ships**; the next render auto-upgrades
   `<img src>` to a full `srcset`. Encoder choice (Cloudflare Images vs `@cf-wasm/photon`) is deferred (§10.12).
@@ -965,14 +965,14 @@ After this phase the suite goes from 62 → ~90+ tests; the existing 62 must sta
 carries no logic worth a render test.
 
 **Optional e2e (stretch, NOT a merge blocker).** A single Playwright flow (`tests/e2e/editor.spec.ts`, its own config,
-excluded from the Vitest `include` so it never gates `npm test`): on local `wrangler pages dev` + local D1 with
+excluded from the Vitest `include` so it never gates `npm test`): on `astro dev` + local D1 with
 `DEV_ADMIN_EMAIL` set (Access can't run locally), drive the acceptance trace — create → type Markdown → bold → upload
 cover → save draft → preview → publish → assert it appears on `/blogg`. Ship without it; add when the rest is green.
 
 ### 10.10 Build plan — sub-phases 4a–4f
 
 Dependency-ordered. Each sub-phase: deliverable · files · acceptance. Every page/route starts with
-`export const prerender = false` and guards `Astro.locals.runtime?.env?.DB` like the blog pages.
+`export const prerender = false` and guards `Astro.locals.db` like the blog pages.
 
 #### 4a — Auth core + admin shell + Access wiring
 - **Build.** `src/lib/access.ts` (`decodeJwt`, `validateClaims`, `verifyAccessJwt` via Web Crypto, `isSameOriginWrite`,
@@ -1088,7 +1088,7 @@ the shared types/validation everything imports. 4c is the editor core (needs 4b'
 | `src/admin/editor.client.ts` | Vanilla controller: toolbar→`editor.ts`, debounced preview fetch, upload, dirty guard, save/publish/delete. |
 | `src/admin/dashboard.client.ts` | Vanilla controller: filter/search + delete-confirm. |
 | `src/styles/admin.css` | Admin-only CSS on the dark token theme; shares PostView prose rules; WCAG AA. |
-| `public/_headers` | Cloudflare Pages headers: noindex + X-Frame-Options + CSP + no-store for `/admin/*` + `/api/admin/*`. |
+| `public/_headers` | Static-asset headers: noindex + X-Frame-Options + CSP + no-store for `/admin/*` + `/api/admin/*`. |
 | `.dev.vars.example` | Committed template for local `.dev.vars` (ADMIN_API_TOKEN dev value + DEV_ADMIN_EMAIL). |
 | `tests/access.test.ts` | JWT decode/validate/verify (local RSA keypair + fake JWKS), `isSameOriginWrite`, dev-bypass tripwire. |
 | `tests/editor.test.ts` | Toolbar toggles, slug auto/manual, publish validation, counters, dirty. |
@@ -1104,7 +1104,7 @@ the shared types/validation everything imports. 4c is the editor core (needs 4b'
 | Path | Change |
 |------|--------|
 | `src/middleware.ts` | Keep the redirect pass; add the `ADMIN_RE` admin branch verifying the Access JWT and populating `locals.user`. |
-| `src/env.d.ts` | Add `ACCESS_AUD?`, `ACCESS_TEAM_DOMAIN?`, `DEV_ADMIN_EMAIL?` to `CloudflareEnv`; add `App.AdminUser` + `locals.user`. |
+| `src/env.d.ts` | Add `ACCESS_AUD?`, `ACCESS_TEAM_DOMAIN?`, `DEV_ADMIN_EMAIL?` to `Env`; declare `locals.db`/`getCms`/`adminEmail`/`adminToken` and do NOT extend `Runtime` (ADR-08). |
 | `src/lib/db.ts` | Add `getById`, `takenSlugs`, `listAdmin`, `listMedia`, `insertMedia`, `deleteMediaRow`, `mediaUsage`; `insertPost`/`updatePost` now return `Post`. |
 | `src/lib/slug.ts` | Add `resolveSlug` (immutable-after-publish + editable + uniquify policy, pure). |
 | `src/lib/posts.ts` | Add `nextPublishedAt` (publish-transition helper, pure). |

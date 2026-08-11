@@ -1,78 +1,138 @@
 ---
 /**
- * Admin top navigation: dashboard, new post, "view site", the Access email
- * readout, and the Access logout link. No public chrome. Swedish-only (§10.2).
+ * Admin section navigation (ARCHITECTURE §5, F-016).
+ *
+ * The fixed sections come from `CMS.adminNav`; the per-GROUP, per-COPY-PAGE and
+ * per-COLLECTION links are DERIVED from the rest of the config, so adding an
+ * editable group or a list puts it in the nav without anyone remembering to.
+ * Nothing here is hardcoded, which is what keeps that true.
+ *
+ * The derived links sit on their own row. There are a dozen-plus of them and
+ * they are the screens Nicole uses most; mixing them into the four section links
+ * would bury both. Their labels come from the config (they name her content),
+ * while the fixed sections resolve through `adminString` — the chrome is
+ * Swedish-only by decision, and one module is what makes it swappable when the
+ * core is vendored into a project whose client speaks something else.
  */
+import { CMS } from "../../cms.config";
+import { adminString } from "../../lib/cms/strings.sv";
+
 interface Props {
-  userEmail?: string | null;
+  email?: string;
+  /** Hidden under a dev identity — `/cdn-cgi/access/logout` only exists behind Access. */
+  showLogout?: boolean;
 }
-const { userEmail } = Astro.props;
+
+const { email = "", showLogout = true } = Astro.props;
+
 const path = Astro.url.pathname;
-const isActive = (href: string) =>
-  href === "/admin" ? path === "/admin" : path.startsWith(href);
+/** `/admin` matches only itself; every other section matches its subtree. */
+const isActive = (href: string) => (href === "/admin" ? path === "/admin" : path.startsWith(href));
+
+/**
+ * Icons are inline SVG paths keyed by `AdminNavItem.icon`. Inline because the
+ * admin CSP is `default-src 'self'` with no external origin, and four 24px
+ * glyphs are not worth a sprite sheet or a dependency.
+ */
+const ICONS: Record<string, string> = {
+  grid: "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z",
+  film: "M4 4h16v16H4zM8 4v16M16 4v16M4 9h4M4 15h4M16 9h4M16 15h4",
+  image: "M4 5h16v14H4zM4 15l4-4 4 4 3-3 5 5M15 9.5a1 1 0 1 0 0-.01",
+  mail: "M3 6h18v12H3zM3 7l9 6 9-6",
+};
+
+/**
+ * The editable surfaces, in the order the config declares them: site facts,
+ * then page copy, then lists.
+ */
+const derived = [
+  ...CMS.contentGroups.map((group) => ({
+    href: `/admin/content/${group.key}`,
+    label: group.label,
+  })),
+  ...CMS.editableCopy.map((page) => ({
+    href: `/admin/content/${page.page}`,
+    label: page.label,
+  })),
+  ...CMS.collections.map((collection) => ({
+    href: `/admin/collections/${collection.name}`,
+    label: collection.label,
+  })),
+];
 ---
-<nav class="admin-nav" aria-label="Admin">
-  <div class="admin-nav__links">
-    <a href="/admin" aria-current={isActive("/admin") && path === "/admin" ? "page" : undefined}>
-      Dashboard
-    </a>
-    <a
-      href="/admin/posts/new"
-      aria-current={isActive("/admin/posts/new") ? "page" : undefined}
-    >
-      Nytt inlägg
-    </a>
-    <a href="/" target="_blank" rel="noopener">Visa sajt</a>
-  </div>
-  <div class="admin-nav__account">
-    {userEmail && <span class="admin-nav__email" title={userEmail}>{userEmail}</span>}
-    <a class="admin-nav__logout" href="/cdn-cgi/access/logout">Logga ut</a>
+
+<nav class="admin-nav" aria-label={adminString("admin.title")}>
+  <div class="admin-nav__inner">
+    <span class="admin-nav__brand">{adminString("admin.title")}</span>
+
+    <div class="admin-nav__links">
+      {
+        CMS.adminNav.map((item) => (
+          <a
+            class="admin-nav__link"
+            href={item.href}
+            aria-current={isActive(item.href) ? "page" : undefined}
+          >
+            <svg
+              class="admin-nav__icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              aria-hidden="true"
+            >
+              <path d={ICONS[item.icon] ?? ICONS.grid} />
+            </svg>
+            {adminString(item.labelKey)}
+          </a>
+        ))
+      }
+      <a class="admin-nav__link" href="/" target="_blank" rel="noopener">
+        {adminString("admin.viewSite")}
+      </a>
+    </div>
+
+    {
+      derived.length > 0 && (
+        /*
+         * Fifteen chips is four wrapped rows on a phone, so the row folds into a
+         * disclosure below 720px and admin.css neutralizes the <details> above
+         * it. Rendering it open when one of its own links is the current page
+         * means arriving at a content screen never hides the way back out.
+         */
+        <details class="admin-nav__disclosure" open={derived.some((item) => path === item.href)}>
+          <summary class="admin-nav__summary">{adminString("nav.contentToggle")}</summary>
+          <div class="admin-nav__content" aria-label={adminString("nav.content")}>
+            <span class="admin-nav__section">{adminString("nav.content")}</span>
+            {derived.map((item) => (
+              <a
+                class="admin-nav__chip"
+                href={item.href}
+                aria-current={path === item.href ? "page" : undefined}
+              >
+                {item.label}
+              </a>
+            ))}
+          </div>
+        </details>
+      )
+    }
+
+    <div class="admin-nav__account">
+      {
+        email && (
+          <span class="admin-nav__email" title={email}>
+            {adminString("admin.signedInAs")} {email}
+          </span>
+        )
+      }
+      {
+        showLogout && (
+          <a class="admin-nav__logout" href="/cdn-cgi/access/logout">
+            {adminString("admin.logout")}
+          </a>
+        )
+      }
+    </div>
   </div>
 </nav>
-
-<style>
-  .admin-nav {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    flex-wrap: wrap;
-    padding: 0.75rem 1.25rem;
-    background: var(--charcoal, #161616);
-    color: var(--white, #fff);
-    border-bottom: 1px solid var(--bronze-muted, #8c7352);
-  }
-  .admin-nav__links,
-  .admin-nav__account {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    flex-wrap: wrap;
-  }
-  .admin-nav a {
-    color: var(--white, #fff);
-    text-decoration: none;
-    font-size: 0.95rem;
-  }
-  .admin-nav__links a[aria-current="page"] {
-    text-decoration: underline;
-    text-underline-offset: 4px;
-  }
-  .admin-nav a:hover,
-  .admin-nav a:focus-visible {
-    color: var(--bronze, #a68b67);
-  }
-  .admin-nav__email {
-    font-size: 0.85rem;
-    opacity: 0.8;
-    max-width: 18rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .admin-nav__logout {
-    border: 1px solid var(--bronze-muted, #8c7352);
-    border-radius: 4px;
-    padding: 0.35rem 0.75rem;
-  }
-</style>

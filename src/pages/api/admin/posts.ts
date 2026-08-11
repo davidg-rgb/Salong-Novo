@@ -114,7 +114,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
   const now = new Date().toISOString();
   // B10: author-default precedence lives in the HANDLER, not parsePostWrite.
-  const author = value.author || locals.user?.email || "";
+  const author = value.author || locals.adminEmail || "";
   const slug = resolveSlug(null, value.slugOverride, value.title, await takenSlugs(env.DB, value.locale));
   const publishedAt = nextPublishedAt(null, value.status, now);
 

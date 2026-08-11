@@ -1,0 +1,90 @@
+---
+/**
+ * The generic collection manager (ARCHITECTURE §5, §6.16, §9.9, F-010).
+ *
+ * Everything on screen comes from the `CollectionDef`: the label, the fields,
+ * whether the list can be reordered. Adding a list to this site adds nothing
+ * here — that is the config-driven model paying out (§12).
+ *
+ * Reordering reuses `wireReorder` unchanged. The endpoint is the collection's
+ * own POST, which discriminates a `{ids}` body from a create; no `data-category`
+ * is set because a collection is not sliced the way the portfolio is.
+ */
+import CollectionItemForm from "./CollectionItemForm.astro";
+import { adminString } from "../../lib/cms/strings.sv";
+import type { CollectionDef, CollectionItem } from "../../lib/cms/config-types";
+
+interface Props {
+  def: CollectionDef;
+  items: CollectionItem[];
+}
+
+const { def, items } = Astro.props;
+
+/** The first non-empty text value on the row — the heading for its editor. */
+function summarize(item: CollectionItem): string {
+  for (const field of def.fields) {
+    for (const prop of field.bilingual ? [`${field.name}_sv`, `${field.name}_en`] : [field.name]) {
+      const value = item.data[prop];
+      if (typeof value === "string" && value.trim() !== "") return value;
+    }
+  }
+  return `#${item.id}`;
+}
+---
+
+{
+  items.length === 0 ? (
+    <p class="admin-empty">{adminString("collection.empty")}</p>
+  ) : (
+    <>
+      {def.orderable && <p class="admin-field__hint">{adminString("collection.reorderHint")}</p>}
+      <ul
+        class="collection-list"
+        data-reorder-endpoint={def.orderable ? `/api/admin/collections/${def.name}` : undefined}
+      >
+        {items.map((item) => (
+          <li class="collection-item" data-reorder-item data-id={item.id}>
+            <div class="collection-item__head">
+              {def.orderable && (
+                <div class="collection-item__handles">
+                  <button
+                    class="admin-btn admin-btn--ghost admin-btn--sm"
+                    type="button"
+                    data-move-up
+                    aria-label={`${adminString("collection.moveUp")}: ${summarize(item)}`}
+                  >
+                    ▲
+                  </button>
+                  <button
+                    class="admin-btn admin-btn--ghost admin-btn--sm"
+                    type="button"
+                    data-move-down
+                    aria-label={`${adminString("collection.moveDown")}: ${summarize(item)}`}
+                  >
+                    ▼
+                  </button>
+                </div>
+              )}
+              <p class="collection-item__title">{summarize(item)}</p>
+            </div>
+
+            <CollectionItemForm def={def} item={item} />
+          </li>
+        ))}
+      </ul>
+    </>
+  )
+}
+
+<section class="admin-panel collection-add">
+  <h2 class="admin-panel__title">{adminString("collection.addTitle")}</h2>
+  <CollectionItemForm def={def} item={null} />
+</section>
+
+<script>
+  import { wireReorderLists } from "../../admin/reorder.client";
+  import { wireCollectionManager } from "../../admin/forms.client";
+  wireReorderLists();
+  wireCollectionManager();
+</script>

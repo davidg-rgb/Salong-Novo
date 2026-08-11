@@ -12,7 +12,7 @@ Cloudflare. Staff-writable blog. No webshop, no on-site booking (external Voady 
 
 ## Stack (locked + built)
 
-Astro 5 (static + server routes) on Cloudflare Pages · D1 (blog) · R2 (images) · Cloudflare
+Astro 7 (static + server routes) on Cloudflare **Workers** (Static Assets) · D1 (blog + CMS) · R2 (images) · Cloudflare
 Access (admin) · markdown-it (`html:false`) · Vitest. See `ARCHITECTURE.md`.
 
 ## Status

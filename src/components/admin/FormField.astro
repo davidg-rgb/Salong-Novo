@@ -1,0 +1,138 @@
+---
+/**
+ * One editable content field (ARCHITECTURE §6.16, F-008/F-009/F-018).
+ *
+ * HYDRATION IS FROM THE RAW STORED ROW, NEVER FROM RESOLUTION (P2-C7). If a row
+ * exists its two sides fill the two inputs verbatim; if it does not, the inputs
+ * are EMPTY and the developer default shows as ghost placeholder text that does
+ * not submit. Hydrating through `overrideValue` would pre-fill the English input
+ * with the Swedish fallback, and the next save would store Swedish as a genuine
+ * English translation — exactly the shadowing the §6.6 split exists to prevent.
+ *
+ * The two per-field buttons are the provenance story, and they are two-way:
+ *   "Bekräfta"                — writes the shown default as a real row, so the
+ *                               PLACEHOLDER badge clears without the client
+ *                               having to invent an edit she does not want.
+ *   "Återställ till standard" — deletes the row, handing authority back to the
+ *                               JSON default. The badge comes back if flagged.
+ */
+import { adminString } from "../../lib/cms/strings.sv";
+import type { ContentFieldDef } from "../../lib/cms/config-types";
+import type { ContentKvRow } from "../../lib/cms/content";
+
+interface Props {
+  field: ContentFieldDef;
+  /** The stored row, or null when the client has never edited this key. */
+  row: ContentKvRow | null;
+  /** The developer default, shown as a ghost placeholder while there is no row. */
+  defaultSv: string;
+  defaultEn: string;
+  /** Rendered thumbnail for an `image` field whose value is a media key. */
+  imageUrl?: string;
+}
+
+const { field, row, defaultSv, defaultEn, imageUrl = "" } = Astro.props;
+
+const isImage = field.kind === "image";
+const isTextarea = field.kind === "textarea";
+/** An image field is one value (a media key), never a locale pair. */
+const bilingual = field.bilingual === true && !isImage;
+const showPlaceholderBadge = field.placeholderUntilEdited === true && row === null;
+
+const sides = bilingual
+  ? ([
+      { side: "sv" as const, label: adminString("form.sv"), value: row?.value_sv ?? "", ghost: defaultSv },
+      { side: "en" as const, label: adminString("form.en"), value: row?.value_en ?? "", ghost: defaultEn },
+    ])
+  : ([{ side: "sv" as const, label: "", value: row?.value_sv ?? "", ghost: defaultSv }]);
+---
+
+<div
+  class="admin-field kv-field"
+  data-kv-field
+  data-key={field.key}
+  data-kind={field.kind}
+  data-default-sv={defaultSv}
+  data-default-en={defaultEn}
+>
+  <span class="admin-field__label kv-field__label">
+    {field.label}
+    {showPlaceholderBadge && <span class="kv-badge">{adminString("form.placeholderBadge")}</span>}
+  </span>
+
+  {field.hint && <span class="admin-field__hint">{field.hint}</span>}
+
+  {
+    isImage ? (
+      <div class="kv-image">
+        <img class="kv-image__thumb" data-kv-thumb src={imageUrl} alt="" hidden={imageUrl === ""} />
+        <div class="kv-image__body">
+          <input
+            class="admin-input"
+            type="text"
+            data-kv-sv
+            value={row?.value_sv ?? ""}
+            placeholder={defaultSv}
+            maxlength="200"
+          />
+          <input
+            class="admin-file"
+            type="file"
+            data-kv-upload
+            accept="image/jpeg,image/png,image/webp,image/avif"
+          />
+          <span class="admin-field__hint">{adminString("content.imageHint")}</span>
+        </div>
+      </div>
+    ) : (
+      <div class:list={["kv-sides", bilingual && "admin-pair"]}>
+        {sides.map(({ side, label, value, ghost }) => (
+          <label class="kv-side">
+            {label && <span class="kv-side__label">{label}</span>}
+            {isTextarea ? (
+              <textarea
+                class="admin-input admin-textarea"
+                rows="3"
+                data-kv-sv={side === "sv" ? true : undefined}
+                data-kv-en={side === "en" ? true : undefined}
+                placeholder={ghost}
+                set:text={value}
+              />
+            ) : (
+              <input
+                class="admin-input"
+                type={field.kind === "url" ? "url" : field.kind === "number" ? "number" : "text"}
+                data-kv-sv={side === "sv" ? true : undefined}
+                data-kv-en={side === "en" ? true : undefined}
+                value={value}
+                placeholder={ghost}
+              />
+            )}
+            {side === "en" && (
+              <span class="admin-field__hint">{adminString("content.enFallbackHint")}</span>
+            )}
+          </label>
+        ))}
+      </div>
+    )
+  }
+
+  <span class="admin-field__error" data-field-error={field.key} hidden></span>
+
+  <div class="kv-field__actions">
+    {
+      showPlaceholderBadge && (
+        <button class="admin-btn admin-btn--ghost admin-btn--sm" type="button" data-kv-confirm>
+          {adminString("form.confirmPlaceholder")}
+        </button>
+      )
+    }
+    {
+      row && (
+        <button class="admin-btn admin-btn--ghost admin-btn--sm" type="button" data-kv-reset>
+          {adminString("form.reset")}
+        </button>
+      )
+    }
+  </div>
+</div>

@@ -1,0 +1,105 @@
+---
+export const prerender = false;
+/**
+ * The media library (ARCHITECTURE §6.16, F-011).
+ *
+ * The UPLOAD control lives HERE, not only on the portfolio form (P1-C7): the
+ * library must have its own ingress, or "replace an image" turns into "create a
+ * portfolio item you don't want".
+ *
+ * The page READS through `Astro.locals.db` (§10.1: admin pages read directly,
+ * every write goes through a §8 endpoint). An unbound D1 is reported honestly
+ * rather than rendered as an empty library — "you have no images" and "we can't
+ * see your images" are different sentences.
+ */
+import AdminBase from "../../layouts/AdminBase.astro";
+import { adminString } from "../../lib/cms/strings.sv";
+import { listMediaRows, type MediaItem } from "../../lib/cms/media-db";
+
+/** Same source as `posterSrc`'s default, so library and grid agree on Stage A/B. */
+const base = import.meta.env.PUBLIC_IMAGE_BASE ?? "";
+
+const db = Astro.locals.db;
+let items: MediaItem[] = [];
+let libraryDown = db === null;
+
+if (db) {
+  try {
+    items = await listMediaRows(db, base);
+  } catch (error) {
+    console.error("[admin/media] listing failed", error);
+    libraryDown = true;
+  }
+}
+
+const kb = (bytes: number | null) => (bytes === null ? "" : `${Math.round(bytes / 1024)} kB`);
+---
+
+<AdminBase title={adminString("media.title")}>
+  <div class="admin-page-head">
+    <h1>{adminString("media.title")}</h1>
+  </div>
+  <p class="admin-lede">{adminString("media.lede")}</p>
+
+  <section class="admin-panel" style="margin-top: var(--unit-lg)">
+    <h2 class="admin-panel__title">{adminString("media.upload")}</h2>
+    <form data-media-upload enctype="multipart/form-data" method="post" action="/api/admin/upload">
+      <label class="admin-field">
+        <span class="admin-field__label">{adminString("media.file")}</span>
+        <input
+          class="admin-file"
+          type="file"
+          name="file"
+          required
+          accept="image/jpeg,image/png,image/webp,image/avif"
+        />
+        <span class="admin-field__hint">{adminString("media.guidance")}</span>
+      </label>
+
+      <label class="admin-field">
+        <span class="admin-field__label">{adminString("media.alt")}</span>
+        <input class="admin-input" type="text" name="alt" maxlength="300" />
+        <span class="admin-field__hint">{adminString("media.altHint")}</span>
+      </label>
+
+      <button class="admin-btn" type="submit">{adminString("media.upload")}</button>
+    </form>
+  </section>
+
+  {
+    libraryDown ? (
+      <p class="admin-empty">{adminString("media.emptyDb")}</p>
+    ) : items.length === 0 ? (
+      <p class="admin-empty">{adminString("media.empty")}</p>
+    ) : (
+      <ul class="media-grid">
+        {items.map((item) => (
+          <li class="media-card" data-media-key={item.key}>
+            <img class="media-card__thumb" src={item.url} alt={item.alt} loading="lazy" />
+            <span class="media-card__key">{item.key}</span>
+            <span class="media-card__meta">
+              {item.mime} {kb(item.bytes)}
+            </span>
+            <label class="admin-field" style="margin-bottom:0">
+              <span class="admin-field__label">{adminString("media.alt")}</span>
+              <input class="admin-input" type="text" maxlength="300" value={item.alt} data-media-alt />
+            </label>
+            <div class="media-card__actions">
+              <button class="admin-btn admin-btn--ghost admin-btn--sm" type="button" data-media-alt-save>
+                {adminString("media.altSave")}
+              </button>
+              <button class="admin-btn admin-btn--danger admin-btn--sm" type="button" data-media-delete>
+                {adminString("form.delete")}
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
+    )
+  }
+</AdminBase>
+
+<script>
+  import { wireMediaLibrary } from "../../admin/media.client";
+  wireMediaLibrary();
+</script>

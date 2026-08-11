@@ -24,21 +24,21 @@ type Env = {
 };
 
 declare namespace App {
-  /** The authenticated admin identity populated by the middleware (§10.3). */
-  interface AdminUser {
-    email: string;
-    source: "access" | "access-header" | "dev";
-  }
-
   /**
    * NOTE what is NOT here: a `runtime` property. @astrojs/cloudflare v14 removed
    * the adapter's runtime-env accessor and throws if you touch it, so
    * `App.Locals` deliberately does not extend the adapter's `Runtime` type — the
    * compiler then rejects the incorrect pattern outright, which is a stronger ban
    * than a grep. All binding access goes through `src/lib/cms/bindings.ts`.
+   *
+   * All four are stamped by `src/middleware.ts`. `db`/`getCms` on every request;
+   * `adminEmail`/`adminToken` only on an ADMITTED admin request, which is why
+   * they are optional and the other two are not.
    */
   interface Locals {
-    /** Set by the admin branch of middleware; null when unauthenticated. */
-    user?: AdminUser | null;
+    db: import("./lib/cms/db").Database | null;
+    getCms: () => Promise<import("./lib/cms/content").CmsContent>;
+    adminEmail?: string;
+    adminToken?: string;
   }
 }

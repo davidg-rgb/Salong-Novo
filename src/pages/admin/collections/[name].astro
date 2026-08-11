@@ -1,0 +1,48 @@
+---
+export const prerender = false;
+/**
+ * One collection manager (ARCHITECTURE §6.16, §9.9, F-010).
+ *
+ * A thin lookup and nothing else: the definition decides what the page contains,
+ * `CollectionList` renders it, and the generic API validates it. An unknown name
+ * is a 404 rather than an empty list — "this collection does not exist" and
+ * "this collection is empty" must not look the same.
+ */
+import AdminBase from "../../../layouts/AdminBase.astro";
+import CollectionList from "../../../components/admin/CollectionList.astro";
+import { CMS } from "../../../cms.config";
+import { adminString } from "../../../lib/cms/strings.sv";
+import { listCollectionItems } from "../../../lib/cms/collections";
+import type { CollectionItem } from "../../../lib/cms/config-types";
+
+const def = CMS.collections.find((collection) => collection.name === Astro.params.name) ?? null;
+if (!def) return new Response(null, { status: 404 });
+
+const db = Astro.locals.db;
+let items: CollectionItem[] = [];
+let listDown = db === null;
+
+if (db) {
+  try {
+    items = await listCollectionItems(db, def.name, { includeDrafts: true });
+  } catch (error) {
+    console.error(`[admin/collections/${def.name}] listing failed`, error);
+    listDown = true;
+  }
+}
+---
+
+<AdminBase title={def.label}>
+  <div class="admin-page-head">
+    <h1>{def.label}</h1>
+  </div>
+  <p class="admin-lede">{adminString("collection.lede")}</p>
+
+  {
+    listDown ? (
+      <p class="admin-empty">{adminString("collection.emptyDb")}</p>
+    ) : (
+      <CollectionList def={def} items={items} />
+    )
+  }
+</AdminBase>

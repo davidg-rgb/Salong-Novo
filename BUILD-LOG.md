@@ -59,3 +59,29 @@ B1 replaces middleware wholesale.
 **Carried into B1:** stale-doc fix list (BUILD-GUIDELINES.md:36,54; .dev.vars.example; ARCHITECTURE.md
 ×12 lines; CLAUDE.md stack line — all still teach the illegal v12 binding pattern), `session: false`,
 32-token CSS contract, hand-written `media` ALTER merge.
+
+### 2026-08-11 16:30 — Phase B1 COMPLETE · B1-gate PASSED (orchestrator-verified)
+Builder `builder-b1` delivered: 44 core files vendored (33 byte-identical, 11 recorded divergences),
+`FORGE-MANIFEST.json` written, five seams wired (`routes.ts` needed nothing), fail-closed middleware
+live (`access-header` trust tier REMOVED, `assertNoDevBypassInProd` now actually called — both
+pre-existing security gaps closed), media table merged via hand-written `0002` ALTER (proven live:
+one upload row satisfies both blog and Forge consumers), 239 template tests ported, ~30 doc lines
+fixed across 5 files (zero v12 patterns left).
+
+Load-bearing merge decisions (builder, ratified): Forge dashboard takes `/admin`, blog list → `/admin/posts`
+via adminNav; core `admin.css` adopted, blog sheet → `admin-blog.css`; core `AdminNav` replaces
+hand-written nav (config-driven).
+
+**Gate results (orchestrator-run):**
+- `npm run test` → **485 passed / 24 files** (246 baseline + 239 ported), 2.10s
+- `npm run typecheck` → clean · `npx astro build` → Complete, no SESSION KV notice
+- Greps: `prerender = false` files = 22 · `assertNoDevBypassInProd` call sites = 2 ·
+  header-trust remnant = doc comment only · all 11 core lib files present
+- Builder smoke (accepted): Forge dashboard + `/admin/posts` + `/admin/media` 200 on local D1;
+  blog POST 201 + upload round-trip; **fail-closed 403 proof** with dev identity unset (HTML noindex
+  for UI, JSON for API, public routes stay 200); tripwire probe → 403 `misconfigured`, no 500
+
+**Carried into B2:** add `@astrojs/check` + `check` script (last RUNBOOK stack-floor item);
+arm the vacuous `cms-config` loops by authoring the real config; `mediaPrefix` stays `"blog/"`
+(media library lists by prefix — changing it would orphan every existing key); `posts/[id]` API is
+GET-only by design (writes go to `/api/admin/posts?id=`), not a regression.

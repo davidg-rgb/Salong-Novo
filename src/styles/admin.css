@@ -1,254 +1,1165 @@
 /*
- * Admin-only CSS (§10.6 / §11). Dark token theme. Loaded by every /admin page on
- * top of tokens.css. Two principles:
- *   1. WCAG AA on the dark surface — body copy uses a light text token
- *      (--admin-text ≈ #d8d8d8), never the public --muted (too dim on charcoal).
- *   2. The live-preview pane (.preview.body) SHARES PostView's prose rules so
- *      "preview == production" holds visually as well as semantically.
- * Terracotta is the focus ring + primary action; bronze is texture/hairline.
+ * Admin chrome (ARCHITECTURE §5, F-016).
+ *
+ * Loaded AFTER tokens.css, and it declares NO colour of its own — every value
+ * here resolves through a project token. That is what makes the shell rethemable
+ * by vendoring the core into a project with a different tokens.css and changing
+ * nothing else.
+ *
+ * Mobile-first for a real reason, not a slogan: Nicole edits her portfolio from
+ * a phone (R-4). Every control is a full-width tap target until there is room
+ * for a grid, and the reorder/delete affordances never depend on hover.
  */
 
-:root {
-  --admin-bg: var(--charcoal, #161616);
-  --admin-panel: #1f1f1f;
-  --admin-panel-2: #262626;
-  --admin-line: #3a3632;
-  --admin-text: #d8d8d8;       /* body copy — AA on #161616 */
-  --admin-text-dim: #a9a39a;   /* secondary — still AA-ish for non-essential */
-  --admin-heading: var(--cream, #f8f8f8);
-  --admin-accent: var(--terracotta, #cc5a31);
-  --admin-accent-deep: var(--terracotta-deep, #b34a26);
-  --admin-gold: var(--bronze, #a68b67);
-  --admin-radius: 4px;
-}
-
+/* ---------- shell ---------- */
 body.admin {
-  color: var(--admin-text);
-}
-.admin-main { color: var(--admin-text); }
-.admin h1, .admin h2, .admin h3 { color: var(--admin-heading); font-family: var(--font-serif); }
-
-.sr-only {
-  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
-  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  background: var(--surface-container-low);
+  color: var(--on-surface);
+  min-height: 100vh;
 }
 
-/* ── Shared buttons ─────────────────────────────────────────────── */
-.btn-primary, .btn-ghost, .btn-danger, .btn-danger-ghost {
-  display: inline-flex; align-items: center; justify-content: center; gap: .4rem;
-  font-family: var(--font-sans); font-size: .82rem; font-weight: 600;
-  letter-spacing: .06em; padding: .6rem 1rem; border-radius: var(--admin-radius);
-  cursor: pointer; border: 1px solid transparent; text-decoration: none;
-  transition: background .2s, border-color .2s, color .2s, opacity .2s;
+.admin-main {
+  width: 100%;
+  max-width: 960px;
+  margin-inline: auto;
+  padding: var(--unit-lg) var(--margin-mobile) var(--unit-xl);
 }
-.btn-primary { background: var(--admin-accent); color: #fff; border-color: var(--admin-accent); }
-.btn-primary:hover:not(:disabled) { background: var(--admin-accent-deep); border-color: var(--admin-accent-deep); }
-.btn-ghost { background: transparent; color: var(--admin-text); border-color: var(--admin-line); }
-.btn-ghost:hover:not(:disabled) { border-color: var(--admin-gold); color: var(--admin-heading); }
-.btn-danger { background: #8c2f1c; color: #fff; border-color: #8c2f1c; }
-.btn-danger:hover:not(:disabled) { background: #a33620; }
-.btn-danger-ghost { background: transparent; color: #e08a72; border-color: #5a3328; }
-.btn-danger-ghost:hover:not(:disabled) { background: #3a221c; color: #f0a892; }
-.btn-sm { padding: .35rem .7rem; font-size: .75rem; }
-button:disabled, .btn-primary:disabled { opacity: .45; cursor: not-allowed; }
-.link-btn {
-  background: none; border: none; color: var(--admin-gold); cursor: pointer;
-  font-size: .8rem; padding: 0; text-decoration: underline; text-underline-offset: 2px;
+
+@media (min-width: 720px) {
+  .admin-main {
+    padding-inline: var(--gutter);
+  }
 }
-.link-btn:hover { color: var(--admin-accent); }
 
-/* ── Segmented control (locale / filters) ──────────────────────── */
-.segmented { display: inline-flex; border: 1px solid var(--admin-line); border-radius: var(--admin-radius); overflow: hidden; }
-.seg {
-  background: var(--admin-panel); color: var(--admin-text-dim); border: none;
-  padding: .45rem .8rem; font-size: .8rem; font-weight: 600; cursor: pointer;
-  border-right: 1px solid var(--admin-line); transition: background .15s, color .15s;
+.admin-page-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--unit-sm);
+  margin-bottom: var(--unit-lg);
 }
-.seg:last-child { border-right: none; }
-.seg:hover { color: var(--admin-heading); }
-.seg--on { background: var(--admin-accent); color: #fff; }
 
-/* ── Dashboard ─────────────────────────────────────────────────── */
-.dashboard__head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
-.dashboard__head h1 { font-size: clamp(28px, 4vw, 40px); }
-
-.filter-bar { display: flex; gap: .75rem; flex-wrap: wrap; align-items: center; margin-bottom: 1.25rem; }
-.filter-bar__search { flex: 1 1 240px; min-width: 200px; }
-.filter-bar__search input {
-  width: 100%; background: var(--admin-panel); color: var(--admin-text);
-  border: 1px solid var(--admin-line); border-radius: var(--admin-radius);
-  padding: .55rem .8rem; font-size: .9rem;
+.admin-page-head h1 {
+  font-family: var(--font-serif);
+  font-size: 32px;
+  line-height: 40px;
+  font-weight: 600;
 }
-.filter-bar__search input::placeholder { color: var(--admin-text-dim); }
 
-.post-table { width: 100%; border-collapse: collapse; font-size: .9rem; }
-.post-table th {
-  text-align: left; font-family: var(--font-sans); font-size: .72rem; font-weight: 700;
-  letter-spacing: .1em; text-transform: uppercase; color: var(--admin-text-dim);
-  padding: .6rem .75rem; border-bottom: 1px solid var(--admin-line);
+.admin-lede {
+  color: var(--on-surface-variant);
+  max-width: 60ch;
 }
-.post-table td { padding: .7rem .75rem; border-bottom: 1px solid var(--admin-line); vertical-align: middle; }
-.post-table tr[hidden] { display: none; }
-.cell-title a { color: var(--admin-heading); font-weight: 600; text-decoration: none; }
-.cell-title a:hover { color: var(--admin-accent); text-decoration: underline; }
-.cell-date { color: var(--admin-text-dim); white-space: nowrap; }
-.col-actions, .cell-actions { text-align: right; white-space: nowrap; }
-.cell-actions { display: flex; gap: .75rem; justify-content: flex-end; align-items: center; }
-.row-action { background: none; border: none; cursor: pointer; color: var(--admin-gold); font-size: .82rem; text-decoration: none; padding: 0; }
-.row-action:hover { color: var(--admin-accent); text-decoration: underline; }
-.row-action--danger { color: #e08a72; }
-.row-action--danger:hover { color: #f0a892; }
 
-.pill { display: inline-block; font-size: .7rem; font-weight: 700; letter-spacing: .05em; padding: .15rem .5rem; border-radius: 999px; }
-.pill--locale { background: var(--admin-panel-2); color: var(--admin-text); border: 1px solid var(--admin-line); }
-.badge { display: inline-flex; align-items: center; gap: .35rem; font-size: .72rem; font-weight: 700; letter-spacing: .04em; padding: .2rem .55rem; border-radius: var(--admin-radius); }
-.badge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; }
-.badge--published { color: #e8d3ad; background: rgba(166,139,103,.16); border: 1px solid var(--admin-gold); }
-.badge--published::before { background: var(--admin-gold); }
-.badge--draft { color: var(--admin-text-dim); background: var(--admin-panel-2); border: 1px solid var(--admin-line); }
-.badge--draft::before { background: var(--admin-text-dim); }
-
-.empty-state { text-align: center; padding: 4rem 1rem; border: 1px dashed var(--admin-line); border-radius: var(--admin-radius); }
-.empty-state p { color: var(--admin-text-dim); margin-bottom: 1.25rem; }
-.no-results { color: var(--admin-text-dim); padding: 2rem; text-align: center; }
-.db-warning code { background: var(--admin-panel-2); padding: .1rem .35rem; border-radius: 3px; }
-
-/* ── Editor layout ─────────────────────────────────────────────── */
-.editor { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
-@media (min-width: 1100px) {
-  .editor { grid-template-columns: minmax(0, 1fr) 320px; align-items: start; }
+/* ---------- navigation ---------- */
+.admin-nav {
+  background: var(--inverse-surface);
+  color: var(--inverse-on-surface);
+  border-bottom: 1px solid var(--inverse-outline-variant);
 }
-.editor__main { min-width: 0; }
-.editor__side { display: flex; flex-direction: column; gap: 1.25rem; }
-.editor--busy { opacity: .8; pointer-events: none; }
 
-.field { display: flex; flex-direction: column; gap: .35rem; }
-.field--inline { gap: .5rem; }
-.field__row { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
-.field__label { font-size: .78rem; font-weight: 600; letter-spacing: .05em; color: var(--admin-text); }
-.field__input, .field__textarea {
-  background: var(--admin-panel); color: var(--admin-text);
-  border: 1px solid var(--admin-line); border-radius: var(--admin-radius);
-  padding: .55rem .75rem; font-size: .95rem; font-family: var(--font-sans); width: 100%;
+.admin-nav__inner {
+  max-width: 960px;
+  margin-inline: auto;
+  padding: var(--unit-sm) var(--margin-mobile);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--unit-sm) var(--unit-md);
 }
-.field__input::placeholder, .field__textarea::placeholder { color: var(--admin-text-dim); }
-.field__input--title { font-family: var(--font-serif); font-size: 1.35rem; }
-.field__textarea { resize: vertical; line-height: 1.5; }
-.field__textarea--sm { min-height: 3.2rem; }
-.field__hint { font-size: .72rem; color: var(--admin-text-dim); }
-.req { color: var(--admin-accent); }
 
-.meta-strip { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.25rem; }
-
-/* Slug chip */
-.slug-chip { display: inline-flex; align-items: center; gap: .35rem; font-size: .82rem; background: var(--admin-panel-2); border: 1px solid var(--admin-line); border-radius: var(--admin-radius); padding: .3rem .6rem; align-self: flex-start; max-width: 100%; }
-.slug-chip__prefix { color: var(--admin-text-dim); }
-.slug-chip__slug { color: var(--admin-heading); font-weight: 600; }
-.slug-chip__input { background: transparent; border: none; color: var(--admin-heading); font-size: .82rem; min-width: 8rem; }
-.slug-chip__input:focus { outline: none; }
-.slug-chip__toggle { background: none; border: none; color: var(--admin-gold); cursor: pointer; font-size: .78rem; }
-.slug-chip__toggle:hover { color: var(--admin-accent); }
-
-/* Counter pills */
-.counter { font-size: .72rem; font-variant-numeric: tabular-nums; color: var(--admin-text-dim); }
-.counter[data-state="ok"] { color: #8fcf8f; }
-.counter[data-state="warn"] { color: #e8c06a; }
-.counter[data-state="over"] { color: #e8806a; font-weight: 700; }
-
-/* ── Two-pane write/preview ────────────────────────────────────── */
-.editor__panes { display: grid; grid-template-columns: 1fr; gap: 1rem; }
-@media (min-width: 960px) { .editor__panes { grid-template-columns: 1fr 1fr; } }
-.pane { display: flex; flex-direction: column; min-width: 0; border: 1px solid var(--admin-line); border-radius: var(--admin-radius); background: var(--admin-panel); }
-.pane__head { display: flex; align-items: center; justify-content: space-between; padding: .5rem .75rem; border-bottom: 1px solid var(--admin-line); }
-.pane__title { font-size: .72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--admin-text-dim); }
-.preview-status { font-size: .72rem; color: var(--admin-gold); }
-
-.md-toolbar { display: flex; flex-wrap: wrap; gap: .15rem; padding: .35rem; border-bottom: 1px solid var(--admin-line); background: var(--admin-panel-2); border-radius: var(--admin-radius) var(--admin-radius) 0 0; }
-.md-tool {
-  background: transparent; border: 1px solid transparent; color: var(--admin-text);
-  min-width: 2rem; height: 2rem; padding: 0 .5rem; border-radius: 3px; cursor: pointer;
-  font-size: .9rem; font-weight: 700; display: inline-flex; align-items: center; justify-content: center;
+@media (min-width: 720px) {
+  .admin-nav__inner {
+    padding-inline: var(--gutter);
+  }
 }
-.md-tool:hover { background: var(--admin-panel); border-color: var(--admin-line); }
-.md-body {
-  flex: 1; min-height: 22rem; resize: vertical; border: none; outline: none;
-  background: var(--admin-panel); color: var(--admin-text);
-  padding: .85rem; font-family: "SFMono-Regular", ui-monospace, "Cascadia Code", Menlo, monospace;
-  font-size: .92rem; line-height: 1.6;
+
+.admin-nav__brand {
+  font-family: var(--font-serif);
+  font-size: 18px;
+  font-weight: 600;
+  margin-right: auto;
 }
-.md-body::placeholder { color: var(--admin-text-dim); }
 
-.pane--preview .preview { flex: 1; padding: 1rem 1.1rem; overflow-y: auto; min-height: 22rem; }
-.preview__placeholder { color: var(--admin-text-dim); font-style: italic; }
+.admin-nav__links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--unit-xs);
+  order: 3;
+  width: 100%;
+}
 
-/* ── Preview prose — mirror PostView.astro so preview == production.
- *    Same selectors/scale; recolored for the dark admin surface.            */
-.preview.body { font-size: 16px; color: var(--admin-text); }
-.preview.body p { color: var(--admin-text); margin-bottom: 1.2rem; line-height: 1.7; max-width: 68ch; }
-.preview.body h2 { font-family: var(--font-serif); color: var(--admin-heading); font-size: 1.6rem; letter-spacing: -0.02em; margin: 1.8rem 0 .8rem; }
-.preview.body h3 { font-family: var(--font-serif); color: var(--admin-heading); margin: 1.4rem 0 .6rem; }
-.preview.body a { color: var(--admin-gold); text-decoration: underline; text-underline-offset: 3px; }
-.preview.body a:hover { color: var(--admin-accent); }
-.preview.body img { margin: 1.4rem 0; max-width: 100%; border-radius: 2px; }
-.preview.body blockquote { border-left: 2px solid var(--admin-gold); padding-left: 1.1rem; font-family: var(--font-serif); font-style: italic; font-size: 1.3rem; line-height: 1.4; color: #cbb48f; margin: 1.4rem 0; }
-.preview.body ul, .preview.body ol { margin: 0 0 1.2rem 1.2rem; color: var(--admin-text); }
-.preview.body li { margin-bottom: .4rem; line-height: 1.7; }
-.preview.body code { background: var(--admin-panel-2); padding: .1rem .35rem; border-radius: 3px; font-size: .85em; }
+@media (min-width: 720px) {
+  .admin-nav__links {
+    order: 0;
+    width: auto;
+    gap: var(--unit-xs);
+  }
+}
 
-/* ── Cover picker ──────────────────────────────────────────────── */
-.cover-picker { display: flex; flex-direction: column; gap: .6rem; }
-.cover-picker__frame { border: 1px solid var(--admin-line); border-radius: var(--admin-radius); overflow: hidden; background: var(--admin-panel); aspect-ratio: 16 / 9; display: flex; align-items: center; justify-content: center; }
-.cover-picker__thumb { width: 100%; height: 100%; object-fit: cover; }
-.cover-picker__empty { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .5rem; background: transparent; border: none; color: var(--admin-text-dim); cursor: pointer; font-size: .85rem; }
-.cover-picker__empty:hover { color: var(--admin-heading); }
-.cover-picker__icon { font-size: 1.5rem; }
-.cover-picker__actions { display: flex; gap: .5rem; }
-.cover-picker__error, .img-picker__error, .field__error { color: #e8806a; font-size: .8rem; }
+.admin-nav__link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--unit-xs);
+  padding: 10px var(--unit-sm);
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--inverse-on-surface-variant);
+}
 
-/* ── SEO / validation / status ─────────────────────────────────── */
-.validation-summary { background: rgba(140,47,28,.18); border: 1px solid #8c2f1c; border-radius: var(--admin-radius); padding: .75rem .9rem; color: #f0c0b0; font-size: .85rem; }
-.validation-summary__title { font-weight: 700; margin-bottom: .35rem; }
-.validation-summary ul { margin: 0 0 0 1.1rem; }
-.action-bar { display: flex; flex-wrap: wrap; gap: .5rem; }
-.action-bar .btn-primary, .action-bar .btn-ghost { flex: 1 1 auto; }
-.save-status { font-size: .78rem; color: var(--admin-text-dim); min-height: 1.1rem; }
+.admin-nav__link:hover,
+.admin-nav__link:focus-visible {
+  background: var(--inverse-surface-container);
+  color: var(--inverse-on-surface);
+}
 
-/* ── Image picker dialog ───────────────────────────────────────── */
-dialog.img-picker, dialog.confirm-dialog { border: 1px solid var(--admin-line); border-radius: var(--admin-radius); background: var(--admin-panel); color: var(--admin-text); padding: 0; max-width: 560px; width: 92vw; }
-dialog::backdrop { background: rgba(0,0,0,.6); }
-.img-picker__inner { display: flex; flex-direction: column; }
-.img-picker__head { display: flex; align-items: center; justify-content: space-between; padding: .9rem 1.1rem; border-bottom: 1px solid var(--admin-line); }
-.img-picker__head h2 { font-size: 1.1rem; }
-.img-picker__close { background: none; border: none; color: var(--admin-text); font-size: 1.4rem; cursor: pointer; line-height: 1; }
-.img-picker__body { padding: 1.1rem; display: flex; flex-direction: column; gap: 1rem; }
-.dropzone { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .4rem; padding: 1.4rem; border: 2px dashed var(--admin-line); border-radius: var(--admin-radius); cursor: pointer; text-align: center; color: var(--admin-text-dim); }
-.dropzone:hover, .dropzone--over { border-color: var(--admin-accent); color: var(--admin-heading); }
-.dropzone__icon { font-size: 1.5rem; }
-.dropzone__hint { font-size: .72rem; }
-.img-picker__preview img { max-height: 160px; width: auto; border-radius: 3px; }
-.recent__title { font-size: .72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--admin-text-dim); margin-bottom: .5rem; }
-.recent__grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: .5rem; }
-.recent__empty { color: var(--admin-text-dim); font-size: .8rem; grid-column: 1 / -1; }
-.recent__item { padding: 0; border: 1px solid var(--admin-line); border-radius: 3px; overflow: hidden; cursor: pointer; aspect-ratio: 1; background: var(--admin-panel-2); }
-.recent__item img { width: 100%; height: 100%; object-fit: cover; }
-.recent__item--on { border-color: var(--admin-accent); outline: 2px solid var(--admin-accent); }
-.img-picker__actions { display: flex; justify-content: flex-end; gap: .6rem; padding: .9rem 1.1rem; border-top: 1px solid var(--admin-line); }
+.admin-nav__link[aria-current="page"] {
+  background: var(--inverse-surface-container);
+  color: var(--inverse-primary);
+}
 
-/* ── Confirm dialog ────────────────────────────────────────────── */
-.confirm-dialog__inner { padding: 1.4rem; display: flex; flex-direction: column; gap: 1.2rem; }
-.confirm-dialog__msg { color: var(--admin-text); font-size: .95rem; }
-.confirm-dialog__actions { display: flex; justify-content: flex-end; gap: .6rem; }
+.admin-nav__icon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
 
-/* ── Preview route banner ──────────────────────────────────────── */
-.preview-banner { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; background: rgba(166,139,103,.14); border: 1px solid var(--admin-gold); border-radius: var(--admin-radius); padding: .7rem 1rem; margin-bottom: 1.5rem; color: #e8d3ad; font-size: .85rem; }
-.preview-banner__dot { width: 9px; height: 9px; border-radius: 50%; background: var(--admin-gold); }
-.preview-banner__back { margin-left: auto; color: var(--admin-gold); text-decoration: underline; }
-/* The preview surface renders the public PostView on a light card so it looks
- * exactly like production (PostView's prose is written for the light theme). */
-.preview-surface { background: var(--white, #fff); color: var(--ink, #1a1a1a); border-radius: var(--admin-radius); padding: 1rem; }
-.preview-surface :where(h1, h2, h3) { color: var(--ink, #1a1a1a); }
+/*
+ * The derived content links. A wrapped row of chips rather than a dropdown:
+ * there is no room for a menu on a phone, and a chip row is one tap deep where a
+ * menu is two.
+ *
+ * There are fifteen of them, though, and fifteen wrapped chips is four rows of
+ * chrome above every screen on a 375px phone — the nav pushing the page it
+ * navigates to off the fold. So on small viewports the row folds into a
+ * <details>; from 720px up the disclosure is neutralized and the chips are just
+ * a row again. No JS, and the config-derived seam is untouched: the same list
+ * renders either way.
+ */
+.admin-nav__disclosure {
+  order: 4;
+  width: 100%;
+  padding-top: var(--unit-xs);
+  border-top: 1px solid var(--inverse-outline-variant);
+}
 
-/* ── Toast ─────────────────────────────────────────────────────── */
-.toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); background: var(--admin-panel-2); color: var(--admin-heading); border: 1px solid var(--admin-line); border-radius: var(--admin-radius); padding: .7rem 1.1rem; font-size: .85rem; box-shadow: 0 6px 24px rgba(0,0,0,.4); z-index: 50; }
+.admin-nav__summary {
+  display: flex;
+  align-items: center;
+  gap: var(--unit-xs);
+  min-height: 44px; /* touch target — the phone is the primary device (R-4) */
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--inverse-on-surface-variant);
+  /* Both are needed: `list-style` for Firefox, the pseudo for WebKit. */
+  list-style: none;
+}
 
-@media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
+.admin-nav__summary::-webkit-details-marker {
+  display: none;
+}
+
+.admin-nav__summary::after {
+  content: "▾";
+  font-size: 14px;
+}
+
+.admin-nav__disclosure[open] .admin-nav__summary::after {
+  content: "▴";
+}
+
+.admin-nav__content {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--unit-xs);
+  padding-bottom: var(--unit-xs);
+}
+
+@media (min-width: 720px) {
+  /*
+   * Un-collapse. Two rules for one job because engines disagree on HOW a closed
+   * <details> hides its content: the legacy UA rule is `display: none` on the
+   * children (overridden by the `.admin-nav__content` display below), and Chrome
+   * 131+ uses `content-visibility` on the `::details-content` pseudo. An engine
+   * that does not know the pseudo drops only that rule.
+   */
+  .admin-nav__summary {
+    display: none;
+  }
+
+  .admin-nav__disclosure::details-content {
+    content-visibility: visible;
+    block-size: auto;
+  }
+
+  .admin-nav__content {
+    display: flex;
+    padding-bottom: 0;
+  }
+}
+
+/* The row label. On a phone the <summary> already says this word. */
+.admin-nav__section {
+  display: none;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--inverse-on-surface-variant);
+  margin-right: var(--unit-xs);
+}
+
+@media (min-width: 720px) {
+  .admin-nav__section {
+    display: inline;
+  }
+}
+
+.admin-nav__chip {
+  padding: 6px var(--unit-sm);
+  border: 1px solid var(--inverse-outline-variant);
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--inverse-on-surface-variant);
+}
+
+.admin-nav__chip:hover,
+.admin-nav__chip:focus-visible {
+  color: var(--inverse-on-surface);
+  border-color: var(--inverse-primary);
+}
+
+.admin-nav__chip[aria-current="page"] {
+  background: var(--inverse-primary);
+  border-color: var(--inverse-primary);
+  color: var(--inverse-surface);
+}
+
+.admin-nav__account {
+  display: flex;
+  align-items: center;
+  gap: var(--unit-sm);
+  font-size: 12px;
+  color: var(--inverse-on-surface-variant);
+}
+
+.admin-nav__email {
+  max-width: 16rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-nav__logout {
+  border: 1px solid var(--inverse-outline-variant);
+  border-radius: var(--radius);
+  padding: 6px var(--unit-sm);
+  font-weight: 600;
+}
+
+/* ---------- cards ---------- */
+.admin-cards {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--unit-md);
+}
+
+@media (min-width: 640px) {
+  .admin-cards {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+}
+
+.admin-card {
+  display: block;
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-lg);
+  padding: var(--unit-md);
+}
+
+.admin-card:hover,
+.admin-card:focus-visible {
+  border-color: var(--primary);
+}
+
+/* `display: block` is load-bearing, not tidiness: these are <span>s inside a
+   block <a>, and inline spans put the card's title and its description on the
+   same line with the margin silently dropped. */
+.admin-card__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--unit-sm);
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: var(--unit-xs);
+}
+
+.admin-card__body {
+  display: block;
+  font-size: 14px;
+  color: var(--on-surface-variant);
+}
+
+.admin-card__note {
+  display: block;
+  margin-top: var(--unit-xs);
+  font-size: 12px;
+  color: var(--on-surface-muted);
+}
+
+.admin-card__note:empty {
+  display: none;
+}
+
+/* The count of things waiting for you — on the card, where the decision to tap
+   it is made. It carries its own noun ("3 nya"), so it reads on its own. */
+.admin-badge {
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
+  background: var(--primary);
+  color: var(--on-primary);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+/* Panel-level explanatory copy, as opposed to `.admin-field__hint` under one input. */
+.admin-hint {
+  font-size: 14px;
+  color: var(--on-surface-variant);
+  max-width: 60ch;
+}
+
+/* ---------- dashboard: the F-018 provenance summary ---------- */
+.provenance-list {
+  display: grid;
+  gap: var(--unit-xs);
+  margin-top: var(--unit-sm);
+  list-style: none;
+}
+
+.provenance-link {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--unit-sm);
+  min-height: 44px;
+  padding: var(--unit-xs) var(--unit-sm);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius);
+  font-weight: 600;
+}
+
+.provenance-link:hover,
+.provenance-link:focus-visible {
+  border-color: var(--primary);
+}
+
+.provenance-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--on-surface-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- panels + forms ---------- */
+.admin-panel {
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-lg);
+  padding: var(--unit-md);
+  margin-bottom: var(--unit-lg);
+}
+
+.admin-panel__title {
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: var(--unit-sm);
+}
+
+.admin-field {
+  display: block;
+  margin-bottom: var(--unit-md);
+}
+
+.admin-field__label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--on-surface-variant);
+  margin-bottom: var(--unit-xs);
+}
+
+.admin-field__hint {
+  display: block;
+  font-size: 12px;
+  color: var(--on-surface-muted);
+  margin-top: var(--unit-xs);
+}
+
+.admin-input,
+.admin-file {
+  width: 100%;
+  font: inherit;
+  color: var(--on-surface);
+  background: var(--surface-container-low);
+  border: 1px solid var(--outline);
+  border-radius: var(--radius);
+  padding: 10px var(--unit-sm);
+}
+
+.admin-input:focus-visible,
+.admin-file:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+
+/* ---------- buttons ---------- */
+.admin-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--unit-xs);
+  min-height: 44px; /* touch target — the phone is the primary device (R-4) */
+  padding: 10px var(--unit-md);
+  border-radius: var(--radius);
+  border: 1px solid var(--primary);
+  background: var(--primary);
+  color: var(--on-primary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-btn:disabled {
+  opacity: 0.55;
+  cursor: progress;
+}
+
+.admin-btn--ghost {
+  background: transparent;
+  color: var(--primary);
+}
+
+.admin-btn--danger {
+  background: transparent;
+  border-color: var(--error);
+  color: var(--error);
+}
+
+.admin-btn--sm {
+  min-height: 36px;
+  padding: 6px var(--unit-sm);
+}
+
+/* ---------- media library ---------- */
+.media-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--unit-md);
+  list-style: none;
+}
+
+@media (min-width: 560px) {
+  .media-grid {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  }
+}
+
+.media-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--unit-sm);
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-lg);
+  padding: var(--unit-sm);
+}
+
+.media-card__thumb {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  border-radius: var(--radius);
+  background: var(--surface-container-high);
+}
+
+.media-card__key {
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--on-surface-muted);
+  word-break: break-all;
+}
+
+.media-card__meta {
+  font-size: 11px;
+  color: var(--on-surface-muted);
+}
+
+.media-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--unit-xs);
+  margin-top: auto;
+}
+
+/* ---------- empty state + feedback ---------- */
+.admin-empty {
+  border: 1px dashed var(--outline);
+  border-radius: var(--radius-lg);
+  padding: var(--unit-lg);
+  text-align: center;
+  color: var(--on-surface-variant);
+}
+
+/*
+ * The toast is a live region rather than an alert() so a save confirmation can
+ * never block the next edit. It is announced, not just shown.
+ */
+.admin-toast {
+  position: fixed;
+  inset-inline: var(--margin-mobile);
+  bottom: var(--unit-md);
+  z-index: 10;
+  margin-inline: auto;
+  max-width: 30rem;
+  padding: var(--unit-sm) var(--unit-md);
+  border-radius: var(--radius);
+  background: var(--inverse-surface);
+  color: var(--inverse-on-surface);
+  box-shadow: var(--glow-sm);
+  font-size: 14px;
+}
+
+.admin-toast[hidden] {
+  display: none;
+}
+
+.admin-toast--error {
+  background: var(--error);
+  color: var(--on-error);
+}
+
+/* ---------- portfolio: the editor form ---------- */
+/*
+ * The panels of the portfolio form are <fieldset>s, so the section heading is a
+ * real <legend> and each group is announced as a group. Two UA defaults have to
+ * be undone for that: a fieldset's min-inline-size is min-content (which blows a
+ * grid child out to the width of its longest input), and a legend carries its
+ * own inline padding.
+ */
+fieldset.admin-panel {
+  min-inline-size: 0;
+}
+
+legend.admin-panel__title {
+  padding-inline: 0;
+}
+
+.admin-field__req {
+  margin-inline-start: var(--unit-xs);
+  color: var(--on-surface-muted);
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* Inline validation: the message sits under the field it belongs to, because a
+   single "something is wrong" toast on a 25-field form is not an answer. */
+.admin-field__error {
+  display: block;
+  margin-top: var(--unit-xs);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--error);
+}
+
+.admin-field__error[hidden] {
+  display: none;
+}
+
+/* The parsed-provider badge on the share-URL field (F-002). */
+.admin-field__badge {
+  display: inline-block;
+  margin-top: var(--unit-xs);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: var(--secondary-container);
+  color: #241a05;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.admin-field__badge[hidden] {
+  display: none;
+}
+
+.admin-field__badge.is-invalid {
+  background: var(--error);
+  color: var(--on-error);
+}
+
+.admin-select {
+  /* Keeps the native control (and its phone-native picker) while matching the
+     text inputs' box. Nothing here is worth a custom dropdown. */
+  appearance: auto;
+}
+
+.admin-textarea {
+  min-height: 6rem;
+  resize: vertical;
+}
+
+.admin-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--unit-sm) var(--unit-md);
+}
+
+@media (min-width: 720px) {
+  .admin-pair {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.admin-checkline {
+  display: grid;
+  gap: var(--unit-sm);
+}
+
+.admin-check {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--unit-sm);
+  min-height: 44px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.admin-check input {
+  margin-top: 3px;
+  width: 20px;
+  height: 20px;
+  flex: none;
+}
+
+.admin-check .admin-field__hint {
+  font-weight: 400;
+}
+
+.admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--unit-sm);
+  margin-bottom: var(--unit-xl);
+}
+
+.poster-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--unit-md);
+  margin-bottom: var(--unit-md);
+}
+
+.poster-picker__thumb {
+  width: 96px;
+  aspect-ratio: 9 / 16;
+  object-fit: cover;
+  border-radius: var(--radius);
+  background: var(--surface-container-high);
+}
+
+.poster-picker__body {
+  flex: 1 1 16rem;
+  min-width: 0;
+}
+
+.poster-picker__key {
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  color: var(--on-surface-muted);
+  margin-bottom: var(--unit-xs);
+}
+
+/* ---------- portfolio: the list ---------- */
+.admin-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--unit-xs);
+  margin-bottom: var(--unit-md);
+}
+
+.admin-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--unit-xs);
+  min-height: 44px;
+  padding: 6px var(--unit-md);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-full);
+  color: var(--on-surface-variant);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.admin-tab[aria-current="page"] {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--on-primary);
+}
+
+.admin-tab__count {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+.portfolio-list {
+  display: grid;
+  gap: var(--unit-sm);
+  margin-top: var(--unit-sm);
+  list-style: none;
+}
+
+.portfolio-row {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--unit-sm);
+  padding: var(--unit-sm);
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-lg);
+}
+
+@media (min-width: 720px) {
+  .portfolio-row {
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
+  }
+}
+
+/* The dragged row stays in place visually but fades, so the gap it leaves is
+   readable as "this is where it comes from". */
+.portfolio-row.is-dragging {
+  opacity: 0.45;
+}
+
+.portfolio-row__handles {
+  display: grid;
+  gap: 2px;
+}
+
+.portfolio-row__thumb {
+  width: 48px;
+  aspect-ratio: 9 / 16;
+  object-fit: cover;
+  border-radius: var(--radius);
+  background: var(--surface-container-high);
+}
+
+.portfolio-row__thumb--empty {
+  display: block;
+  border: 1px dashed var(--outline);
+}
+
+.portfolio-row__body {
+  min-width: 0;
+}
+
+.portfolio-row__title {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.portfolio-row__meta {
+  font-size: 12px;
+  color: var(--on-surface-muted);
+  overflow-wrap: anywhere;
+}
+
+.portfolio-row__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--unit-xs);
+  margin-top: var(--unit-xs);
+}
+
+.portfolio-row__actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--unit-xs);
+}
+
+@media (min-width: 720px) {
+  .portfolio-row__actions {
+    grid-column: auto;
+  }
+}
+
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--on-surface-variant);
+}
+
+.status-chip--live {
+  background: var(--secondary-container);
+  border-color: transparent;
+  color: #241a05;
+}
+
+.status-chip--draft {
+  background: var(--surface-container-high);
+}
+
+.status-chip--warn {
+  border-color: var(--error);
+  color: var(--error);
+}
+
+/* ---------- content forms (F-008 / F-009 / F-018) ---------- */
+.kv-field {
+  padding-bottom: var(--unit-md);
+  border-bottom: 1px solid var(--outline-variant);
+}
+
+.kv-field:last-of-type {
+  border-bottom: 0;
+}
+
+.kv-field__label {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--unit-xs);
+}
+
+/* F-018: a value nobody has confirmed says so, until someone does. */
+.kv-badge {
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: var(--secondary-container);
+  color: #241a05;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.kv-sides {
+  margin-top: var(--unit-xs);
+}
+
+.kv-side {
+  display: block;
+  min-width: 0;
+}
+
+.kv-side__label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--on-surface-muted);
+  margin-bottom: 2px;
+}
+
+/*
+ * The ghost default. It must read as "this is what will show if you write
+ * nothing" and never as a value that is already saved — hence italic and muted,
+ * not just placeholder-grey.
+ */
+.kv-side .admin-input::placeholder,
+.kv-image .admin-input::placeholder {
+  color: var(--on-surface-muted);
+  font-style: italic;
+  opacity: 1;
+}
+
+.kv-field__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--unit-xs);
+  margin-top: var(--unit-xs);
+}
+
+.kv-field__actions:empty {
+  display: none;
+}
+
+.kv-image {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--unit-md);
+  margin-top: var(--unit-xs);
+}
+
+.kv-image__thumb {
+  width: 96px;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: var(--radius);
+  background: var(--surface-container-high);
+}
+
+.kv-image__body {
+  flex: 1 1 16rem;
+  min-width: 0;
+  display: grid;
+  gap: var(--unit-xs);
+}
+
+/* ---------- collections (F-010) ---------- */
+.collection-list {
+  display: grid;
+  gap: var(--unit-md);
+  list-style: none;
+}
+
+.collection-item {
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-lg);
+  padding: var(--unit-md);
+}
+
+.collection-item.is-dragging {
+  opacity: 0.45;
+}
+
+.collection-item__head {
+  display: flex;
+  align-items: center;
+  gap: var(--unit-sm);
+  margin-bottom: var(--unit-sm);
+}
+
+.collection-item__handles {
+  display: grid;
+  gap: 2px;
+}
+
+.collection-item__title {
+  min-width: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.collection-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--unit-xs);
+}
+
+/* A machine slug is shown, not offered: it is set at creation and carried
+   forward on every save (§6.7). */
+.collection-readonly {
+  display: block;
+  padding: 10px 0;
+  font-size: 14px;
+  color: var(--on-surface-muted);
+  overflow-wrap: anywhere;
+}
+
+.collection-add {
+  margin-top: var(--unit-lg);
+}
+
+/* ---------- portfolio: the draft preview (F-006) ---------- */
+.admin-preview {
+  padding: 0;
+}
+
+.preview-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--unit-sm);
+  padding: var(--unit-sm) var(--margin-mobile);
+  background: var(--inverse-surface);
+  color: var(--inverse-on-surface);
+}
+
+.preview-bar__badge {
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background: var(--secondary-container);
+  color: #241a05;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.preview-bar__note {
+  flex: 1 1 18rem;
+  font-size: 12px;
+}
+
+.preview-bar__actions {
+  display: flex;
+  gap: var(--unit-xs);
+}
+
+.preview-bar__actions .admin-btn--ghost {
+  color: var(--inverse-on-surface);
+  border-color: currentColor;
+}
+
+.preview-stage {
+  padding: var(--unit-xl) var(--margin-mobile);
+}
+
+/* One card, at the width it actually occupies in a grid column — a preview
+   stretched to the viewport would flatter every poster. */
+.preview-card {
+  max-width: 22rem;
+  margin-inline: auto;
+}
+
+/* ---------- enquiry inbox (F-013) ---------- */
+/*
+ * Cards, not table rows. The payload is a free-text message of unbounded length
+ * and an unbroken URL is a normal thing to find in one — in a table cell that is
+ * either a clipped column or a 375px viewport scrolling sideways. Here it wraps.
+ */
+.enquiry-list {
+  display: grid;
+  gap: var(--unit-md);
+  margin-top: var(--unit-md);
+  list-style: none;
+}
+
+.enquiry {
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-lg);
+  padding: var(--unit-md);
+}
+
+.enquiry__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--unit-sm);
+  margin-bottom: var(--unit-sm);
+}
+
+.enquiry__name {
+  min-width: 0;
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.enquiry__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--unit-xs) var(--unit-md);
+  margin-bottom: var(--unit-sm);
+  font-size: 12px;
+  color: var(--on-surface-muted);
+}
+
+.enquiry__meta dt {
+  display: inline;
+  font-weight: 700;
+}
+
+.enquiry__meta dt::after {
+  content: ": ";
+}
+
+.enquiry__meta dd {
+  display: inline;
+}
+
+/* `pre-wrap` because the sender's paragraph breaks are part of the message;
+   `anywhere` because a pasted campaign URL must not widen the page. */
+.enquiry__message {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  padding: var(--unit-sm) 0;
+  border-top: 1px solid var(--outline-variant);
+}
+
+.enquiry__warning {
+  margin-top: var(--unit-xs);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--error);
+}
+
+.enquiry__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--unit-xs);
+  margin-top: var(--unit-sm);
+}
+
+/* ---------- the phone pass (R-4, F-016) ---------- */
+/*
+ * Nicole triages from a phone, so the small viewport is the DEFAULT everywhere
+ * above and this block only holds what is specifically a phone concession.
+ *
+ * 44px is the floor for anything you tap. `.admin-btn--sm` exists to keep dense
+ * lists (media cards, portfolio rows, enquiry actions) from looking like a stack
+ * of primary buttons — that is a VISUAL weight argument, and it does not survive
+ * contact with a thumb. Below 720px the small variant keeps its lighter padding
+ * and gets its target back.
+ */
+@media (max-width: 719px) {
+  .admin-btn--sm {
+    min-height: 44px;
+  }
+
+  .admin-nav__link {
+    min-height: 44px;
+  }
+
+  /*
+   * The account row goes full-width under the brand. Sharing a line with it, a
+   * long address either ellipsised to nothing or pushed the logout button off
+   * the edge.
+   */
+  .admin-nav__account {
+    order: 2;
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .admin-nav__email {
+    min-width: 0;
+    max-width: none;
+  }
+
+  .admin-nav__logout {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    flex: none;
+  }
+}

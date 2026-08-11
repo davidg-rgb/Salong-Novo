@@ -11,11 +11,10 @@ import AdminBase from "../../../layouts/AdminBase.astro";
 import PostView from "../../../components/PostView.astro";
 import { getById } from "../../../lib/db";
 import { bindings } from "../../../lib/cms/bindings";
-import "../../../styles/admin.css";
+import "../../../styles/admin-blog.css";
 
 const env = await bindings();
 const db = env.DB;
-const userEmail = Astro.locals.user?.email ?? null;
 
 const idParam = Astro.params.id ?? "";
 const id = /^\d+$/.test(idParam) ? Number(idParam) : NaN;
@@ -37,7 +36,7 @@ const bannerText =
       ? "Förhandsgranskning av utkast — inte publicerat"
       : "Förhandsgranskning av publicerat inlägg";
 ---
-<AdminBase title={`Förhandsgranska: ${post.title || "Utkast"}`} userEmail={userEmail}>
+<AdminBase title={`Förhandsgranska: ${post.title || "Utkast"}`}>
   <div class="preview-banner" role="status">
     <span class="preview-banner__dot" aria-hidden="true"></span>
     <span>{bannerText}</span>

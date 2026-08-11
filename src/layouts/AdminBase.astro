@@ -1,28 +1,35 @@
 ---
 /**
- * Admin shell — Swedish-only, `noindex`, dark token theme, NO public
- * header/footer. Used by every `/admin/*` page (never the public Base.astro).
- * See ARCHITECTURE §10.2 / §10.8.
+ * The admin shell (ARCHITECTURE §6.16, F-016) — used by every `/admin/*` page,
+ * never the public `Base.astro`.
+ *
+ * The write token comes off `Astro.locals` (stamped by the middleware on an
+ * admitted admin request), NOT from `bindings()`. That invariant is §8.6's:
+ * nothing outside the middleware and the API routes touches a binding, so the
+ * layout cannot accidentally become a second place that has to get the
+ * Vercel/no-binding path right.
+ *
+ * The token in a meta tag is defense layer 2. Cloudflare Access is the real gate
+ * — a cross-site attacker can neither read this noindex page nor set the
+ * `x-admin-token` header without a CORS grant we never issue.
  */
 import "../styles/tokens.css";
+import "../styles/admin.css";
 import AdminNav from "../components/admin/AdminNav.astro";
-import { bindings } from "../lib/cms/bindings";
+import { adminString } from "../lib/cms/strings.sv";
 
 interface Props {
   title: string;
-  userEmail?: string | null;
 }
-const { title, userEmail } = Astro.props;
 
-/**
- * Defense-in-depth write token (§10.8). Cloudflare Access is the real gate; this
- * token is injected into the Access-gated, noindex admin page so the same-origin
- * client can echo it as `x-admin-token` on writes. A cross-site attacker can
- * neither read this page (Access) nor set the header (no CORS grant).
- */
-const env = await bindings();
-const adminToken = env.ADMIN_API_TOKEN ?? "";
+const { title } = Astro.props;
+
+const adminToken = Astro.locals.adminToken ?? "";
+const adminEmail = Astro.locals.adminEmail ?? "";
+/** Under the dev identity there is no Access session to log out of. */
+const showLogout = !import.meta.env.DEV;
 ---
+
 <!doctype html>
 <html lang="sv">
   <head>
@@ -30,26 +37,19 @@ const adminToken = env.ADMIN_API_TOKEN ?? "";
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex,nofollow" />
     <meta name="admin-token" content={adminToken} />
-    <title>{title} — Salong NOVO Admin</title>
+    <title>{title} — {adminString("admin.title")}</title>
     <link rel="icon" href="/favicon.ico" />
   </head>
   <body class="admin">
-    <AdminNav userEmail={userEmail} />
-    <main id="main" class="admin-main wrap">
+    <AdminNav email={adminEmail} showLogout={showLogout} />
+    <main id="main" class="admin-main">
       <slot />
     </main>
+    <!--
+      One toast element per page, owned by whichever client script is wired in.
+      It lives in the layout so every admin screen reports success and failure
+      the same way, and so a raw error code can never be the thing on screen.
+    -->
+    <p id="admin-toast" class="admin-toast" role="status" aria-live="polite" hidden></p>
   </body>
 </html>
-
-<style>
-  :global(body.admin) {
-    background: var(--charcoal, #161616);
-    color: var(--cream, #f8f8f8);
-    min-height: 100vh;
-  }
-  .admin-main {
-    padding: 1.5rem 1.25rem 3rem;
-    max-width: var(--maxw, 1100px);
-    margin-inline: auto;
-  }
-</style>

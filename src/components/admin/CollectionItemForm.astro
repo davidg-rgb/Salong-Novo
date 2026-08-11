@@ -1,0 +1,129 @@
+---
+/**
+ * One item of one collection, rendered from its `CollectionDef` (§6.7).
+ *
+ * Used twice by `CollectionList`: once per stored row as an edit form, and once
+ * at the foot of the page with `item = null` as the create form. Same schema,
+ * same markup, one definition — a second copy of this field loop is the thing
+ * that would quietly drift out of agreement with the validator.
+ *
+ * The one branch that matters is `readOnly`. On an EDIT form a machine slug
+ * renders as static text and carries no `data-prop`, so it is absent from the
+ * request body and the server copies it forward from the stored row. On the
+ * CREATE form it is a real input, because creation is the one moment the value
+ * is set. Without that split, the first save of a seeded service would drop its
+ * `key` and break the tile's link to its category page.
+ */
+import { adminString } from "../../lib/cms/strings.sv";
+import type { CollectionDef, CollectionItem, FieldDef } from "../../lib/cms/config-types";
+
+interface Props {
+  def: CollectionDef;
+  /** The stored item, or null on the create form. */
+  item: CollectionItem | null;
+}
+
+const { def, item } = Astro.props;
+
+const data = item?.data ?? {};
+const endpoint = item
+  ? `/api/admin/collections/${def.name}/${item.id}`
+  : `/api/admin/collections/${def.name}`;
+
+/** The payload property names one field owns — two of them when bilingual. */
+const propsOf = (field: FieldDef): { prop: string; sideLabel: string }[] =>
+  field.bilingual
+    ? [
+        { prop: `${field.name}_sv`, sideLabel: adminString("form.sv") },
+        { prop: `${field.name}_en`, sideLabel: adminString("form.en") },
+      ]
+    : [{ prop: field.name, sideLabel: "" }];
+
+/** A `list` value is edited as one entry per line — the JSON stays an array. */
+const asText = (field: FieldDef, prop: string): string => {
+  const value = data[prop];
+  if (field.kind === "list") return Array.isArray(value) ? value.join("\n") : "";
+  return value === undefined || value === null ? "" : String(value);
+};
+
+const isChecked = (prop: string): boolean => data[prop] === true;
+---
+
+<form
+  class="collection-form"
+  data-collection-form
+  data-endpoint={endpoint}
+  data-method={item ? "PUT" : "POST"}
+  method="post"
+  action={endpoint}
+>
+  {
+    def.fields.map((field) => (
+      <div class:list={["admin-field", field.bilingual && "collection-field--pair"]}>
+        <span class="admin-field__label">
+          {field.label}
+          {field.required && <span class="admin-field__req">{adminString("form.required")}</span>}
+        </span>
+
+        <div class:list={[field.bilingual && "admin-pair"]}>
+          {propsOf(field).map(({ prop, sideLabel }) => (
+            <label class="kv-side">
+              {sideLabel && <span class="kv-side__label">{sideLabel}</span>}
+
+              {field.readOnly && item ? (
+                <span class="collection-readonly">{asText(field, prop) || "—"}</span>
+              ) : field.kind === "textarea" || field.kind === "list" ? (
+                <textarea
+                  class="admin-input admin-textarea"
+                  rows={field.kind === "list" ? 4 : 3}
+                  data-prop={prop}
+                  data-kind={field.kind}
+                  set:text={asText(field, prop)}
+                />
+              ) : field.kind === "toggle" ? (
+                <input
+                  type="checkbox"
+                  data-prop={prop}
+                  data-kind="toggle"
+                  checked={isChecked(prop)}
+                />
+              ) : (
+                <input
+                  class="admin-input"
+                  type={field.kind === "url" ? "url" : field.kind === "number" ? "number" : "text"}
+                  data-prop={prop}
+                  data-kind={field.kind}
+                  value={asText(field, prop)}
+                  maxlength={field.maxLen}
+                />
+              )}
+
+              <span class="admin-field__error" data-field-error={prop} hidden />
+            </label>
+          ))}
+        </div>
+
+        {field.kind === "list" && (
+          <span class="admin-field__hint">{adminString("collection.listHint")}</span>
+        )}
+      </div>
+    ))
+  }
+
+  <div class="collection-form__actions">
+    <button class="admin-btn admin-btn--sm" type="submit">
+      {item ? adminString("form.save") : adminString("collection.add")}
+    </button>
+    {
+      item && (
+        <button
+          class="admin-btn admin-btn--danger admin-btn--sm"
+          type="button"
+          data-collection-delete={endpoint}
+        >
+          {adminString("form.delete")}
+        </button>
+      )
+    }
+  </div>
+</form>

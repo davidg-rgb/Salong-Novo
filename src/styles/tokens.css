@@ -36,6 +36,65 @@
   --font-sans: "Hanken Grotesk", "Helvetica Neue", Arial, sans-serif;
   --font-serif: "Playfair Display", Georgia, serif;
 }
+
+/*
+ * ── The Forge CMS token contract (RUNBOOK §3.3) ──────────────────────────────
+ *
+ * `src/styles/admin.css` contains ZERO hardcoded brand colours; it is rethemed
+ * entirely by these 30 role-named properties (plus --font-sans/--font-serif
+ * above, for 32). The names are Material-3-shaped — surface / on-surface /
+ * inverse-* — because that is what the admin's light-body-dark-nav layout needs
+ * to express. Our palette is named for COLOURS (--bronze, --clay, --terracotta),
+ * so this block is the alias layer between the two vocabularies.
+ *
+ * It themes the ADMIN ONLY. Nothing on the public site reads a role name, and
+ * nothing here changes a public pixel.
+ */
+:root {
+  /* brand + state. --primary is terracotta, not bronze: bronze is texture and
+     never a CTA fill (see the palette note above), and every --primary use in
+     admin.css is a filled action. */
+  --primary: var(--terracotta);
+  --on-primary: var(--white);
+  --secondary-container: var(--clay);
+  --error: #b3261e;
+  --on-error: var(--white);
+
+  /* surfaces (light) — the admin body */
+  --surface-container-lowest: var(--white);
+  --surface-container-low: var(--cream);
+  --surface-container-high: #ece7df;
+  --on-surface: var(--ink);
+  --on-surface-variant: var(--on-variant);
+  --on-surface-muted: #7d7c74;
+  --outline: #9a978e;
+  --outline-variant: var(--hairline);
+
+  /* surfaces (inverse) — the admin nav bar and dark bands. --inverse-primary is
+     champagne rather than bronze: bronze at 3.1:1 on charcoal is the one place
+     the texture colour would have had to carry a link. */
+  --inverse-surface: var(--charcoal);
+  --inverse-surface-container: #23221f;
+  --inverse-on-surface: var(--cream);
+  --inverse-on-surface-variant: var(--clay);
+  --inverse-outline-variant: var(--bronze-dark);
+  --inverse-primary: var(--champagne);
+
+  /* geometry. Square corners are the editorial direction, not an omission —
+     .btn above is `border-radius: 0` and the admin follows it. --radius-full
+     stays a pill because it only ever wraps a badge. */
+  --radius: 0;
+  --radius-lg: 0;
+  --radius-full: 9999px;
+  --unit-xs: 4px;
+  --unit-sm: 8px;
+  --unit-md: 16px;
+  --unit-lg: 32px;
+  --unit-xl: 64px;
+  --gutter: 24px;
+  --margin-mobile: 20px;
+  --glow-sm: 0 8px 28px -12px rgba(22, 22, 22, 0.18);
+}
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body {

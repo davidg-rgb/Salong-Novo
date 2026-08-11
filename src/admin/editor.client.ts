@@ -656,7 +656,7 @@ function initEditor(form: HTMLFormElement): void {
   }
 
   async function remove(): Promise<void> {
-    if (draft.id === undefined) { window.location.href = "/admin"; return; }
+    if (draft.id === undefined) { window.location.href = "/admin/posts"; return; }
     if (!window.confirm(fmt(ADMIN.dashboard.deleteConfirm, { title: draft.title || "" }))) return;
     setBusy(true);
     try {
@@ -669,7 +669,7 @@ function initEditor(form: HTMLFormElement): void {
       if (res.ok && isOk(data)) {
         saved = structuredClone(draft); // suppress the dirty guard on navigate-away
         clearStash();
-        window.location.href = "/admin";
+        window.location.href = "/admin/posts";
       } else {
         showToast(ADMIN.errors.generic);
       }

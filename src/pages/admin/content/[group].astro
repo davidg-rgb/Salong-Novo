@@ -1,0 +1,137 @@
+---
+export const prerender = false;
+/**
+ * One grouped content form (ARCHITECTURE §6.16, §9.2/§9.3, F-008/F-009).
+ *
+ * ONE ROUTE, TWO KINDS OF GROUP. `/admin/content/model` is a set of site FACTS
+ * (`site.*` keys backed by `content/site.json`); `/admin/content/copy-home` is a
+ * set of page COPY overrides (`copy.*` keys backed by the dictionary). They share
+ * the param namespace, the form, and the endpoint — the only difference is where
+ * the ghost-placeholder default comes from, which is why the config test insists
+ * the two key spaces never collide.
+ *
+ * Hydration reads RAW rows via `Astro.locals.db` (§10.1: admin pages read, every
+ * write goes through §8). Never through `overrideValue` — see FormField.
+ */
+import AdminBase from "../../../layouts/AdminBase.astro";
+import FormField from "../../../components/admin/FormField.astro";
+import { CMS } from "../../../cms.config";
+import { adminString } from "../../../lib/cms/strings.sv";
+import { copyKey, listContentKv, type ContentKvRow } from "../../../lib/cms/content";
+import { servedUrl } from "../../../lib/cms/media";
+import type { ContentFieldDef } from "../../../lib/cms/config-types";
+import { getSite } from "../../../lib/site";
+import { t } from "../../../i18n";
+
+const param = Astro.params.group ?? "";
+const factGroup = CMS.contentGroups.find((group) => group.key === param) ?? null;
+const copyGroup = CMS.editableCopy.find((page) => page.page === param) ?? null;
+if (!factGroup && !copyGroup) return new Response(null, { status: 404 });
+
+/**
+ * A copy group's fields are synthesized: the config stores bare dictionary keys
+ * for readability, `copyKey()` namespaces them for storage, and the input shape
+ * follows the length of the developer's own string — a call-to-action label does
+ * not deserve a three-row textarea.
+ */
+const fields: ContentFieldDef[] = factGroup
+  ? factGroup.fields
+  : copyGroup!.keys.map((entry) => ({
+      key: copyKey(entry.key),
+      label: entry.label,
+      hint: entry.hint,
+      kind: t("sv", entry.key).length > 80 ? "textarea" : "text",
+      bilingual: true,
+    }));
+
+const title = factGroup?.label ?? copyGroup!.label;
+
+const db = Astro.locals.db;
+let rows: ContentKvRow[] = [];
+let formDown = db === null;
+
+if (db) {
+  try {
+    rows = await listContentKv(db);
+  } catch (error) {
+    console.error("[admin/content] hydration failed", error);
+    formDown = true;
+  }
+}
+const byKey = new Map(rows.map((row) => [row.key, row]));
+
+/** The un-overridden JSON document — defaults must not show the client's own edits back to her. */
+const site = getSite();
+
+/** Walk `site.<path>.<leaf>` into the JSON and read the pair, or the plain leaf. */
+function factDefaults(key: string): { sv: string; en: string } {
+  const parts = key.split(".");
+  parts.shift();
+  const leaf = parts.pop() ?? "";
+  let node: unknown = site;
+  for (const part of parts) {
+    node = node && typeof node === "object" ? (node as Record<string, unknown>)[part] : undefined;
+  }
+  const target = (node ?? {}) as Record<string, unknown>;
+  const read = (name: string) => (typeof target[name] === "string" ? (target[name] as string) : "");
+  return `${leaf}_sv` in target
+    ? { sv: read(`${leaf}_sv`), en: read(`${leaf}_en`) }
+    : { sv: read(leaf), en: "" };
+}
+
+/** Copy defaults are the dictionary strings themselves — no kv, so no override. */
+function copyDefaults(bare: string): { sv: string; en: string } {
+  return { sv: t("sv", bare), en: t("en", bare) };
+}
+
+const defaults = new Map(
+  fields.map((field) => [
+    field.key,
+    factGroup ? factDefaults(field.key) : copyDefaults(field.key.replace(/^copy\./, "")),
+  ]),
+);
+
+/** Same source as `posterSrc`, so the picker and the public grid agree on Stage A/B. */
+const imageBase = import.meta.env.PUBLIC_IMAGE_BASE ?? "";
+const imageUrlFor = (field: ContentFieldDef): string => {
+  if (field.kind !== "image") return "";
+  const key = byKey.get(field.key)?.value_sv ?? "";
+  return key === "" ? "" : servedUrl(imageBase, key);
+};
+---
+
+<AdminBase title={title}>
+  <div class="admin-page-head">
+    <h1>{title}</h1>
+  </div>
+  <p class="admin-lede">
+    {factGroup ? adminString("content.factsLede") : adminString("content.copyLede")}
+  </p>
+
+  {
+    formDown ? (
+      <p class="admin-empty">{adminString("content.emptyDb")}</p>
+    ) : (
+      <form class="admin-panel" data-content-form data-endpoint="/api/admin/content" data-method="PUT">
+        {fields.map((field) => (
+          <FormField
+            field={field}
+            row={byKey.get(field.key) ?? null}
+            defaultSv={defaults.get(field.key)?.sv ?? ""}
+            defaultEn={defaults.get(field.key)?.en ?? ""}
+            imageUrl={imageUrlFor(field)}
+          />
+        ))}
+
+        <div class="admin-actions">
+          <button class="admin-btn" type="submit">{adminString("form.save")}</button>
+        </div>
+      </form>
+    )
+  }
+</AdminBase>
+
+<script>
+  import { wireContentForm } from "../../../admin/forms.client";
+  wireContentForm();
+</script>

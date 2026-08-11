@@ -33,7 +33,7 @@ How to extend this codebase without breaking its grain. Read once before contrib
 ## Adding a server (D1-backed) route
 
 - Add `export const prerender = false;` at the top.
-- Read the binding via `Astro.locals.runtime?.env?.DB` (optional chaining — it's undefined
+- Read the binding via `bindings()` from `src/lib/cms/bindings.ts` (defensively — it's undefined
   during static build). Wrap queries in `.catch(() => fallback)`.
 - Use the `src/lib/db.ts` helpers; don't write inline SQL in pages.
 
@@ -51,7 +51,7 @@ The admin panel (ARCHITECTURE §10) is **built**. Extend it in the same grain:
    public `Base.astro`. Pass `userEmail={Astro.locals.user?.email}`. AdminBase injects the
    defense-in-depth `<meta name="admin-token">` that the client controllers echo as
    `x-admin-token` on writes.
-3. **API routes:** `export const prerender = false`, guard `locals.runtime?.env?.DB` (503
+3. **API routes:** `export const prerender = false`, guard the `DB` off `bindings()`/`Astro.locals.db` (503
    `db_unavailable`), keep the `authorized()` token check, and on **every write** call
    `isSameOriginWrite(request, env.PUBLIC_SITE_URL)` (CSRF → 403). All request/response shapes
    come from `src/lib/admin-api.ts` — never declare a local `Body`. Untrusted JSON is normalized

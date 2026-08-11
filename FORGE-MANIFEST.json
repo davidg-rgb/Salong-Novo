@@ -1,0 +1,250 @@
+{
+  "core": "forge-cms",
+  "coreVersion": "1.0.0",
+  "instance": "salong-novo-v2",
+  "adoptedAt": "2026-08-11",
+  "adoptedAtPhase": "Phase B1 (RUNBOOK §3 stand-up checklist)",
+  "template": "../../_templates/forge-cms",
+  "spec": "../../docs/cms/ARCHITECTURE.md",
+  "runbook": "../../docs/cms/RUNBOOK.md",
+  "about": "ADR-01: the core is a VENDORED COPY, not a package. This file is the provenance record — which files came from the template, at which core version, and where this project has since diverged. Re-hash a file and compare against `sha256` to see whether it still matches the template; a mismatch is legal, but it belongs in `divergences` rather than in silence.",
+  "context": "This project is the one RUNBOOK §8 dry-ran the checklist against and declared NOT a candidate — on the §1 stack floor, because it sat on Astro 5 / @astrojs/cloudflare v12 (the Pages-era adapter with a working `locals.runtime`). Phase A paid that migration first, as its own piece of work, exactly as §8 prescribed. Everything §8 predicted about the CMS adoption itself held: the six `src/lib` filename collisions (harmless — the core lands in `src/lib/cms/`), the 2-of-32 token gap, and the `media` table shape clash that makes `CREATE TABLE IF NOT EXISTS` a silent no-op. That last one is the migration divergence below.",
+  "kinds": {
+    "core": "Project-agnostic. Copy as-is; edits here are divergence and must be recorded below.",
+    "seam": "Instance-OWNED content at a core-KNOWN path. The path is the contract, the contents are yours.",
+    "test": "Ported test. Pure-core ones run unchanged; the ones with a `note` touch instance modules on purpose.",
+    "derived": "Assembled rather than copied. No byte-identical template counterpart."
+  },
+  "seams": [
+    {
+      "path": "src/cms.config.ts",
+      "required": true,
+      "contract": "Exports `CMS: CmsConfig` (src/lib/cms/config-types.ts). Routes import it and PASS defs into core functions as parameters — no core lib module ever imports it (§10.1).",
+      "note": "PHASE B1 IS THE MINIMUM TYPE-VALID CONFIG. `contentGroups`, `editableCopy` and `collections` are empty on purpose; Phase B2 authors them. What is real today: `mediaPrefix` (`blog/`), the four `usageQueries`, and the three-entry `adminNav`. The worked reference for the full thing is projects/nicole-olmedo/src/cms.config.ts."
+    },
+    {
+      "path": "src/lib/cms/strings.sv.ts",
+      "required": true,
+      "importedBy": "12 core files (every admin page, component and client script)",
+      "contract": "Exports `STRINGS: Record<string,string>` + `adminString(key)`. Every §11.1 error code needs a message; tests/admin-strings.test.ts enforces it.",
+      "note": "Shipped in the template, but its CONTENTS are the instance's. See divergence `strings.sv.ts`."
+    },
+    {
+      "path": "src/i18n/routes.ts",
+      "required": true,
+      "importedBy": ["src/lib/cms/content.ts (type-only)"],
+      "contract": "Exports `type Locale = \"sv\" | \"en\"`. ADR-01's named v1 limitation.",
+      "note": "NO CHANGE NEEDED. The file already exported `type Locale = (typeof LOCALES)[number]` over `[\"sv\",\"en\"]`, which is that type. This project was bilingual sv/en from day one, so the one seam that can cost a core generalisation cost nothing."
+    },
+    {
+      "path": "src/lib/site.ts + src/i18n/index.ts",
+      "required": true,
+      "importedBy": ["src/pages/admin/content/[group].astro", "tests/cms-config.test.ts"],
+      "contract": "`getSite(kv?)` (unmerged JSON defaults with no argument) and `t(locale, key)` / `useT(locale, kv?)` supply the GHOST PLACEHOLDER values behind an unedited field — the §6.16/P2-C7 'absent row → empty input + ghost default' behaviour.",
+      "note": "`src/lib/site.ts` is NEW and thin: 3 lines of body over `content/site.json` and the core's `mergeSiteOverrides`. `t(locale, key, vars?)` already existed in the required shape; `useT` gained an optional `kv` parameter and now resolves `overrideSide(kv, copyKey(key), locale)` before the dictionary chain. Interpolation still applies to an overridden string. The pre-CMS `getSite()` in src/lib/content.ts is untouched and still what the public components call — one JSON file behind both."
+    },
+    {
+      "path": "src/styles/tokens.css",
+      "required": true,
+      "importedBy": ["src/layouts/AdminBase.astro"],
+      "contract": "Must define the 32 custom properties admin.css consumes. RUNBOOK §3.3 lists them.",
+      "note": "§8 measured this project at 2 of 32. The other 30 were added as an ALIAS BLOCK mapping the Haute Editorial palette (charcoal/ink/cream/clay/bronze/champagne/terracotta) onto the Material-3-shaped role names, in a second `:root` after the existing one. Two judgement calls are commented in place: `--primary` is terracotta, not bronze (bronze is texture and never a CTA fill in this design system), and `--radius`/`--radius-lg` are `0` because square corners are the editorial direction the public buttons already use. The RUNBOOK §3.3 verification grep returns empty. NO public pixel changed — nothing on the public site reads a role name."
+    },
+    {
+      "path": "src/env.d.ts",
+      "required": true,
+      "importedBy": "the compiler",
+      "contract": "App.Locals must declare db / getCms / adminEmail / adminToken, and must NOT extend Runtime (ADR-08).",
+      "note": "`App.AdminUser` and `locals.user` are GONE, replaced by the four core locals. The five call sites moved with them: four admin pages dropped their `userEmail` prop (AdminBase reads `Astro.locals.adminEmail` itself) and `api/admin/posts.ts` now takes its author default from `locals.adminEmail`."
+    }
+  ],
+  "notInCore": [
+    {
+      "path": "migrations/0001_init.sql",
+      "reason": "Pre-existing. Creates `posts` (bespoke domain) alongside a `media` table whose shape predates the core — see the `0002_core_tables.sql` divergence."
+    },
+    {
+      "path": "src/lib/{access,db,media,slug,admin-api,admin-strings,admin-validate,editor,images,markdown,posts,redirects,seo,content,pagecopy}.ts",
+      "reason": "The blog admin's own library, and the prior art the core was extracted FROM. Six of these collide by NAME with core modules (access, db, media, slug, plus admin-strings/admin-api covering what strings.sv/http now do) — harmless, because the core lands in `src/lib/cms/`. The project carries two implementations of each until the blog admin is retired; that is §8's predicted cost and it is paid knowingly."
+    },
+    {
+      "path": "src/components/admin/{PostList,PostEditor,ImagePicker,CoverPicker,MarkdownToolbar}.astro",
+      "reason": "Bespoke domain (the blog editor)."
+    },
+    {
+      "path": "src/admin/{dashboard,editor}.client.ts",
+      "reason": "Bespoke domain. They sit beside the core's three client modules in the same directory."
+    },
+    {
+      "path": "src/pages/admin/posts/*, src/pages/admin/preview/[id].astro",
+      "reason": "Bespoke domain (the blog admin screens)."
+    },
+    {
+      "path": "src/pages/api/admin/{posts.ts,posts/[id].ts,preview.ts,media.ts}",
+      "reason": "Bespoke domain. They keep their own hand-rolled response envelope and `x-admin-token` + CSRF checks as defense-in-depth behind the new gate."
+    },
+    {
+      "path": "src/styles/admin-blog.css",
+      "reason": "The blog admin's stylesheet, renamed out of the way so `admin.css` could take the core file. See divergence `admin.css / admin-blog.css`."
+    },
+    {
+      "path": "src/pages/admin/enquiries.astro, src/pages/api/admin/enquiries/[id].ts, src/admin/enquiries.client.ts",
+      "reason": "NOT ADOPTED. There is no contact form on this site (§'Contact = info-only, no form'), so the inbox UI has no traffic to show. `src/lib/enquiries-admin.ts` and the `enquiries` table ARE adopted, because the [CORE] dashboard imports `countNewEnquiries` for its badge and an absent table makes that query throw. The table simply stays empty and `CMS.adminNav` has no enquiries entry, so the badge never renders."
+    },
+    {
+      "path": "src/lib/portfolio.ts, src/pages/admin/portfolio/*, scripts/seed-sql.mjs",
+      "reason": "Nicole's bespoke domain. Never in the template."
+    }
+  ],
+  "divergences": [
+    {
+      "path": "migrations/0002_core_tables.sql",
+      "from": "_templates/forge-cms/migrations/0001_core_tables.sql",
+      "kind": "derived",
+      "what": "Renumbered into this project's sequence (0001 was already taken), and the `media` CREATE replaced by two `ALTER TABLE ADD COLUMN` statements. `enquiries` and its index are the template's statements verbatim.",
+      "why": "THE DOCUMENTED CORRUPTION TRAP (RUNBOOK §8, §3.7). `0001_init.sql` already created a `media` table with a DIFFERENT shape — it has `post_id` and `variants` and lacks `mime` and `bytes`, which `src/lib/cms/media-db.ts` writes on every upload. The template's `CREATE TABLE IF NOT EXISTS media` would have SILENTLY NO-OPPED against it: no error, and every later Forge insert failing on a column that does not exist. The two ALTERs reconcile the shapes to a superset that satisfies both consumers.",
+      "detail": "Columns after 0002: `id, post_id, r2_key, alt, width, height, variants, created_at, mime, bytes`. `post_id`/`variants` keep serving src/lib/db.ts's `insertMedia` (blog uploads); `mime`/`bytes` serve media-db.ts's `insertMediaRow`. Each writer leaves the other's columns at their defaults — which is why `mime` carries `DEFAULT ''` and `bytes` is nullable — and each reader selects only its own (`SELECT *` on the blog side tolerates the additions; media-db names its six explicitly). Verified live: a single upload through the merged route produced one row carrying post_id=5, variants=NULL, mime='image/png', bytes=70, and BOTH listing paths rendered it correctly.",
+      "idempotence": "SQLite has no `ADD COLUMN IF NOT EXISTS`; re-running is prevented by wrangler's own `d1_migrations` bookkeeping. Proven on both paths — a fresh scratch store (0001→0002→0003) and the already-migrated local store produce an identical column list, and a second `apply` on each reports 'No migrations to apply!'."
+    },
+    {
+      "path": "src/middleware.ts",
+      "kind": "core",
+      "what": "The core file with this project's legacy-redirect pass merged in AHEAD of it. `resolveRedirect(pathname)` runs first and 301s before bindings are read or the gate is consulted. Everything below that point is the core's file unchanged.",
+      "why": "The redirect table maps the launched Next.js site's URLs onto this one and its behaviour is public and tested (`/portfolio` → `/tavlingar`). It stays first because a redirected request has no business paying for bindings.",
+      "removed": "The old middleware's THIRD identity tier — trusting a bare `Cf-Access-Authenticated-User-Email` header when origin-side verification was unconfigured (`source: \"access-header\"`). That header is attacker-suppliable on any path that does not traverse Access, e.g. a direct `*.workers.dev` hit. 'Verification isn't configured' is now a hard reject, not a trust downgrade.",
+      "fixed": "`assertNoDevBypassInProd` was DEFINED and NEVER CALLED in the old code. It is now called — from inside `resolveAdminIdentity` — and the middleware turns its throw into a 403 with a `console.error`, never a 500 with a stack. Proven live: with `DEV_ADMIN_EMAIL` and `ACCESS_AUD`/`ACCESS_TEAM_DOMAIN` all set, `/admin` and `/api/admin/*` answer 403 `misconfigured` and the reason is logged.",
+      "alsoNote": "The old file's CSP named `https://img.salongnovo.se` in `img-src`; the core's (in `src/lib/cms/http.ts`) is `img-src 'self' data:`. Correct today — `PUBLIC_IMAGE_BASE` is `\"\"` and images serve same-origin through `/api/media/*`. The Stage-B R2-domain cutover must append that origin to the core CSP, which is the same step RUNBOOK §5 step 4 already calls out."
+    },
+    {
+      "path": "src/pages/api/admin/upload.ts",
+      "kind": "core",
+      "what": "OVERLAP MERGE. The core's route, with the blog's extra request and response fields carried through: `kind` + `postId` in, `markdown` + `variants` out, plus the best-effort `UPDATE media SET post_id` association.",
+      "why": "Both sides owned an endpoint at this path and it is the same operation with two callers — the blog editor's inline/cover picker and the core's media library — so one route with a superset contract beats two endpoints or a broken caller. Everything security-relevant comes from the core: the guard preamble, the 64-byte sniff (the blog's read 32, which is short for AVIF compatible brands), and the orphan-object rollback when the row insert fails, which the blog's version had no equivalent of.",
+      "detail": "Response is now 201 (was 200); both clients test `res.ok`, so neither notices. `postId` at upload time is a convenience — `api/admin/posts.ts` re-associates every referenced key on each save — but it is preserved so no behaviour is lost. `variants: []` is honest: the variant Worker was never built, `media.variants` is now NULL on Forge-written rows, and `parseVariantWidths(null)` already returns `[]`, which `renderImage` reads as 'serve the original'. Verified live end-to-end: upload → 201 with the full superset payload → byte-identical stream back through `/api/media/*` → visible in BOTH the core media library and the blog's legacy `/api/admin/media` picker."
+    },
+    {
+      "path": "src/pages/api/media/[...key].ts",
+      "kind": "core",
+      "what": "Adopted the core file VERBATIM, replacing this project's own version of the same route.",
+      "why": "Not really a divergence — recorded because a file was overwritten. Same behaviour (immutable cache + ETag/304 + streamed body), plus three hardenings: a key character-class check, an explicit `..` traversal check, and a uniform bare 404 for every failure class (the old one answered 503 JSON when the binding was missing, which tells a prober whether R2 is wired). Smoke: a missing key answers 404."
+    },
+    {
+      "path": "src/pages/admin/index.astro",
+      "kind": "core",
+      "what": "The core dashboard TOOK the `/admin` route. This project's blog post list moved to `/admin/posts` (`src/pages/admin/posts/index.astro`) and is linked from `CMS.adminNav`.",
+      "why": "The core file IS byte-identical; what moved is the instance page it displaced. The whole shell is built around `/admin` being the dashboard — `AdminNav`'s `isActive` special-cases it, and the dashboard filters itself out of its own section cards. The blog is one section of this admin now, not the whole of it. The blog page was rewritten to read `Astro.locals.db` rather than calling `bindings()`, and its two hardcoded Swedish strings now resolve through `adminString`.",
+      "alsoChanged": "`src/admin/editor.client.ts` redirected to `/admin` after delete and after a save-on-a-deleted-post; both now go to `/admin/posts`."
+    },
+    {
+      "path": "src/styles/admin.css",
+      "kind": "core",
+      "what": "Core file adopted verbatim. This project's existing 254-line `admin.css` was RENAMED to `src/styles/admin-blog.css`, and its four importers (the blog admin pages) updated.",
+      "why": "Both files claim the name and both are needed — the core one themes the CMS screens, the blog one themes the editor and post list. Class-name overlap between them is exactly two selectors (`.admin`, `.admin-main`), and import order resolves those in the blog's favour on blog pages: `AdminBase` (tokens → admin.css) evaluates before the page's own `admin-blog.css`. Core screens never import the blog sheet, so nothing leaks the other way. Verified live: `/admin/posts` links both stylesheets, the core CMS pages only one."
+    },
+    {
+      "path": "src/components/admin/AdminNav.astro",
+      "kind": "core",
+      "what": "Core file adopted verbatim, REPLACING this project's hand-written blog nav. Its three links became `CMS.adminNav` entries.",
+      "why": "The core nav is config-driven and derives per-group/per-collection chips from the rest of the config, so Phase B2's content screens appear in it without anyone remembering to add them. Keeping a hardcoded nav would have made that silently untrue. The `userEmail` prop became `email` + `showLogout`, both supplied by `AdminBase` off `Astro.locals`."
+    },
+    {
+      "path": "src/layouts/AdminBase.astro",
+      "kind": "core",
+      "what": "Core file adopted verbatim, replacing this project's version.",
+      "why": "Recorded because the file was overwritten and one requirement had to be checked rather than assumed: the `<meta name=\"admin-token\">` injection the blog's client scripts read. The core file has it — and reads the token off `Astro.locals.adminToken` (stamped by the middleware) instead of calling `bindings()` in a layout, which is strictly better. The old page title `\"{title} — Salong NOVO Admin\"` is preserved through the `admin.title` string rather than a literal. Verified live: the meta tag renders and the blog write path authenticates with it."
+    },
+    {
+      "path": "src/lib/cms/strings.sv.ts",
+      "kind": "seam",
+      "what": "Dropped the `portfolio.*` (60 keys) and `embed.*` (2 keys) blocks; retitled `admin.title` to \"Salong NOVO Admin\"; `nav.portfolio` → `nav.blog` and `dashboard.card.portfolio` → `dashboard.card.posts`; retuned three `media.*` strings that described clips and poster frames; added six `error.*` messages.",
+      "why": "The path is the contract, the contents are the instance's (RUNBOOK §3.6). The portfolio and embed blocks are nicole's bespoke domain. The six added codes — `id_required`, `invalid_id`, `invalid_locale`, `invalid_status`, `key_required`, `title_required` — are emitted by the blog's own API routes, which keep their hand-rolled envelope; `tests/admin-strings.test.ts` harvests every `error: \"…\"` under `src/`, so without messages they would have failed CI, which is the gate working."
+    },
+    {
+      "path": "tests/build-gates.test.ts",
+      "kind": "test",
+      "what": "Three instance facts repointed: `olmedo_db` → `novo_db`, `loadPortfolioItems` dropped from the content-read needles, and the `cloudflare:workers` holder list narrowed from two files to one.",
+      "why": "Nicole's copy allows a second holder for her pre-CMS enquiry route; this project has no such route, so the rule is the STRICTER form here. Everything else — the prerender gate, the first-statement rule, the persistence-root assertions, the no-static-admin check — runs unedited against this project's tree and passes."
+    },
+    {
+      "path": "tests/cms-config.test.ts",
+      "kind": "test",
+      "what": "Two assertions repointed at this project's config: `mediaPrefix` `\"posters/\"` → `\"blog/\"`, and the usage-query table set `portfolio_items` → `posts`.",
+      "why": "Mechanism-over-instance-data by design. NOTE the standing weakness for Phase B2: with `contentGroups`/`editableCopy`/`collections` empty, the loops over them are VACUOUS — the site.json-resolution, bilingual-pairing, copy-key and uniqueness checks assert nothing yet. They arm themselves the moment B2 writes the config, which is where their value is."
+    },
+    {
+      "path": "tests/cms-media.test.ts",
+      "kind": "test",
+      "what": "Dropped the `servedUrl` ↔ `posterSrc` parity block; rewrote the `usageDb` fake and every usage/clear assertion against this project's four usage queries; normalised fixtures from `posters/` to `blog/` and the Stage-B host to `img.salongnovo.se`.",
+      "why": "The parity block exists because nicole's public grid has a SECOND implementation of the served-URL rule; this project has one, so there is nothing to hold in agreement. The usage rewrite is not cosmetic — it covers a case her config does not have: two queries reading the SAME table (`posts`, by `cover_image` and by `body LIKE`), told apart by column, with one clearable and one not."
+    },
+    {
+      "path": "tests/cms-collections.test.ts",
+      "kind": "test",
+      "what": "The `SERVICES`-keyed round-trip guard was rewritten. It now runs over EVERY entry in `CMS.collections`, plus one explicit assertion against the file's existing all-FieldKinds `def` fixture.",
+      "why": "`CMS.collections` is empty in Phase B1, so a direct port would not have compiled. Written as a loop it ARMS ITSELF when B2 declares the first collection rather than needing to be remembered; the fixture assertion keeps the underlying mechanism (an unedited save strips nothing) tested today. The rest of the file is unedited.",
+      "skipped": "The 'config declares every property the seed stores' assertion is inside that loop and therefore does not run yet. It is the one real coverage gap this phase leaves, and B2 closes it by existing."
+    },
+    {
+      "path": "tests/cms-middleware.test.ts",
+      "kind": "test",
+      "what": "The fake `APIContext` gained a `redirect` helper; `SITE`/`EMAIL` and three sample paths moved to this project's domain and routes; a new two-test block asserts the merged redirect pass runs BEFORE the gate and skips the route entirely.",
+      "why": "The harness had to grow `redirect` because the merged middleware calls it — without it the very first ported test threw. The added block is the only coverage the merge point has, and it is the thing most likely to be broken by a future edit: `/portfolio` must 301 to `/tavlingar` without `next()` ever being called."
+    }
+  ],
+  "verification": {
+    "tests": "485 passed / 485 (24 files). Baseline before this phase was 246; the core added 239.",
+    "typecheck": "tsc --noEmit clean.",
+    "build": "npx astro build Complete, Cloudflare target. No SESSION KV notice (astro.config.mjs gained `session: false`; the 7.2.0 / 14.2.0 floor was already met by Phase A). `dist/client/admin` absent.",
+    "migrations": "npm run db:migrate:local clean on the existing store AND on a fresh scratch store; identical column list from both; re-apply a no-op on both.",
+    "tokens": "RUNBOOK §3.3 verification grep returns empty — all 32 properties resolve.",
+    "smoke": "Under astro dev against local D1 + R2: /admin renders the Forge dashboard with the config-driven nav; /admin/posts and /admin/media 200; a draft created through POST /api/admin/posts appears in D1 and on the list, authored from `locals.adminEmail`; upload round-trips byte-identically; /api/media/<missing> 404s. FAIL-CLOSED PROOF with DEV_ADMIN_EMAIL unset and ACCESS_* empty: /admin 403 (noindex HTML, no-store), /api/admin/posts 403 {\"error\":\"forbidden\",\"reason\":\"not_configured\"}, /admin/posts + /admin/media + /admin/content/* 403, public / + /blogg + /priser still 200.",
+    "notRun": "`npm run check` (astro check). The project has neither the script nor `@astrojs/check`, and adding a dependency was out of scope for this phase. `.astro` files are therefore covered by `astro build` only — RUNBOOK §1 wants that gate, and it is the one stack-floor item still open."
+  },
+  "files": [
+    { "path": "migrations/0002_core_tables.sql", "kind": "derived", "version": "1.0.0", "sha256": "a88a015374d70b9adfbd969d3157fd92478d5cca9ee9248a1c03ebd4f93385d3", "identical": false, "note": "See divergence — the media merge." },
+    { "path": "migrations/0003_cms_content.sql", "kind": "core", "version": "1.0.0", "sha256": "80320581231b82bab7a744730f1a288613a2e18f587a03357321d465d397fd4d", "identical": true },
+    { "path": "src/lib/cms/bindings.ts", "kind": "core", "version": "1.0.0", "sha256": "cf7a42732e2a58f52b087fd6e0c0b8810819512be30a230475d6a5b4018460a5", "identical": true, "note": "Vendored in Phase A, ahead of the rest of the core." },
+    { "path": "src/lib/cms/db.ts", "kind": "core", "version": "1.0.0", "sha256": "1b21aa7c6e570d65042c190bdd180cf9e4e922b0bab0e792df348dd38dd91ce7", "identical": true },
+    { "path": "src/lib/cms/access.ts", "kind": "core", "version": "1.0.0", "sha256": "18ef70d96eb692e16b63cb7d4db6cc666888448ec773f4411576df1f134f7ec8", "identical": true, "note": "This project's src/lib/access.ts is the prior art it was extracted from; both now exist." },
+    { "path": "src/lib/cms/http.ts", "kind": "core", "version": "1.0.0", "sha256": "03fd338b6692c9e16dbef0f3f46ab7bcdcb3b6560af72382007761fff96e75a9", "identical": true },
+    { "path": "src/lib/cms/config-types.ts", "kind": "core", "version": "1.0.0", "sha256": "704729da03e8754db5aca42bc46bef714abc907d4dfb78efdb5c6a4728ba9fc3", "identical": true, "note": "Core owns the TYPES; cms.config.ts owns the DATA (§10.1)." },
+    { "path": "src/lib/cms/content.ts", "kind": "core", "version": "1.0.0", "sha256": "a932748ce513c22b632257b3edd247f86226f966485ca071ed7138fb0e1c4427", "identical": true, "note": "Imports `type Locale` from src/i18n/routes — the ADR-01 sv/en hardwire." },
+    { "path": "src/lib/cms/collections.ts", "kind": "core", "version": "1.0.0", "sha256": "b2c136951ae9c161a6364143227594d46536f54903bff946d9ba0834b761ca3d", "identical": true },
+    { "path": "src/lib/cms/media.ts", "kind": "core", "version": "1.0.0", "sha256": "561010cd3e59ebf3ee14a61a806ffd5fb6c51ccf83096c8451998410af3a1d90", "identical": true },
+    { "path": "src/lib/cms/media-db.ts", "kind": "core", "version": "1.0.0", "sha256": "d8bd96c7651c45997f12e358a0514def523b2c8d13d29c835874ca2e6f45c68e", "identical": true, "note": "Its header says salong's post_id/variants are 'deliberately not ported'. Still true of the MODULE; the TABLE now carries both, because this project's blog still writes them." },
+    { "path": "src/lib/cms/slug.ts", "kind": "core", "version": "1.0.0", "sha256": "68661316170c00cb239076fbef7342eafa34f37852d3e9c18c48c6f8d4d99604", "identical": true },
+    { "path": "src/lib/cms/strings.sv.ts", "kind": "seam", "version": "1.0.0", "sha256": "511e8ffec3baedc6ff066fab05b00b553229f0e205d407c5a5da68457766fee1", "identical": false, "note": "See divergence — expected, the contents are the instance's." },
+    { "path": "src/lib/enquiries-admin.ts", "kind": "core", "version": "1.0.0", "sha256": "0a460aab2aff68b87b985331b55e62389ac2db5035131ce050cf1b11ef4e59e1", "identical": true, "note": "Adopted even though this site has no contact form: the [CORE] dashboard imports countNewEnquiries." },
+    { "path": "src/middleware.ts", "kind": "core", "version": "1.0.0", "sha256": "15a396a5f2b895cdac0d5a442b10454fd33aa2ed1c6c71073fa8383dacf3bcd0", "identical": false, "note": "See divergence — the redirect merge, the removed header-trust tier, the now-called tripwire." },
+    { "path": "src/layouts/AdminBase.astro", "kind": "core", "version": "1.0.0", "sha256": "b799b7f3dfa1446ad63e79b6b54d7dd9090d89bf879f7e24d19ae2b10fd8ec99", "identical": true },
+    { "path": "src/styles/admin.css", "kind": "core", "version": "1.0.0", "sha256": "dca90a6dd3b45ec82b870eedfc257711abaeac0bf6c64b5ad9799bebbc712ddb", "identical": true, "note": "Consumes 32 CSS custom properties; tokens.css now defines all 32." },
+    { "path": "src/components/admin/AdminNav.astro", "kind": "core", "version": "1.0.0", "sha256": "a10eca3a3e4fdda0642ceae4cfebbdd30b1d821c2643b71dee06b9832aa01c69", "identical": true },
+    { "path": "src/components/admin/FormField.astro", "kind": "core", "version": "1.0.0", "sha256": "2fb878840b8e5a28e1d249d2d34123f244eb8abcc85f8cc91360f9dca7972bf7", "identical": true },
+    { "path": "src/components/admin/CollectionList.astro", "kind": "core", "version": "1.0.0", "sha256": "5648f08c8bf83a30ed61fecd7c52a5a0ea58052b6c6732d0598bd97e6b5a2a5c", "identical": true },
+    { "path": "src/components/admin/CollectionItemForm.astro", "kind": "core", "version": "1.0.0", "sha256": "c2019e317922cdfb435954d27697b1136a799d28917786823cd3014219ffe11b", "identical": true },
+    { "path": "src/admin/forms.client.ts", "kind": "core", "version": "1.0.0", "sha256": "f3a230157427ec822a05c5c05941b37af636f9d30f1baed16c971eba6fb588c0", "identical": true },
+    { "path": "src/admin/reorder.client.ts", "kind": "core", "version": "1.0.0", "sha256": "506d05607a8e692e3cbf51915d8372bc7bf8c6310e84cc394cb3d307445f9e8b", "identical": true },
+    { "path": "src/admin/media.client.ts", "kind": "core", "version": "1.0.0", "sha256": "be22a715c1fad9f0c5eae4931393e9db6cf52395e90e9ee2e33a5a96032eeaa8", "identical": true },
+    { "path": "src/pages/admin/index.astro", "kind": "core", "version": "1.0.0", "sha256": "6d9cce3db844219c7a69b646e12b476340695e0817d58e079ce3834755fb424c", "identical": true, "note": "Byte-identical; the DISPLACED blog page is the divergence." },
+    { "path": "src/pages/admin/content/[group].astro", "kind": "core", "version": "1.0.0", "sha256": "a58b6a99af4810fa7b11514d67c47a11a08d66475fc61a08b6622e9ef9a1e29d", "identical": true, "note": "Imports getSite() and t() from the instance — seam 4. Renders an empty group list until Phase B2." },
+    { "path": "src/pages/admin/collections/[name].astro", "kind": "core", "version": "1.0.0", "sha256": "100e7bcda2cc319221857a00b0e5ec0dbf01abeb763a9b9dd09ffacdb9ca5970", "identical": true },
+    { "path": "src/pages/admin/media.astro", "kind": "core", "version": "1.0.0", "sha256": "b76bcaa13b8842a0c6d4601d5e0a9136b0c6411f599e58556740dd0a96858591", "identical": true },
+    { "path": "src/pages/api/admin/content.ts", "kind": "core", "version": "1.0.0", "sha256": "26a56399dfc53981cd9b4d5da8fc50964e44c7cc31cb873d7958d63581505421", "identical": true },
+    { "path": "src/pages/api/admin/collections/[name].ts", "kind": "core", "version": "1.0.0", "sha256": "3571493b725a6624bb7306f6f04ffa8826708a3817a48e7d11c1604ba69846c9", "identical": true },
+    { "path": "src/pages/api/admin/collections/[name]/[id].ts", "kind": "core", "version": "1.0.0", "sha256": "dcecd715cc032c482085e9bfe8522bae314c356e2221623fef871a8bd8fc6beb", "identical": true },
+    { "path": "src/pages/api/admin/upload.ts", "kind": "core", "version": "1.0.0", "sha256": "2e4ef0ff7d96fec3cf088c04bbabdefde8964ad8a2f471d4c0b40448230e0922", "identical": false, "note": "See divergence — the two-caller overlap merge." },
+    { "path": "src/pages/api/admin/media/[key].ts", "kind": "core", "version": "1.0.0", "sha256": "4686ae921abcbbe3a381e24ef5c596b87b90533e79d3b00038ec9082c5b762ba", "identical": true, "note": "Coexists with the blog's own src/pages/api/admin/media.ts — different routes (/api/admin/media vs /api/admin/media/:key), both live." },
+    { "path": "src/pages/api/media/[...key].ts", "kind": "core", "version": "1.0.0", "sha256": "b62f2e7eb7b1363d157b573e016895573e4ba011436850a42d0e96bfb515cea7", "identical": true, "note": "PUBLIC route — no auth, immutable cache + ETag. Replaced this project's own version." },
+    { "path": "tests/helpers/fake-d1.ts", "kind": "test", "version": "1.0.0", "sha256": "07c28a20ad4a48e0e5d27db1421f757f7a1281e25a9a15c4138b63a2fe694a71", "identical": true },
+    { "path": "tests/cms-access.test.ts", "kind": "test", "version": "1.0.0", "sha256": "7a0efdeb6c00c7809b6836abb30c9ee717b481995b3cc87b520b91c79c0c640c", "identical": true },
+    { "path": "tests/cms-http.test.ts", "kind": "test", "version": "1.0.0", "sha256": "166d3480ab27cc7f8953faf26efe42b15508b381b4fdca3fdd4f5a5c3ec72186", "identical": true },
+    { "path": "tests/cms-content.test.ts", "kind": "test", "version": "1.0.0", "sha256": "dff0ad065d0b239e165e0460aaaf4998e7f2837197c3e42ef884aab019751272", "identical": true },
+    { "path": "tests/enquiries-admin.test.ts", "kind": "test", "version": "1.0.0", "sha256": "0b50dacf9e7469e8e0c204a4a0ecf5d7e314d5b629f293d791ba9e3f07e95904", "identical": true },
+    { "path": "tests/cms-middleware.test.ts", "kind": "test", "version": "1.0.0", "sha256": "d1dc5211a44120851c91d133c7eb98d1390366492b465db9a29d320690d98e63", "identical": false, "note": "See divergence." },
+    { "path": "tests/cms-collections.test.ts", "kind": "test", "version": "1.0.0", "sha256": "b304a5ac2aef44c8ef202473df53a8546a8e648e5cdb65686735ab1996d387d2", "identical": false, "note": "See divergence." },
+    { "path": "tests/cms-media.test.ts", "kind": "test", "version": "1.0.0", "sha256": "8f5871d5738b3b1e6a0ec21f12395670a200d221a4c7826ac5150d709fd0d2ca", "identical": false, "note": "See divergence." },
+    { "path": "tests/build-gates.test.ts", "kind": "test", "version": "1.0.0", "sha256": "ae62b16b70bd552aa45ff5d0cac02c1f5d0dab507c64a855d0d736ed74da4ca3", "identical": false, "note": "See divergence." },
+    { "path": "tests/admin-strings.test.ts", "kind": "test", "version": "1.0.0", "sha256": "bccb67c4f57605cbd2521c919b0ab39c9abf109ca0a7cc800f05b779eb484669", "identical": false, "note": "See divergence — six blog codes added to the taxonomy, nicole's `embed.detected` token dropped." },
+    { "path": "tests/cms-config.test.ts", "kind": "test", "version": "1.0.0", "sha256": "18e6a8dc05798e7b1ed8e041ee42f8114fef6a17288911c5c16077d5428ffe47", "identical": false, "note": "See divergence." }
+  ]
+}

@@ -1,49 +1,84 @@
-import { defineMiddleware } from "astro:middleware";
-import type { APIContext } from "astro";
+/**
+ * Global middleware — legacy redirects, content distributor, admin identity gate
+ * (ARCHITECTURE §6.4). Runs for EVERY request.
+ *
+ * THREE JOBS, in this order:
+ *
+ * 0. LEGACY REDIRECTS. `resolveRedirect` maps the launched Next.js site's URLs
+ *    onto this one's and answers a 301 before anything else runs. It stays first
+ *    because a redirected request has no business paying for bindings, and
+ *    because the old site's `/admin`-adjacent URLs must resolve to their new
+ *    home rather than hit the gate below.
+ *
+ * 1. DISTRIBUTION. Bindings are read once per request and stashed in
+ *    `Astro.locals`, so pages and components never touch `bindings()`
+ *    themselves. Content loading is a LAZY MEMOIZED thunk: no branch can forget
+ *    to load it, and requests that never render CMS content — 404s, media
+ *    streaming, the blog's own D1 reads — cost zero content_kv queries.
+ *
+ * 2. THE ADMIN GATE. `/admin*` and `/api/admin*` are the identity boundary's
+ *    origin-side enforcement point. Rejection is a 403 BEFORE the route runs;
+ *    admission stamps `locals.adminEmail` and the defense-in-depth headers.
+ *
+ * WHAT THIS FILE DROPPED when the Forge core landed: the third identity tier
+ * that trusted a bare `Cf-Access-Authenticated-User-Email` header when
+ * origin-side verification was unconfigured. That header is attacker-suppliable
+ * on any path that does not traverse Access (a direct `*.workers.dev` hit), so
+ * "verification isn't configured" is now a hard reject rather than a trust
+ * downgrade. The dev identity survives, but only per `resolveAdminIdentity`'s
+ * model: inside a dev build, with both `ACCESS_*` vars unset.
+ *
+ * `onRequest` is a plain `MiddlewareHandler` rather than a `defineMiddleware()`
+ * call. `defineMiddleware` is only a typing convenience, and importing
+ * `astro:middleware` here would make the whole module unimportable from vitest —
+ * which would leave the §9.7 gate untested, the one thing it must not be.
+ */
+import type { APIContext, MiddlewareHandler, MiddlewareNext } from "astro";
 import { resolveRedirect } from "./lib/redirects";
-import { verifyAccessJwt, type Jwk } from "./lib/access";
 import { bindings } from "./lib/cms/bindings";
+import { resolveAdminIdentity, type Jwk } from "./lib/cms/access";
+import { adminSecurityHeaders } from "./lib/cms/http";
+import { loadCmsContent, type CmsContent } from "./lib/cms/content";
 
-/** Matches the two Access-gated prefixes: `/admin*` and `/api/admin*`. */
+/** The two gated prefixes: `/admin*` and `/api/admin*`. */
 const ADMIN_RE = /^\/(admin|api\/admin)(\/|$)/;
 
-/** The security headers applied to every admin response (§10.8, defense-in-depth). */
-const ADMIN_PAGE_CSP =
-  "default-src 'self'; img-src 'self' https://img.salongnovo.se data:; " +
-  "style-src 'self' 'unsafe-inline'; script-src 'self'; form-action 'self'; " +
-  "frame-ancestors 'none'";
-
 /**
- * In-module JWKS cache + fetcher. The Access signing keys rotate rarely; caching
- * per worker isolate avoids a JWKS round-trip on every admin request. Keyed by
- * URL so a team-domain change can't serve stale keys.
+ * In-isolate JWKS cache + fetcher. Access signing keys rotate rarely, so caching
+ * per isolate avoids a round-trip on every admin request. Keyed by URL, so a
+ * team-domain change cannot serve stale keys.
+ *
+ * Exported as a FACTORY (the module keeps a single instance) so the cache
+ * behaviour is unit-testable against a fake fetch.
  */
-function makeJwksFetcher(): (url: string) => Promise<Jwk[]> {
+export function makeJwksFetcher(
+  deps: { fetch: typeof fetch; now: () => number } = { fetch, now: Date.now },
+): (url: string) => Promise<Jwk[]> {
   const cache = new Map<string, { keys: Jwk[]; at: number }>();
   const TTL_MS = 60 * 60 * 1000; // 1h
   return async (url: string): Promise<Jwk[]> => {
     const hit = cache.get(url);
-    if (hit && Date.now() - hit.at < TTL_MS) return hit.keys;
-    const res = await fetch(url);
+    if (hit && deps.now() - hit.at < TTL_MS) return hit.keys;
+    const res = await deps.fetch(url);
     if (!res.ok) throw new Error(`JWKS fetch failed: ${res.status}`);
     const data = (await res.json()) as { keys?: Jwk[] };
     const keys = Array.isArray(data.keys) ? data.keys : [];
-    cache.set(url, { keys, at: Date.now() });
+    cache.set(url, { keys, at: deps.now() });
     return keys;
   };
 }
+
 const fetchJwks = makeJwksFetcher();
 
 const NOINDEX_403_HTML = `<!doctype html><html lang="sv"><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><title>Åtkomst nekad</title></head><body><h1>Åtkomst nekad</h1><p>Du har inte behörighet att se den här sidan.</p></body></html>`;
 
 /**
- * Reject a request whose Access JWT failed verification. JSON for the API,
- * a `noindex` HTML page for the admin UI. Fires only on a verifiably bad JWT
- * (Access itself normally prevents this from reaching the origin).
+ * Reject an unauthenticated admin request: JSON for the API, a `noindex` HTML
+ * page for the UI. `no-store` on both — a cached 403 is as wrong as a cached
+ * dashboard.
  */
 function adminUnauthorized(context: APIContext, reason: string): Response {
-  const isApi = context.url.pathname.startsWith("/api/admin");
-  if (isApi) {
+  if (context.url.pathname.startsWith("/api/admin")) {
     return new Response(JSON.stringify({ error: "forbidden", reason }), {
       status: 403,
       headers: {
@@ -63,59 +98,52 @@ function adminUnauthorized(context: APIContext, reason: string): Response {
   });
 }
 
-/** Apply the §10.8 admin security headers to a response (page vs API variant). */
-function applyAdminHeaders(res: Response, isApi: boolean): void {
-  res.headers.set("Cache-Control", "no-store");
-  if (isApi) {
-    res.headers.set("X-Robots-Tag", "noindex");
-    return;
-  }
-  res.headers.set("X-Robots-Tag", "noindex, nofollow");
-  res.headers.set("X-Frame-Options", "DENY");
-  res.headers.set("Content-Security-Policy", ADMIN_PAGE_CSP);
-  res.headers.set("Referrer-Policy", "same-origin");
+/** Load once per request, at most once, and only if someone actually asks. */
+function memoizeCms(db: Parameters<typeof loadCmsContent>[0]): () => Promise<CmsContent> {
+  let pending: Promise<CmsContent> | null = null;
+  return () => (pending ??= loadCmsContent(db));
 }
 
-/** Edge middleware: legacy redirects first, then the admin identity gate. */
-export const onRequest = defineMiddleware(async (context, next) => {
-  // 1) existing legacy-redirect pass (unchanged, runs first for all routes).
+export const onRequest: MiddlewareHandler = async (
+  context: APIContext,
+  next: MiddlewareNext,
+) => {
   const target = resolveRedirect(context.url.pathname);
   if (target && target !== context.url.pathname) {
     return context.redirect(target, 301);
   }
 
-  // 2) admin identity — only for the two Access-gated prefixes.
-  if (ADMIN_RE.test(context.url.pathname)) {
-    const env = await bindings();
-    const h = context.request.headers;
-    const jwt = h.get("Cf-Access-Jwt-Assertion");
-    const headerEmail = h.get("Cf-Access-Authenticated-User-Email");
-    let user: App.AdminUser | null = null;
+  const env = await bindings();
+  context.locals.db = env.DB ?? null;
+  context.locals.getCms = memoizeCms(context.locals.db);
 
-    if (jwt && env?.ACCESS_AUD && env?.ACCESS_TEAM_DOMAIN) {
-      const res = await verifyAccessJwt(
-        jwt,
-        { aud: env.ACCESS_AUD, teamDomain: env.ACCESS_TEAM_DOMAIN },
-        { fetchJwks },
-      );
-      if (res.ok) {
-        user = { email: res.identity.email || headerEmail || "", source: "access" };
-      } else {
-        return adminUnauthorized(context, res.reason);
-      }
-    } else if (headerEmail) {
-      // Access is in front but origin-side verification isn't configured.
-      user = { email: headerEmail, source: "access-header" };
-    } else if (env?.DEV_ADMIN_EMAIL) {
-      // LOCAL DEV ONLY — Access cannot gate localhost.
-      user = { email: env.DEV_ADMIN_EMAIL, source: "dev" };
-    }
-    context.locals.user = user; // null when unauthenticated
+  if (!ADMIN_RE.test(context.url.pathname)) return next();
 
-    const response = await next();
-    applyAdminHeaders(response, context.url.pathname.startsWith("/api/admin"));
-    return response;
+  let identity;
+  try {
+    identity = await resolveAdminIdentity({
+      jwt: context.request.headers.get("Cf-Access-Jwt-Assertion"),
+      env,
+      // Evaluated HERE, not in the core: the decision table stays env-free and
+      // every one of its rows stays a unit test.
+      isDevBuild: import.meta.env.DEV,
+      deps: { fetchJwks },
+    });
+  } catch (error) {
+    // The coexistence tripwire fired. This is a deploy-configuration bug, but it
+    // must never surface as a 500 with a stack — log it and fail closed.
+    console.error("[admin] identity misconfiguration", error);
+    return adminUnauthorized(context, "misconfigured");
   }
 
-  return next();
-});
+  if (identity.kind === "rejected") return adminUnauthorized(context, identity.reason);
+
+  context.locals.adminEmail = identity.email;
+  // The layout reads the write token off locals for its meta tag; no component
+  // ever calls bindings() itself.
+  context.locals.adminToken = env.ADMIN_API_TOKEN ?? "";
+
+  const response = await next();
+  adminSecurityHeaders(response, context.url.pathname.startsWith("/api/admin"));
+  return response;
+};

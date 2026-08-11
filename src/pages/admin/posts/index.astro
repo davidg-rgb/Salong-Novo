@@ -1,0 +1,35 @@
+---
+/**
+ * Blog post list (§10.2 / §10.6). SSR-lists every post (both locales, all
+ * statuses) via `listAll(DB)` and renders the `PostList` table inside the admin
+ * shell. The list client filters/searches over the rendered rows and drives the
+ * delete `<dialog>` — no framework, one script.
+ *
+ * This page used to be `/admin`. The Forge CMS dashboard owns that route now —
+ * the blog is one section of the admin rather than the whole of it — and
+ * `CMS.adminNav` is what links here.
+ */
+export const prerender = false;
+import AdminBase from "../../../layouts/AdminBase.astro";
+import PostList from "../../../components/admin/PostList.astro";
+import { listAll } from "../../../lib/db";
+import { adminString } from "../../../lib/cms/strings.sv";
+import "../../../styles/admin-blog.css";
+
+const db = Astro.locals.db;
+const posts = db ? await listAll(db).catch(() => []) : [];
+---
+<AdminBase title={adminString("nav.blog")}>
+  {!db ? (
+    <div class="db-warning">
+      <h1>{adminString("nav.blog")}</h1>
+      <p>{adminString("error.db_unavailable")}</p>
+    </div>
+  ) : (
+    <PostList posts={posts} />
+  )}
+</AdminBase>
+
+<script>
+  import "../../../admin/dashboard.client.ts";
+</script>

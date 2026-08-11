@@ -1,36 +1,128 @@
 ---
-/**
- * Admin dashboard (§10.2 / §10.6). SSR-lists every post (both locales, all
- * statuses) via `listAll(DB)` and renders the `PostList` table inside the admin
- * shell. The dashboard client filters/searches over the rendered rows and drives
- * the delete `<dialog>` — no framework, one script.
- */
 export const prerender = false;
+/**
+ * The admin dashboard (ARCHITECTURE §6.16, F-016 + F-018).
+ *
+ * Three things, in the order they matter on arrival: what needs your attention
+ * (new enquiries), what is still an invented placeholder (the F-018 provenance
+ * summary), and where everything lives (the section cards, derived from
+ * `CMS.adminNav` so a new section appears here and in the nav from one config
+ * edit).
+ *
+ * The provenance summary is the dashboard half of F-018. Row existence is
+ * provenance (§6.6): a `placeholderUntilEdited` field with NO `content_kv` row
+ * is still showing the developer's invented value. The per-field badge already
+ * says so inside each form — but only to someone who opens that form. Counting
+ * it here is what turns "some of this copy is fake" from something Nicole has to
+ * remember into something the front page tells her, and it empties itself as she
+ * edits or presses Bekräfta.
+ *
+ * Reads D1 through `Astro.locals.db` (§10.1). Neither read is allowed to take
+ * the page down: an unavailable database costs the badge and the summary, not
+ * the navigation.
+ */
 import AdminBase from "../../layouts/AdminBase.astro";
-import PostList from "../../components/admin/PostList.astro";
-import { listAll } from "../../lib/db";
-import { bindings } from "../../lib/cms/bindings";
-import "../../styles/admin.css";
+import { CMS } from "../../cms.config";
+import { adminString } from "../../lib/cms/strings.sv";
+import { listContentKv } from "../../lib/cms/content";
+import { countNewEnquiries } from "../../lib/enquiries-admin";
 
-const env = await bindings();
-const db = env.DB;
-const userEmail = Astro.locals.user?.email ?? null;
-const posts = db ? await listAll(db).catch(() => []) : [];
+/** The dashboard is the page you are on; linking to it from itself is noise. */
+const sections = CMS.adminNav.filter((item) => item.href !== "/admin");
+const slug = (href: string) => href.split("/").filter(Boolean).pop() ?? "";
+
+const db = Astro.locals.db;
+
+let newEnquiries = 0;
+let enquiriesDown = db === null;
+let unconfirmed: { key: string; label: string; count: number }[] = [];
+let provenanceDown = db === null;
+
+if (db) {
+  try {
+    newEnquiries = await countNewEnquiries(db);
+  } catch (error) {
+    console.error("[admin] enquiry count failed", error);
+    enquiriesDown = true;
+  }
+
+  try {
+    const stored = new Set((await listContentKv(db)).map((row) => row.key));
+    unconfirmed = CMS.contentGroups
+      .map((group) => ({
+        key: group.key,
+        label: group.label,
+        count: group.fields.filter((field) => field.placeholderUntilEdited && !stored.has(field.key))
+          .length,
+      }))
+      .filter((group) => group.count > 0);
+  } catch (error) {
+    console.error("[admin] provenance summary failed", error);
+    provenanceDown = true;
+  }
+}
+
+const remaining = unconfirmed.reduce((sum, group) => sum + group.count, 0);
+const fill = (key: string, count: number) => adminString(key).replace("{count}", String(count));
 ---
-<AdminBase title="Dashboard" userEmail={userEmail}>
-  {!db ? (
-    <div class="db-warning">
-      <h1>Dashboard</h1>
-      <p>
-        Databasen är inte tillgänglig i den här miljön. Kör lokalt med
-        <code>wrangler pages dev</code> eller distribuera till Cloudflare.
-      </p>
-    </div>
-  ) : (
-    <PostList posts={posts} />
-  )}
-</AdminBase>
 
-<script>
-  import "../../admin/dashboard.client.ts";
-</script>
+<AdminBase title={adminString("dashboard.title")}>
+  <div class="admin-page-head">
+    <h1>{adminString("dashboard.title")}</h1>
+  </div>
+  <p class="admin-lede">{adminString("dashboard.lede")}</p>
+
+  <section class="admin-panel" style="margin-top: var(--unit-lg)">
+    <h2 class="admin-panel__title">{adminString("provenance.title")}</h2>
+    {
+      provenanceDown ? (
+        <p class="admin-hint">{adminString("provenance.down")}</p>
+      ) : remaining === 0 ? (
+        <p class="admin-hint">{adminString("provenance.allConfirmed")}</p>
+      ) : (
+        <>
+          <p class="admin-hint">{adminString("provenance.lede")}</p>
+          <ul class="provenance-list">
+            {unconfirmed.map((group) => (
+              <li>
+                <a class="provenance-link" href={`/admin/content/${group.key}`}>
+                  <span>{group.label}</span>
+                  <span class="provenance-count">
+                    {fill("provenance.fieldsLeft", group.count)}
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </>
+      )
+    }
+  </section>
+
+  <div class="admin-cards" style="margin-top: var(--unit-lg)">
+    {
+      sections.map((item) => (
+        <a class="admin-card" href={item.href}>
+          <span class="admin-card__title">
+            {adminString(item.labelKey)}
+            {item.href === "/admin/enquiries" && !enquiriesDown && newEnquiries > 0 && (
+              <span class="admin-badge">{fill("dashboard.newEnquiries", newEnquiries)}</span>
+            )}
+          </span>
+          <span class="admin-card__body">
+            {adminString(`dashboard.card.${slug(item.href)}`)}
+          </span>
+          {item.href === "/admin/enquiries" && (
+            <span class="admin-card__note">
+              {enquiriesDown
+                ? adminString("dashboard.enquiriesDown")
+                : newEnquiries === 0
+                  ? adminString("dashboard.enquiriesQuiet")
+                  : ""}
+            </span>
+          )}
+        </a>
+      ))
+    }
+  </div>
+</AdminBase>

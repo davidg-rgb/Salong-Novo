@@ -1,6 +1,7 @@
 import sv from "./ui.sv.json";
 import en from "./ui.en.json";
 import { type Locale, DEFAULT_LOCALE } from "./routes";
+import { copyKey, overrideSide, type KvMap } from "../lib/cms/content";
 
 export * from "./routes";
 
@@ -41,8 +42,18 @@ export function t(
   return interpolate(value, vars);
 }
 
-/** Curried translator bound to a locale: `const tr = useT("sv")`. */
-export function useT(locale: Locale) {
-  return (key: string, vars?: Record<string, string | number>) =>
-    t(locale, key, vars);
+/**
+ * Curried translator bound to a locale: `const tr = useT("sv")`.
+ *
+ * With a `content_kv` map it becomes the CMS-aware translator: an allowlisted
+ * `copy.*` override wins over the dictionary, resolved PER SIDE — a blank
+ * English side falls through to the English dictionary rather than shadowing it
+ * with Swedish. Interpolation still applies to an overridden string, or
+ * `t("blog.readingTime", { minutes })` renders a sentence missing its number.
+ */
+export function useT(locale: Locale, kv?: KvMap | null) {
+  return (key: string, vars?: Record<string, string | number>) => {
+    const override = kv ? overrideSide(kv, copyKey(key), locale) : null;
+    return override === null ? t(locale, key, vars) : interpolate(override, vars);
+  };
 }

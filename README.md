@@ -47,10 +47,10 @@ npm run db:migrate:remote            # ...and to the remote D1
 | Script | Does |
 |--------|------|
 | `npm run dev` | Astro dev server |
-| `npm run build` | Build to `dist/` (Cloudflare Pages output) |
+| `npm run build` | Build to `dist/` (Workers output: `dist/client` + `dist/server`) |
 | `npm test` / `test:watch` | Vitest unit suite |
 | `npm run typecheck` | `tsc --noEmit` |
-| `npm run preview` | `wrangler pages dev ./dist` (full runtime incl. D1/R2) |
+| `npm run preview` | `wrangler dev --config dist/server/wrangler.json` (full runtime incl. D1/R2) |
 | `npm run db:migrate:local` / `:remote` | Apply D1 migrations |
 
 ## Key facts (verified from live site, 2026-05-31)
@@ -63,6 +63,6 @@ npm run db:migrate:remote            # ...and to the remote D1
 ## Remaining before launch
 1. **Pick a design direction** → apply tokens + component styling (Phase 1).
 2. Migrate award/hero imagery into `public/`.
-3. Create D1 + R2 + Cloudflare Access; deploy to Cloudflare Pages.
+3. Create D1 + R2 + Cloudflare Access; deploy to Cloudflare Workers.
 4. Confirm `salongnovo.se` DNS on Cloudflare; flip the redirect cutover.
 5. EN copy sign-off; real services menu (deferred); GA4 + cookie consent.
