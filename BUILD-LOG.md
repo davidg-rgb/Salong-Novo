@@ -112,6 +112,34 @@ site-fact keys with <2 segments (`content.ts:284`) — a flat `site.json` (top-l
 `brand`/`contact` + tests forbidding root scalars. `_templates/forge-cms` still carries the trap for
 the next consumer.
 
+### 2026-08-11 17:21 — REVIEW COMPLETE · fixes applied · FINAL GATE PASSED — RETROFIT DONE
+Fable adversarial review verdict: **ship** — 0 blockers, 0 warnings, 3 NOTEs. The reviewer
+re-verified the gates itself and traced the hard claims to source: the encoded-path/double-slash
+admin bypass is impossible (Astro normalizes+decodes the pathname BEFORE middleware; multi-level
+encoding 400s), the media merge is complete on both writer/reader paths incl. pre-existing rows,
+build-gates walks the tree so future pages can't slip past the prerender rule, usageQueries can
+only over-match (safe direction), and `getCms()` is memoized per request via the middleware thunk.
+
+Two NOTEs fixed immediately (orchestrator, prime directive — five-minute permanent fixes):
+1. **Blog `authorized()` aligned with the CMS guard** — was `return true` when `ADMIN_API_TOKEN`
+   unset; now `return !import.meta.env.PROD` in all 4 route files (posts, posts/[id], media,
+   preview). Prod fails closed even in the defense-in-depth layer; local dev unchanged.
+2. **Template `mergeSiteOverrides` trap fixed at the source** — `_templates/forge-cms` guard
+   `< 2` → `< 1` (root-level site keys now merge; `containerAt([])` returns the root), two
+   root-leaf tests added to the template's `cms-content.test.ts`, RUNBOOK §3 shape-trap note for
+   pre-fix vendored cores, ARCHITECTURE §16 **Amendment 15** recorded. NOVO's vendored copy
+   deliberately unchanged (safe by shape + tests forbid root scalars; next re-sync picks it up).
+Third NOTE (last-row delete resurrects JSON defaults on the public grid) stays a documented
+deferral with the "Kopiera standardlistan" affordance follow-up.
+
+**FINAL GATE (orchestrator-run, post-fix):** `npm run test` → **529/529** · typecheck clean ·
+`npm run check` → 0 errors (6 pre-existing hints) · `npx astro build` → Complete.
+
+**RETROFIT COMPLETE.** salong-novo-v2 now runs the Forge CMS on the Forge stack floor.
+Remaining before launch is ops + content, not code: Cloudflare account provisioning (D1/R2/Access
+per RUNBOOK §5), client content per the 2026-06-01 IA (CLAUDE.md §12 page migration is a separate
+design/build task), imagery, DNS.
+
 **Deliberate deferrals (logged, not bugs):** `showPrices` stays a developer flag (no toggle renderer
 in FormField; string round-trip would corrupt the boolean); services/awards admin-editable but
 publicly unrendered (rendering would publish unconfirmed prices — design task); two homepage stat

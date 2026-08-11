@@ -33,7 +33,7 @@ import type { Post, PostStatus } from "../../../lib/posts";
  */
 function authorized(request: Request, env: Partial<Env>): boolean {
   const expected = env.ADMIN_API_TOKEN;
-  if (!expected) return true; // not configured locally -> allow (Access still gates prod)
+  if (!expected) return !import.meta.env.PROD; // unset: dev builds only — prod fails closed, matching the CMS guard
   return request.headers.get("x-admin-token") === expected;
 }
 
