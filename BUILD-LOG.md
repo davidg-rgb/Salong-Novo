@@ -168,6 +168,37 @@ after a first deploy.
 **Cosmetic on test deploy:** canonical URLs/JSON-LD reference `https://salongnovo.se` (from
 wrangler.toml [vars]) — correct at DNS cutover, harmless meanwhile.
 
+### 2026-08-12 00:45 — REAL IMAGERY LANDED: 18 portraits + 16 award shots fetched, textures generated, all wired
+**Photos (real, fetched — NOT generated):** all 18 stylist portraits harvested from the live site
+(`salongnovo.se/img/personal/<slug>.jpg`, professional studio set, 800x1000) plus all 16 Årets
+Frisör 2026 competition images (`/img/arets_frisor_2026/`), optimized into
+`public/images/staff/` + `public/images/awards-2026/` (typo "anvantagrde"→"avantgarde" fixed in
+our filenames). Faces of real people are never AI-generated — fetch-first was the rule.
+
+**Wiring (builder-photos, 537/537 tests):** `Stylist.photo` mapped end-to-end (was orphaned);
+`stylistPhotoUrl()` helper — leading `/` = static asset, else R2 media key via `/api/media/`;
+portraits render in StaffGrid + modal + Home team cards under the existing bronze duotone
+(`mix-blend-mode: color`, fades on hover → true colour); monogram stays the no-photo fallback
+(proven); hair strip rebuilt as a named region with 5 award images + localized alts
+(`home.galleryAlt`); new repo gate test: every referenced `/images/…` path must exist in `public/`.
+
+**Ratified core divergence (#15 in FORGE-MANIFEST):** `collections.ts` `kind:"image"` accepts a
+rooted STATIC_ASSET path alongside MEDIA_KEY — without it, saving an unedited stylist failed
+`bad_shape` on the untouched photo field. Protocol-relative and absolute URLs still refused
+(test-pinned). Template deliberately unchanged (nicole seeds real media keys); candidate for
+template adoption at a third JSON-default-images consumer.
+
+**Generated textures (Gemini `gemini-2.5-flash-image`, scope approved by David: abstract only):**
+6 candidates (hair macro / ink silk / bronze brushwork × 2), 2 curated in:
+`public/images/textures/hair-band.jpg` (Home full-bleed divider band before the champagne
+closing band) + `silk-band.jpg` (site-wide black footer backdrop under a 0.9 ink overlay —
+reads as sheen, text contrast unchanged). 4 rejected (vortex gimmick, gold too dominant ×2,
+X-shape reads as error). GEMINI_API_KEY lives in workspace `.env.local`.
+
+**Gate:** 537/537 · typecheck clean · `astro check` 0 errors · build green · 18 portraits in dist.
+**Ops note:** killed an orphaned `wrangler dev` (TaskStop kills the shell but not the child on
+Windows — use `taskkill //PID <pid> //T`); RUNBOOK's `--persist-to` warning is exactly this.
+
 **Deliberate deferrals (logged, not bugs):** `showPrices` stays a developer flag (no toggle renderer
 in FormField; string round-trip would corrupt the boolean); services/awards admin-editable but
 publicly unrendered (rendering would publish unconfirmed prices — design task); two homepage stat

@@ -1,7 +1,8 @@
 ---
 import { type Locale, useT, localizePath } from "../i18n";
-import { asStylist, getStats, stylistBio } from "../lib/content";
+import { asStylist, getStats, stylistBio, stylistPhotoUrl } from "../lib/content";
 import { resolveCollection } from "../lib/collections";
+import { bindings } from "../lib/cms/bindings";
 import { STAFF } from "../cms.config";
 import BookingButton from "./BookingButton.astro";
 import Logo from "./Logo.astro";
@@ -13,9 +14,21 @@ const stats = getStats(kv);
 // the list, and from her first stylist onward the list in D1 is the roster.
 const staff = (await resolveCollection(Astro.locals.db, STAFF)).items.map(asStylist);
 const staffLabel = t("nav.staff");
+const imageBase = (await bindings()).PUBLIC_IMAGE_BASE ?? "";
 // Section order is client-confirmed (ARCHITECTURE §2A.2): hero → Boka tid → hair strip →
-// founders story → team (hover/focus/tap bios). Pending assets (salon video, hair photos,
-// owners photo, stylist texts) slot into these existing slots without layout changes.
+// founders story → team (hover/focus/tap bios). Pending assets (salon video, owners photo)
+// slot into these existing slots without layout changes.
+
+// The strip's five looks — one per competition class NOVO placed in, plus a second
+// Nykomling frame, chosen for contrast (light studio ↔ dark neon) as the row scrolls.
+// `category` names the class the image competed in; it feeds the alt text.
+const gallery = [
+  { src: "/images/awards-2026/farg-1.jpg", category: "Årets Färg" },
+  { src: "/images/awards-2026/avantgarde-2.jpg", category: "Avantgarde" },
+  { src: "/images/awards-2026/nykomling-1.jpg", category: "Årets Nykomling" },
+  { src: "/images/awards-2026/herr-3.jpg", category: "Årets Herr" },
+  { src: "/images/awards-2026/nykomling-3.jpg", category: "Årets Nykomling" },
+];
 ---
 <!-- 1 ── HERO. "Nu kan vi ha loggan eller något snyggt mjukt" — soft brand hero now; a muted,
      looped salon-ambience video drops in behind .hero-inner later (gated on prefers-reduced-motion
@@ -35,17 +48,23 @@ const staffLabel = t("nav.staff");
 </section>
 
 <!-- 2 ── HAIR-GALLERY STRIP. "Sedan kan de rulla lite fina hårbilder i en rad." Horizontal
-     scroll-snap row; tonal placeholder tiles are durable stand-ins until real photos land.
-     Decorative for now → a plain <div>, not a named landmark (an aria-labelled region with only
-     aria-hidden tiles announces an empty region — review 2026-06-01). When real captioned photos
-     land, restore the landmark + per-tile <img alt> (home.galleryLabel is the name to use). -->
-<div class="strip">
-  <ul class="strip-track" role="list" aria-hidden="true">
-    {Array.from({ length: 8 }).map((_, i) => (
-      <li class="tile" style={`--i:${i}`}></li>
+     scroll-snap row. The real Årets Frisör 2026 photography landed 2026-08-12, so the
+     placeholder tiles are gone and the strip is what the review of 2026-06-01 said it should
+     become once captioned photos existed: a named region, each tile a described image. -->
+<section class="strip" aria-label={t("home.galleryLabel")}>
+  <ul class="strip-track" role="list">
+    {gallery.map((shot, i) => (
+      <li class="tile" style={`--i:${i}`}>
+        <img
+          src={shot.src}
+          alt={t("home.galleryAlt", { category: shot.category })}
+          loading="lazy"
+          decoding="async"
+        />
+      </li>
     ))}
   </ul>
-</div>
+</section>
 
 <!-- 3 ── FOUNDERS STORY. "Bild på mig och Chriss och en story om oss och salongen." -->
 <section class="story">
@@ -80,11 +99,14 @@ const staffLabel = t("nav.staff");
       {staff.map((s) => {
         const bio = stylistBio(s, locale);
         const role = s.specialty !== "TODO" ? s.specialty : s.role;
+        const photo = stylistPhotoUrl(s.photo, imageBase);
         return (
           <li>
             <a class="team-card" href={localizePath("staff", locale)} aria-label={`${s.name} — ${role}`}>
               <span class="frame" aria-hidden="true">
-                <span class="mono">{s.name.charAt(0)}</span>
+                {photo
+                  ? <img class="portrait" src={photo} alt={s.name} loading="lazy" decoding="async" />
+                  : <span class="mono">{s.name.charAt(0)}</span>}
                 <span class="duo"></span>
                 {bio && <span class="bio"><span class="bio-inner">{bio}</span></span>}
               </span>
@@ -97,6 +119,11 @@ const staffLabel = t("nav.staff");
     </ul>
   </div>
 </section>
+
+<!-- 5 ── TEXTURE BAND. Decorative full-bleed divider before the champagne closing band —
+     generated brand texture (dark hair, bronze glints; public/images/textures/), approved
+     2026-08-12. Purely presentational: no landmark, no alt. -->
+<div class="texture-band" aria-hidden="true"></div>
 
 <style>
   /* ── 1. Hero — soft, light, brand-forward (DESIGN-SYSTEM §6; client: "loggan eller något mjukt"). */
@@ -132,8 +159,11 @@ const staffLabel = t("nav.staff");
   .tile {
     flex: 0 0 clamp(220px, 26vw, 340px); aspect-ratio: 4/5; scroll-snap-align: start;
     background: linear-gradient(150deg, #34302a, #1d1c19);
-    position: relative;
+    position: relative; isolation: isolate;
   }
+  .tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  /* The bronze wash sits ON the photograph — the ramp keeps the row reading as one
+     graded sequence rather than five unrelated pictures. */
   .tile::after {
     content: ""; position: absolute; inset: 0;
     background: var(--bronze); mix-blend-mode: color; opacity: calc(0.16 + (var(--i) * 0.03));
@@ -167,10 +197,12 @@ const staffLabel = t("nav.staff");
   .team-grid { list-style: none; display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--gutter, 1.5rem) clamp(14px, 2vw, 28px); }
   .team-card { display: flex; flex-direction: column; color: inherit; }
   .team-card .frame {
-    position: relative; aspect-ratio: 3/4; overflow: hidden;
+    position: relative; aspect-ratio: 3/4; overflow: hidden; isolation: isolate;
     background: linear-gradient(160deg, #33302a, #1c1b18); display: grid; place-items: center;
   }
   .team-card .mono { font-family: var(--font-serif); font-size: clamp(40px, 5vw, 72px); color: rgba(255,255,255,0.92); }
+  /* Portrait under .duo and under .bio: bronze-toned at rest, true colour on reveal. */
+  .team-card .portrait { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
   .team-card .duo { position: absolute; inset: 0; background: var(--bronze); mix-blend-mode: color; opacity: 0.32; transition: opacity 0.8s ease; }
   .team-card:hover .duo, .team-card:focus-visible .duo { opacity: 0; }
   /* Bio overlay — always in the DOM; revealed on hover, keyboard focus, and tap (.is-revealed). */
@@ -195,6 +227,13 @@ const staffLabel = t("nav.staff");
     .story-media { max-width: 420px; }
   }
   @media (max-width: 620px) { .team-grid { grid-template-columns: repeat(2, 1fr); } }
+
+  /* ── 5. Texture band — fixed-height full-bleed strip; cover-cropped, so any viewport just
+     crops the 21:9 source. Kept shallow to stay a divider, not a hero. */
+  .texture-band {
+    height: clamp(110px, 20vw, 210px);
+    background: url("/images/textures/hair-band.jpg") center / cover no-repeat;
+  }
 
   @media (prefers-reduced-motion: reduce) {
     .tile::after, .team-card .duo, .team-card .bio, .story-more .arr, .team-all .arr { transition: none; }

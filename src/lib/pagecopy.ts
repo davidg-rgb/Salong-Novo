@@ -28,6 +28,12 @@ export const home = {
     en: "18 stylists in the heart of Vasastan. Cut, colour and styling at competition level — three-time winners of Collection of the Year.",
   } as Bi,
   galleryLabel: { sv: "Utvalda hårbilder", en: "Selected hair looks" } as Bi,
+  // {category} is the competition class, a Swedish proper noun in both locales —
+  // the same way the stat row prints "Årets Kollektion" untranslated.
+  galleryAlt: {
+    sv: "{category}, Årets Frisör 2026",
+    en: "{category}, Swedish Hairdressing Awards 2026",
+  } as Bi,
   teamHeading: { sv: "Vårt fantastiska team.", en: "Our wonderful team." } as Bi,
 };
 

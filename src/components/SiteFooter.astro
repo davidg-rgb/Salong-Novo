@@ -72,8 +72,15 @@ const site = getSite(kv);
 
   /* Recognition bar — black base + terracotta BOKA (DESIGN-SYSTEM §6); the champagne band above
      now carries the warm-band signature, so the black bar drops its old 4px top line. */
+  /* Ink footer over the generated silk texture (public/images/textures/, approved 2026-08-12).
+     The 0.9 ink overlay keeps text contrast effectively unchanged — the silk reads as a
+     low-key sheen, not an image. Solid var(--black) stays the paint-order fallback. */
   .site-footer {
-    background: var(--black); color: var(--cream);
+    background:
+      linear-gradient(rgba(10, 10, 10, 0.9), rgba(10, 10, 10, 0.9)),
+      url("/images/textures/silk-band.jpg") center / cover no-repeat,
+      var(--black);
+    color: var(--cream);
     padding: clamp(64px, 8vw, 100px) 0 0;
   }
   .foot {

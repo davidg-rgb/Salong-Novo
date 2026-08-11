@@ -3,6 +3,7 @@ import servicesData from "../../content/services.json";
 import awardsData from "../../content/awards.json";
 import type { Locale } from "../i18n/routes";
 import { getSite } from "./site";
+import { servedUrl } from "./media";
 import type { KvMap } from "./cms/content";
 
 /**
@@ -29,6 +30,8 @@ export interface Stylist {
   awards: string[];
   bio_sv: string;
   bio_en: string;
+  /** A bundled asset path or an R2 media key — see `stylistPhotoUrl`. */
+  photo?: string;
 }
 
 export interface Service {
@@ -138,7 +141,24 @@ export function asStylist(row: Record<string, unknown>): Stylist {
     awards: Array.isArray(row.awards) ? (row.awards as unknown[]).map(String) : [],
     bio_sv: text("bio_sv"),
     bio_en: text("bio_en"),
+    photo: text("photo") || undefined,
   };
+}
+
+/**
+ * The URL of a stylist's portrait, or `null` when there is none.
+ *
+ * Two shapes reach the same `photo` field and both are legitimate. The JSON
+ * defaults layer ships the roster's portraits as bundled asset paths
+ * (`/images/staff/<slug>.jpg`), while the admin's image picker stores a bare R2
+ * media key. A LEADING SLASH is the discriminator — a media key never has one —
+ * so an uploaded portrait takes over from the shipped default through the same
+ * field, with no second code path and no migration.
+ */
+export function stylistPhotoUrl(photo: string | null | undefined, base = ""): string | null {
+  const value = (photo ?? "").trim();
+  if (value === "") return null;
+  return value.startsWith("/") ? value : servedUrl(base, value);
 }
 
 /** Localized stylist bio with graceful fallback. */

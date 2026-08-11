@@ -32,21 +32,28 @@
     {
       "path": "src/i18n/routes.ts",
       "required": true,
-      "importedBy": ["src/lib/cms/content.ts (type-only)"],
+      "importedBy": [
+        "src/lib/cms/content.ts (type-only)"
+      ],
       "contract": "Exports `type Locale = \"sv\" | \"en\"`. ADR-01's named v1 limitation.",
       "note": "NO CHANGE NEEDED. The file already exported `type Locale = (typeof LOCALES)[number]` over `[\"sv\",\"en\"]`, which is that type. This project was bilingual sv/en from day one, so the one seam that can cost a core generalisation cost nothing."
     },
     {
       "path": "src/lib/site.ts + src/i18n/index.ts",
       "required": true,
-      "importedBy": ["src/pages/admin/content/[group].astro", "tests/cms-config.test.ts"],
+      "importedBy": [
+        "src/pages/admin/content/[group].astro",
+        "tests/cms-config.test.ts"
+      ],
       "contract": "`getSite(kv?)` (unmerged JSON defaults with no argument) and `t(locale, key)` / `useT(locale, kv?)` supply the GHOST PLACEHOLDER values behind an unedited field — the §6.16/P2-C7 'absent row → empty input + ghost default' behaviour.",
       "note": "`src/lib/site.ts` is NEW and thin: 3 lines of body over `content/site.json` and the core's `mergeSiteOverrides`. `t(locale, key, vars?)` already existed in the required shape; `useT` gained an optional `kv` parameter and now resolves `overrideSide(kv, copyKey(key), locale)` before the dictionary chain. Interpolation still applies to an overridden string. The pre-CMS `getSite()` in src/lib/content.ts is untouched and still what the public components call — one JSON file behind both."
     },
     {
       "path": "src/styles/tokens.css",
       "required": true,
-      "importedBy": ["src/layouts/AdminBase.astro"],
+      "importedBy": [
+        "src/layouts/AdminBase.astro"
+      ],
       "contract": "Must define the 32 custom properties admin.css consumes. RUNBOOK §3.3 lists them.",
       "note": "§8 measured this project at 2 of 32. The other 30 were added as an ALIAS BLOCK mapping the Haute Editorial palette (charcoal/ink/cream/clay/bronze/champagne/terracotta) onto the Material-3-shaped role names, in a second `:root` after the existing one. Two judgement calls are commented in place: `--primary` is terracotta, not bronze (bronze is texture and never a CTA fill in this design system), and `--radius`/`--radius-lg` are `0` because square corners are the editorial direction the public buttons already use. The RUNBOOK §3.3 verification grep returns empty. NO public pixel changed — nothing on the public site reads a role name."
     },
@@ -189,6 +196,15 @@
       "kind": "test",
       "what": "The fake `APIContext` gained a `redirect` helper; `SITE`/`EMAIL` and three sample paths moved to this project's domain and routes; a new two-test block asserts the merged redirect pass runs BEFORE the gate and skips the route entirely.",
       "why": "The harness had to grow `redirect` because the merged middleware calls it — without it the very first ported test threw. The added block is the only coverage the merge point has, and it is the thing most likely to be broken by a future edit: `/portfolio` must 301 to `/tavlingar` without `next()` ever being called."
+    },
+    {
+      "path": "src/lib/cms/collections.ts",
+      "from": "_templates/forge-cms/src/lib/cms/collections.ts",
+      "kind": "core-edit",
+      "what": "validateCollectionItem: kind \"image\" accepts a STATIC_ASSET shape (rooted path /images/... with an alphanumeric char after the slash and a file extension) alongside the R2 MEDIA_KEY shape.",
+      "why": "The instance ships developer-default images as static assets in public/ (staff portraits), referenced from the JSON defaults layer via /images/staff/<slug>.jpg. Under MEDIA_KEY alone, a client opening an UNEDITED stylist and pressing save got bad_shape on the photo field she never touched, and the round-trip test went red. The admin can still replace any default with an uploaded R2 media key through the same field.",
+      "detail": "STATIC_ASSET = ^/[a-z0-9][a-z0-9/_.-]*\\.[a-z0-9]+$ (case-insensitive). Protocol-relative //host/x.jpg is refused (char after the slash must be alphanumeric); absolute https:// URLs still refused by both shapes. Tests pin both refusals plus the acceptance (tests/cms-collections.test.ts).",
+      "upstream": "Template NOT changed: nicole seeds D1 with real media keys and never stores static paths. Candidate for template adoption if a third consumer uses JSON-default images."
     }
   ],
   "verification": {
@@ -201,50 +217,342 @@
     "notRun": "`npm run check` (astro check). The project has neither the script nor `@astrojs/check`, and adding a dependency was out of scope for this phase. `.astro` files are therefore covered by `astro build` only — RUNBOOK §1 wants that gate, and it is the one stack-floor item still open."
   },
   "files": [
-    { "path": "migrations/0002_core_tables.sql", "kind": "derived", "version": "1.0.0", "sha256": "a88a015374d70b9adfbd969d3157fd92478d5cca9ee9248a1c03ebd4f93385d3", "identical": false, "note": "See divergence — the media merge." },
-    { "path": "migrations/0003_cms_content.sql", "kind": "core", "version": "1.0.0", "sha256": "80320581231b82bab7a744730f1a288613a2e18f587a03357321d465d397fd4d", "identical": true },
-    { "path": "src/lib/cms/bindings.ts", "kind": "core", "version": "1.0.0", "sha256": "cf7a42732e2a58f52b087fd6e0c0b8810819512be30a230475d6a5b4018460a5", "identical": true, "note": "Vendored in Phase A, ahead of the rest of the core." },
-    { "path": "src/lib/cms/db.ts", "kind": "core", "version": "1.0.0", "sha256": "1b21aa7c6e570d65042c190bdd180cf9e4e922b0bab0e792df348dd38dd91ce7", "identical": true },
-    { "path": "src/lib/cms/access.ts", "kind": "core", "version": "1.0.0", "sha256": "18ef70d96eb692e16b63cb7d4db6cc666888448ec773f4411576df1f134f7ec8", "identical": true, "note": "This project's src/lib/access.ts is the prior art it was extracted from; both now exist." },
-    { "path": "src/lib/cms/http.ts", "kind": "core", "version": "1.0.0", "sha256": "03fd338b6692c9e16dbef0f3f46ab7bcdcb3b6560af72382007761fff96e75a9", "identical": true },
-    { "path": "src/lib/cms/config-types.ts", "kind": "core", "version": "1.0.0", "sha256": "704729da03e8754db5aca42bc46bef714abc907d4dfb78efdb5c6a4728ba9fc3", "identical": true, "note": "Core owns the TYPES; cms.config.ts owns the DATA (§10.1)." },
-    { "path": "src/lib/cms/content.ts", "kind": "core", "version": "1.0.0", "sha256": "a932748ce513c22b632257b3edd247f86226f966485ca071ed7138fb0e1c4427", "identical": true, "note": "Imports `type Locale` from src/i18n/routes — the ADR-01 sv/en hardwire." },
-    { "path": "src/lib/cms/collections.ts", "kind": "core", "version": "1.0.0", "sha256": "b2c136951ae9c161a6364143227594d46536f54903bff946d9ba0834b761ca3d", "identical": true },
-    { "path": "src/lib/cms/media.ts", "kind": "core", "version": "1.0.0", "sha256": "561010cd3e59ebf3ee14a61a806ffd5fb6c51ccf83096c8451998410af3a1d90", "identical": true },
-    { "path": "src/lib/cms/media-db.ts", "kind": "core", "version": "1.0.0", "sha256": "d8bd96c7651c45997f12e358a0514def523b2c8d13d29c835874ca2e6f45c68e", "identical": true, "note": "Its header says salong's post_id/variants are 'deliberately not ported'. Still true of the MODULE; the TABLE now carries both, because this project's blog still writes them." },
-    { "path": "src/lib/cms/slug.ts", "kind": "core", "version": "1.0.0", "sha256": "68661316170c00cb239076fbef7342eafa34f37852d3e9c18c48c6f8d4d99604", "identical": true },
-    { "path": "src/lib/cms/strings.sv.ts", "kind": "seam", "version": "1.0.0", "sha256": "511e8ffec3baedc6ff066fab05b00b553229f0e205d407c5a5da68457766fee1", "identical": false, "note": "See divergence — expected, the contents are the instance's." },
-    { "path": "src/lib/enquiries-admin.ts", "kind": "core", "version": "1.0.0", "sha256": "0a460aab2aff68b87b985331b55e62389ac2db5035131ce050cf1b11ef4e59e1", "identical": true, "note": "Adopted even though this site has no contact form: the [CORE] dashboard imports countNewEnquiries." },
-    { "path": "src/middleware.ts", "kind": "core", "version": "1.0.0", "sha256": "15a396a5f2b895cdac0d5a442b10454fd33aa2ed1c6c71073fa8383dacf3bcd0", "identical": false, "note": "See divergence — the redirect merge, the removed header-trust tier, the now-called tripwire." },
-    { "path": "src/layouts/AdminBase.astro", "kind": "core", "version": "1.0.0", "sha256": "b799b7f3dfa1446ad63e79b6b54d7dd9090d89bf879f7e24d19ae2b10fd8ec99", "identical": true },
-    { "path": "src/styles/admin.css", "kind": "core", "version": "1.0.0", "sha256": "dca90a6dd3b45ec82b870eedfc257711abaeac0bf6c64b5ad9799bebbc712ddb", "identical": true, "note": "Consumes 32 CSS custom properties; tokens.css now defines all 32." },
-    { "path": "src/components/admin/AdminNav.astro", "kind": "core", "version": "1.0.0", "sha256": "a10eca3a3e4fdda0642ceae4cfebbdd30b1d821c2643b71dee06b9832aa01c69", "identical": true },
-    { "path": "src/components/admin/FormField.astro", "kind": "core", "version": "1.0.0", "sha256": "2fb878840b8e5a28e1d249d2d34123f244eb8abcc85f8cc91360f9dca7972bf7", "identical": true },
-    { "path": "src/components/admin/CollectionList.astro", "kind": "core", "version": "1.0.0", "sha256": "5648f08c8bf83a30ed61fecd7c52a5a0ea58052b6c6732d0598bd97e6b5a2a5c", "identical": true },
-    { "path": "src/components/admin/CollectionItemForm.astro", "kind": "core", "version": "1.0.0", "sha256": "c2019e317922cdfb435954d27697b1136a799d28917786823cd3014219ffe11b", "identical": true },
-    { "path": "src/admin/forms.client.ts", "kind": "core", "version": "1.0.0", "sha256": "f3a230157427ec822a05c5c05941b37af636f9d30f1baed16c971eba6fb588c0", "identical": true },
-    { "path": "src/admin/reorder.client.ts", "kind": "core", "version": "1.0.0", "sha256": "506d05607a8e692e3cbf51915d8372bc7bf8c6310e84cc394cb3d307445f9e8b", "identical": true },
-    { "path": "src/admin/media.client.ts", "kind": "core", "version": "1.0.0", "sha256": "be22a715c1fad9f0c5eae4931393e9db6cf52395e90e9ee2e33a5a96032eeaa8", "identical": true },
-    { "path": "src/pages/admin/index.astro", "kind": "core", "version": "1.0.0", "sha256": "6d9cce3db844219c7a69b646e12b476340695e0817d58e079ce3834755fb424c", "identical": true, "note": "Byte-identical; the DISPLACED blog page is the divergence." },
-    { "path": "src/pages/admin/content/[group].astro", "kind": "core", "version": "1.0.0", "sha256": "a58b6a99af4810fa7b11514d67c47a11a08d66475fc61a08b6622e9ef9a1e29d", "identical": true, "note": "Imports getSite() and t() from the instance — seam 4. Renders an empty group list until Phase B2." },
-    { "path": "src/pages/admin/collections/[name].astro", "kind": "core", "version": "1.0.0", "sha256": "100e7bcda2cc319221857a00b0e5ec0dbf01abeb763a9b9dd09ffacdb9ca5970", "identical": true },
-    { "path": "src/pages/admin/media.astro", "kind": "core", "version": "1.0.0", "sha256": "b76bcaa13b8842a0c6d4601d5e0a9136b0c6411f599e58556740dd0a96858591", "identical": true },
-    { "path": "src/pages/api/admin/content.ts", "kind": "core", "version": "1.0.0", "sha256": "26a56399dfc53981cd9b4d5da8fc50964e44c7cc31cb873d7958d63581505421", "identical": true },
-    { "path": "src/pages/api/admin/collections/[name].ts", "kind": "core", "version": "1.0.0", "sha256": "3571493b725a6624bb7306f6f04ffa8826708a3817a48e7d11c1604ba69846c9", "identical": true },
-    { "path": "src/pages/api/admin/collections/[name]/[id].ts", "kind": "core", "version": "1.0.0", "sha256": "dcecd715cc032c482085e9bfe8522bae314c356e2221623fef871a8bd8fc6beb", "identical": true },
-    { "path": "src/pages/api/admin/upload.ts", "kind": "core", "version": "1.0.0", "sha256": "2e4ef0ff7d96fec3cf088c04bbabdefde8964ad8a2f471d4c0b40448230e0922", "identical": false, "note": "See divergence — the two-caller overlap merge." },
-    { "path": "src/pages/api/admin/media/[key].ts", "kind": "core", "version": "1.0.0", "sha256": "4686ae921abcbbe3a381e24ef5c596b87b90533e79d3b00038ec9082c5b762ba", "identical": true, "note": "Coexists with the blog's own src/pages/api/admin/media.ts — different routes (/api/admin/media vs /api/admin/media/:key), both live." },
-    { "path": "src/pages/api/media/[...key].ts", "kind": "core", "version": "1.0.0", "sha256": "b62f2e7eb7b1363d157b573e016895573e4ba011436850a42d0e96bfb515cea7", "identical": true, "note": "PUBLIC route — no auth, immutable cache + ETag. Replaced this project's own version." },
-    { "path": "tests/helpers/fake-d1.ts", "kind": "test", "version": "1.0.0", "sha256": "07c28a20ad4a48e0e5d27db1421f757f7a1281e25a9a15c4138b63a2fe694a71", "identical": true },
-    { "path": "tests/cms-access.test.ts", "kind": "test", "version": "1.0.0", "sha256": "7a0efdeb6c00c7809b6836abb30c9ee717b481995b3cc87b520b91c79c0c640c", "identical": true },
-    { "path": "tests/cms-http.test.ts", "kind": "test", "version": "1.0.0", "sha256": "166d3480ab27cc7f8953faf26efe42b15508b381b4fdca3fdd4f5a5c3ec72186", "identical": true },
-    { "path": "tests/cms-content.test.ts", "kind": "test", "version": "1.0.0", "sha256": "dff0ad065d0b239e165e0460aaaf4998e7f2837197c3e42ef884aab019751272", "identical": true },
-    { "path": "tests/enquiries-admin.test.ts", "kind": "test", "version": "1.0.0", "sha256": "0b50dacf9e7469e8e0c204a4a0ecf5d7e314d5b629f293d791ba9e3f07e95904", "identical": true },
-    { "path": "tests/cms-middleware.test.ts", "kind": "test", "version": "1.0.0", "sha256": "d1dc5211a44120851c91d133c7eb98d1390366492b465db9a29d320690d98e63", "identical": false, "note": "See divergence." },
-    { "path": "tests/cms-collections.test.ts", "kind": "test", "version": "1.0.0", "sha256": "b304a5ac2aef44c8ef202473df53a8546a8e648e5cdb65686735ab1996d387d2", "identical": false, "note": "See divergence." },
-    { "path": "tests/cms-media.test.ts", "kind": "test", "version": "1.0.0", "sha256": "8f5871d5738b3b1e6a0ec21f12395670a200d221a4c7826ac5150d709fd0d2ca", "identical": false, "note": "See divergence." },
-    { "path": "tests/build-gates.test.ts", "kind": "test", "version": "1.0.0", "sha256": "ae62b16b70bd552aa45ff5d0cac02c1f5d0dab507c64a855d0d736ed74da4ca3", "identical": false, "note": "See divergence." },
-    { "path": "tests/admin-strings.test.ts", "kind": "test", "version": "1.0.0", "sha256": "bccb67c4f57605cbd2521c919b0ab39c9abf109ca0a7cc800f05b779eb484669", "identical": false, "note": "See divergence — six blog codes added to the taxonomy, nicole's `embed.detected` token dropped." },
-    { "path": "tests/cms-config.test.ts", "kind": "test", "version": "1.0.0", "sha256": "18e6a8dc05798e7b1ed8e041ee42f8114fef6a17288911c5c16077d5428ffe47", "identical": false, "note": "See divergence." }
+    {
+      "path": "migrations/0002_core_tables.sql",
+      "kind": "derived",
+      "version": "1.0.0",
+      "sha256": "a88a015374d70b9adfbd969d3157fd92478d5cca9ee9248a1c03ebd4f93385d3",
+      "identical": false,
+      "note": "See divergence — the media merge."
+    },
+    {
+      "path": "migrations/0003_cms_content.sql",
+      "kind": "core",
+      "version": "1.0.0",
+      "sha256": "80320581231b82bab7a744730f1a288613a2e18f587a03357321d465d397fd4d",
+      "identical": true
+    },
+    {
+      "path": "src/lib/cms/bindings.ts",
+      "kind": "core",
+      "version": "1.0.0",
+      "sha256": "cf7a42732e2a58f52b087fd6e0c0b8810819512be30a230475d6a5b4018460a5",
+      "identical": true,
+      "note": "Vendored in Phase A, ahead of the rest of the core."
+    },
+    {
+      "path": "src/lib/cms/db.ts",
+      "kind": "core",
+      "version": "1.0.0",
+      "sha256": "1b21aa7c6e570d65042c190bdd180cf9e4e922b0bab0e792df348dd38dd91ce7",
+      "identical": true
+    },
+    {
+      "path": "src/lib/cms/access.ts",
+      "kind": "core",
+      "version": "1.0.0",
+      "sha256": "18ef70d96eb692e16b63cb7d4db6cc666888448ec773f4411576df1f134f7ec8",
+      "identical": true,
+      "note": "This project's src/lib/access.ts is the prior art it was extracted from; both now exist."
+    },
+    {
+      "path": "src/lib/cms/http.ts",
+      "kind": "core",
+      "version": "1.0.0",
+      "sha256": "03fd338b6692c9e16dbef0f3f46ab7bcdcb3b6560af72382007761fff96e75a9",
+      "identical": true
+    },
+    {
+      "path": "src/lib/cms/config-types.ts",
+      "kind": "core",
+      "version": "1.0.0",
+      "sha256": "704729da03e8754db5aca42bc46bef714abc907d4dfb78efdb5c6a4728ba9fc3",
+      "identical": true,
+      "note": "Core owns the TYPES; cms.config.ts owns the DATA (§10.1)."
+    },
+    {
+      "path": "src/lib/cms/content.ts",
+      "kind": "core",
+      "version": "1.0.0",
+      "sha256": "a932748ce513c22b632257b3edd247f86226f966485ca071ed7138fb0e1c4427",
+      "identical": true,
+      "note": "Imports `type Locale` from src/i18n/routes — the ADR-01 sv/en hardwire."
+    },
+    {
+      "path": "src/lib/cms/collections.ts",
+      "kind": "core",
+      "version": "1.0.0",
+      "sha256": "38d10e790248f688baae60adc3425b55e90f0ba6f0532cd7647c3287837becca",
+      "identical": false,
+      "note": "See divergence."
+    },
+    {
+      "path": "src/lib/cms/media.ts",
+      "kind": "core",
+      "version": "1.0.0",
+      "sha256": "561010cd3e59ebf3ee14a61a806ffd5fb6c51ccf83096c8451998410af3a1d90",
+      "identical": true
+    },
+    {
+      "path": "src/lib/cms/media-db.ts",
+      "kind": "core",
+      "version": "1.0.0",
+      "sha256": "d8bd96c7651c45997f12e358a0514def523b2c8d13d29c835874ca2e6f45c68e",
+      "identical": true,
+      "note": "Its header says salong's post_id/variants are 'deliberately not ported'. Still true of the MODULE; the TABLE now carries both, because this project's blog still writes them."
+    },
+    {
+      "path": "src/lib/cms/slug.ts",
+      "kind": "core",
+      "version": "1.0.0",
+      "sha256": "68661316170c00cb239076fbef7342eafa34f37852d3e9c18c48c6f8d4d99604",
+      "identical": true
+    },
+    {
+      "path": "src/lib/cms/strings.sv.ts",
+      "kind": "seam",
+      "version": "1.0.0",
+      "sha256": "511e8ffec3baedc6ff066fab05b00b553229f0e205d407c5a5da68457766fee1",
+      "identical": false,
+      "note": "See divergence — expected, the contents are the instance's."
+    },
+    {
+      "path": "src/lib/enquiries-admin.ts",
+      "kind": "core",
+      "version": "1.0.0",
+      "sha256": "0a460aab2aff68b87b985331b55e62389ac2db5035131ce050cf1b11ef4e59e1",
+      "identical": true,
+      "note": "Adopted even though this site has no contact form: the [CORE] dashboard imports countNewEnquiries."
+    },
+    {
+      "path": "src/middleware.ts",
+      "kind": "core",
+      "version": "1.0.0",
+      "sha256": "15a396a5f2b895cdac0d5a442b10454fd33aa2ed1c6c71073fa8383dacf3bcd0",
+      "identical": false,
+      "note": "See divergence — the redirect merge, the removed header-trust tier, the now-called tripwire."
+    },
+    {
+      "path": "src/layouts/AdminBase.astro",
+      "kind": "core",
+      "version": "1.0.0",
+      "sha256": "b799b7f3dfa1446ad63e79b6b54d7dd9090d89bf879f7e24d19ae2b10fd8ec99",
+      "identical": true
+    },
+    {
+      "path": "src/styles/admin.css",
+      "kind": "core",
+      "version": "1.0.0",
+      "sha256": "dca90a6dd3b45ec82b870eedfc257711abaeac0bf6c64b5ad9799bebbc712ddb",
+      "identical": true,
+      "note": "Consumes 32 CSS custom properties; tokens.css now defines all 32."
+    },
+    {
+      "path": "src/components/admin/AdminNav.astro",
+      "kind": "core",
+      "version": "1.0.0",
+      "sha256": "a10eca3a3e4fdda0642ceae4cfebbdd30b1d821c2643b71dee06b9832aa01c69",
+      "identical": true
+    },
+    {
+      "path": "src/components/admin/FormField.astro",
+      "kind": "core",
+      "version": "1.0.0",
+      "sha256": "2fb878840b8e5a28e1d249d2d34123f244eb8abcc85f8cc91360f9dca7972bf7",
+      "identical": true
+    },
+    {
+      "path": "src/components/admin/CollectionList.astro",
+      "kind": "core",
+      "version": "1.0.0",
+      "sha256": "5648f08c8bf83a30ed61fecd7c52a5a0ea58052b6c6732d0598bd97e6b5a2a5c",
+      "identical": true
+    },
+    {
+      "path": "src/components/admin/CollectionItemForm.astro",
+      "kind": "core",
+      "version": "1.0.0",
+      "sha256": "c2019e317922cdfb435954d27697b1136a799d28917786823cd3014219ffe11b",
+      "identical": true
+    },
+    {
+      "path": "src/admin/forms.client.ts",
+      "kind": "core",
+      "version": "1.0.0",
+      "sha256": "f3a230157427ec822a05c5c05941b37af636f9d30f1baed16c971eba6fb588c0",
+      "identical": true
+    },
+    {
+      "path": "src/admin/reorder.client.ts",
+      "kind": "core",
+      "version": "1.0.0",
+      "sha256": "506d05607a8e692e3cbf51915d8372bc7bf8c6310e84cc394cb3d307445f9e8b",
+      "identical": true
+    },
+    {
+      "path": "src/admin/media.client.ts",
+      "kind": "core",
+      "version": "1.0.0",
+      "sha256": "be22a715c1fad9f0c5eae4931393e9db6cf52395e90e9ee2e33a5a96032eeaa8",
+      "identical": true
+    },
+    {
+      "path": "src/pages/admin/index.astro",
+      "kind": "core",
+      "version": "1.0.0",
+      "sha256": "6d9cce3db844219c7a69b646e12b476340695e0817d58e079ce3834755fb424c",
+      "identical": true,
+      "note": "Byte-identical; the DISPLACED blog page is the divergence."
+    },
+    {
+      "path": "src/pages/admin/content/[group].astro",
+      "kind": "core",
+      "version": "1.0.0",
+      "sha256": "a58b6a99af4810fa7b11514d67c47a11a08d66475fc61a08b6622e9ef9a1e29d",
+      "identical": true,
+      "note": "Imports getSite() and t() from the instance — seam 4. Renders an empty group list until Phase B2."
+    },
+    {
+      "path": "src/pages/admin/collections/[name].astro",
+      "kind": "core",
+      "version": "1.0.0",
+      "sha256": "100e7bcda2cc319221857a00b0e5ec0dbf01abeb763a9b9dd09ffacdb9ca5970",
+      "identical": true
+    },
+    {
+      "path": "src/pages/admin/media.astro",
+      "kind": "core",
+      "version": "1.0.0",
+      "sha256": "b76bcaa13b8842a0c6d4601d5e0a9136b0c6411f599e58556740dd0a96858591",
+      "identical": true
+    },
+    {
+      "path": "src/pages/api/admin/content.ts",
+      "kind": "core",
+      "version": "1.0.0",
+      "sha256": "26a56399dfc53981cd9b4d5da8fc50964e44c7cc31cb873d7958d63581505421",
+      "identical": true
+    },
+    {
+      "path": "src/pages/api/admin/collections/[name].ts",
+      "kind": "core",
+      "version": "1.0.0",
+      "sha256": "3571493b725a6624bb7306f6f04ffa8826708a3817a48e7d11c1604ba69846c9",
+      "identical": true
+    },
+    {
+      "path": "src/pages/api/admin/collections/[name]/[id].ts",
+      "kind": "core",
+      "version": "1.0.0",
+      "sha256": "dcecd715cc032c482085e9bfe8522bae314c356e2221623fef871a8bd8fc6beb",
+      "identical": true
+    },
+    {
+      "path": "src/pages/api/admin/upload.ts",
+      "kind": "core",
+      "version": "1.0.0",
+      "sha256": "2e4ef0ff7d96fec3cf088c04bbabdefde8964ad8a2f471d4c0b40448230e0922",
+      "identical": false,
+      "note": "See divergence — the two-caller overlap merge."
+    },
+    {
+      "path": "src/pages/api/admin/media/[key].ts",
+      "kind": "core",
+      "version": "1.0.0",
+      "sha256": "4686ae921abcbbe3a381e24ef5c596b87b90533e79d3b00038ec9082c5b762ba",
+      "identical": true,
+      "note": "Coexists with the blog's own src/pages/api/admin/media.ts — different routes (/api/admin/media vs /api/admin/media/:key), both live."
+    },
+    {
+      "path": "src/pages/api/media/[...key].ts",
+      "kind": "core",
+      "version": "1.0.0",
+      "sha256": "b62f2e7eb7b1363d157b573e016895573e4ba011436850a42d0e96bfb515cea7",
+      "identical": true,
+      "note": "PUBLIC route — no auth, immutable cache + ETag. Replaced this project's own version."
+    },
+    {
+      "path": "tests/helpers/fake-d1.ts",
+      "kind": "test",
+      "version": "1.0.0",
+      "sha256": "07c28a20ad4a48e0e5d27db1421f757f7a1281e25a9a15c4138b63a2fe694a71",
+      "identical": true
+    },
+    {
+      "path": "tests/cms-access.test.ts",
+      "kind": "test",
+      "version": "1.0.0",
+      "sha256": "7a0efdeb6c00c7809b6836abb30c9ee717b481995b3cc87b520b91c79c0c640c",
+      "identical": true
+    },
+    {
+      "path": "tests/cms-http.test.ts",
+      "kind": "test",
+      "version": "1.0.0",
+      "sha256": "166d3480ab27cc7f8953faf26efe42b15508b381b4fdca3fdd4f5a5c3ec72186",
+      "identical": true
+    },
+    {
+      "path": "tests/cms-content.test.ts",
+      "kind": "test",
+      "version": "1.0.0",
+      "sha256": "dff0ad065d0b239e165e0460aaaf4998e7f2837197c3e42ef884aab019751272",
+      "identical": true
+    },
+    {
+      "path": "tests/enquiries-admin.test.ts",
+      "kind": "test",
+      "version": "1.0.0",
+      "sha256": "0b50dacf9e7469e8e0c204a4a0ecf5d7e314d5b629f293d791ba9e3f07e95904",
+      "identical": true
+    },
+    {
+      "path": "tests/cms-middleware.test.ts",
+      "kind": "test",
+      "version": "1.0.0",
+      "sha256": "d1dc5211a44120851c91d133c7eb98d1390366492b465db9a29d320690d98e63",
+      "identical": false,
+      "note": "See divergence."
+    },
+    {
+      "path": "tests/cms-collections.test.ts",
+      "kind": "test",
+      "version": "1.0.0",
+      "sha256": "b304a5ac2aef44c8ef202473df53a8546a8e648e5cdb65686735ab1996d387d2",
+      "identical": false,
+      "note": "See divergence."
+    },
+    {
+      "path": "tests/cms-media.test.ts",
+      "kind": "test",
+      "version": "1.0.0",
+      "sha256": "8f5871d5738b3b1e6a0ec21f12395670a200d221a4c7826ac5150d709fd0d2ca",
+      "identical": false,
+      "note": "See divergence."
+    },
+    {
+      "path": "tests/build-gates.test.ts",
+      "kind": "test",
+      "version": "1.0.0",
+      "sha256": "ae62b16b70bd552aa45ff5d0cac02c1f5d0dab507c64a855d0d736ed74da4ca3",
+      "identical": false,
+      "note": "See divergence."
+    },
+    {
+      "path": "tests/admin-strings.test.ts",
+      "kind": "test",
+      "version": "1.0.0",
+      "sha256": "bccb67c4f57605cbd2521c919b0ab39c9abf109ca0a7cc800f05b779eb484669",
+      "identical": false,
+      "note": "See divergence — six blog codes added to the taxonomy, nicole's `embed.detected` token dropped."
+    },
+    {
+      "path": "tests/cms-config.test.ts",
+      "kind": "test",
+      "version": "1.0.0",
+      "sha256": "18e6a8dc05798e7b1ed8e041ee42f8114fef6a17288911c5c16077d5428ffe47",
+      "identical": false,
+      "note": "See divergence."
+    }
   ]
 }

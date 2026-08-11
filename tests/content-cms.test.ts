@@ -2,7 +2,15 @@ import { describe, it, expect } from "vitest";
 import { FakeD1 } from "./helpers/fake-d1";
 import { CMS, STAFF, SERVICES, AWARDS } from "~/cms.config";
 import { PAGE_COPY, pageCopyDict, paraKeys } from "~/lib/pagecopy";
-import { asStylist, bookingUrl, flatAwards, getSite, getStaff, getStats } from "~/lib/content";
+import {
+  asStylist,
+  bookingUrl,
+  flatAwards,
+  getSite,
+  getStaff,
+  getStats,
+  stylistPhotoUrl,
+} from "~/lib/content";
 import { resolveCollection } from "~/lib/collections";
 import { validateCollectionItem } from "~/lib/cms/collections";
 import { copyKey, toKvMap, type ContentKvRow } from "~/lib/cms/content";
@@ -234,6 +242,7 @@ describe("the staff roster as a collection", () => {
     expect(stylist.instagram).toBeNull();
     expect(stylist.awards).toEqual([]);
     expect(stylist.bio_sv).toBe("");
+    expect(stylist.photo).toBeUndefined();
   });
 
   it("survives a save without losing its awards list or its slug", () => {
@@ -243,6 +252,28 @@ describe("the staff roster as a collection", () => {
     if (!saved.ok) return;
     expect(saved.value.slug).toBe(first!.slug);
     expect(saved.value.awards).toEqual(first!.awards);
+    // The shipped portrait is a value the client never typed and must not have to
+    // fix: an unedited save keeps it, which is only true because the `image` field
+    // accepts a bundled asset path alongside an R2 key.
+    expect(saved.value.photo).toBe(first!.photo);
+  });
+
+  it("takes an uploaded portrait over the shipped one, through the same field", () => {
+    const [first] = STAFF.jsonFallback() as Record<string, unknown>[];
+    const saved = validateCollectionItem(STAFF, { ...first!, photo: "blog/abc123.jpg" }, first!);
+    expect(saved.ok).toBe(true);
+    if (!saved.ok) return;
+    expect(stylistPhotoUrl(asStylist(saved.value).photo)).toBe("/api/media/blog/abc123.jpg");
+  });
+
+  it("still refuses a photo that is neither a bundled asset nor a media key", () => {
+    const [first] = STAFF.jsonFallback() as Record<string, unknown>[];
+    for (const photo of ["https://evil.example/x.jpg", "//evil.example/x.jpg"]) {
+      expect(validateCollectionItem(STAFF, { ...first!, photo }, first!), photo).toMatchObject({
+        ok: false,
+        errors: [{ field: "photo", detail: "bad_shape" }],
+      });
+    }
   });
 });
 

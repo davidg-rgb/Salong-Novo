@@ -232,6 +232,25 @@ describe("local D1 store — one store for migrations and for workerd", () => {
   });
 });
 
+describe("bundled imagery", () => {
+  /**
+   * Every `/images/…` path the source or the content layer points at resolves to
+   * a file in `public/`. A portrait that 404s is invisible in a passing test
+   * suite and obvious to the first visitor — and a renamed asset is exactly the
+   * kind of change nothing else would catch.
+   */
+  it("every referenced /images/ asset exists in public/", () => {
+    const sources = [...walk(p("src"), [".astro", ".ts"]), ...walk(p("content"), [".json"])];
+    const missing: string[] = [];
+    for (const file of sources) {
+      for (const [, path] of read(file).matchAll(/["'`](\/images\/[a-z0-9/_.-]+\.[a-z0-9]+)["'`]/gi)) {
+        if (!existsSync(p("public", ...path!.split("/")))) missing.push(`${rel(file)} → ${path}`);
+      }
+    }
+    expect(missing).toEqual([]);
+  });
+});
+
 describe("shipped output", () => {
   it("a Cloudflare build emits no static admin HTML", () => {
     // Conditional on a build having run: this is the last line of defense behind

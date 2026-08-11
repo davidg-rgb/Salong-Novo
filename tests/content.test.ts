@@ -9,6 +9,7 @@ import {
   getSite,
   bookingUrl,
   serviceName,
+  stylistPhotoUrl,
 } from "../src/lib/content";
 
 describe("staff", () => {
@@ -29,6 +30,35 @@ describe("staff", () => {
   it("includes the owners and the 2026 newcomer winner", () => {
     expect(getStylist("chriss-berner")?.role).toBe("Delägare");
     expect(getStylist("ellen-rudd")?.awards).toContain("Vinnare Årets Nykomling 2026");
+  });
+  it("ships a slug-matched portrait for every stylist", () => {
+    // The file itself is checked by the bundled-imagery gate in build-gates.
+    for (const s of staff) {
+      expect(s.photo, s.slug).toBe(`/images/staff/${s.slug}.jpg`);
+    }
+  });
+});
+
+describe("stylist portraits", () => {
+  it("uses a bundled asset path exactly as written", () => {
+    expect(stylistPhotoUrl("/images/staff/chriss-berner.jpg")).toBe(
+      "/images/staff/chriss-berner.jpg",
+    );
+  });
+  it("serves an uploaded media key through the media route", () => {
+    // Stage A: no PUBLIC_IMAGE_BASE, so the key goes through the Worker.
+    expect(stylistPhotoUrl("blog/abc123.jpg")).toBe("/api/media/blog/abc123.jpg");
+  });
+  it("serves an uploaded media key off the image base once one is configured", () => {
+    expect(stylistPhotoUrl("blog/abc123.jpg", "https://img.salongnovo.se/")).toBe(
+      "https://img.salongnovo.se/blog/abc123.jpg",
+    );
+  });
+  it("is null when there is no portrait, so the card falls back to its monogram", () => {
+    expect(stylistPhotoUrl(undefined)).toBeNull();
+    expect(stylistPhotoUrl(null)).toBeNull();
+    expect(stylistPhotoUrl("")).toBeNull();
+    expect(stylistPhotoUrl("   ")).toBeNull();
   });
 });
 

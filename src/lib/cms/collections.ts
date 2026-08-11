@@ -45,6 +45,16 @@ const DEFAULT_MAX_ITEMS = 20;
 /** Our own R2 namespace: `posters/<uuid>.<ext>`. Anything else is not ours to render. */
 const MEDIA_KEY = /^[a-z0-9][a-z0-9/_.-]*\.[a-z0-9]+$/i;
 
+/**
+ * A bundled asset shipped with the build (`/images/staff/<slug>.jpg`) — the
+ * OTHER legal shape for an `image` field, and the one the JSON defaults layer
+ * uses (see `stylistPhotoUrl` in `src/lib/content.ts`). Without it a default
+ * portrait would be un-saveable: the client opens an unedited row, presses save,
+ * and the field she never touched is rejected. The character after the slash
+ * must be alphanumeric, so a protocol-relative `//host/x.jpg` is still refused.
+ */
+const STATIC_ASSET = /^\/[a-z0-9][a-z0-9/_.-]*\.[a-z0-9]+$/i;
+
 function invalid(field: string, detail: string): ApiError {
   return { error: "invalid_input", field, detail };
 }
@@ -105,7 +115,7 @@ function scalar(
         return { error: invalid(prop, "unparseable") };
       }
     }
-    if (field.kind === "image" && !MEDIA_KEY.test(text)) {
+    if (field.kind === "image" && !MEDIA_KEY.test(text) && !STATIC_ASSET.test(text)) {
       return { error: invalid(prop, "bad_shape") };
     }
   }

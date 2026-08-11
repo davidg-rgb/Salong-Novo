@@ -1,16 +1,22 @@
 ---
 import { type Locale, useT } from "../i18n";
-import { asStylist, stylistBio, bookingUrl } from "../lib/content";
+import { asStylist, stylistBio, stylistPhotoUrl, bookingUrl } from "../lib/content";
 import { resolveCollection } from "../lib/collections";
+import { bindings } from "../lib/cms/bindings";
 import { STAFF } from "../cms.config";
 const { locale } = Astro.props as { locale: Locale };
 const { kv } = await Astro.locals.getCms();
 const t = useT(locale, kv);
 const staff = (await resolveCollection(Astro.locals.db, STAFF)).items.map(asStylist);
 const booking = bookingUrl(kv);
+// Portraits resolve through the same field whether they are the shipped defaults
+// or a picture the client uploaded later (§10.7 / `stylistPhotoUrl`).
+const imageBase = (await bindings()).PUBLIC_IMAGE_BASE ?? "";
 ---
 <ul class="staff-grid" role="list">
-  {staff.map((s) => (
+  {staff.map((s) => {
+    const photo = stylistPhotoUrl(s.photo, imageBase);
+    return (
     <li>
       <button
         class="staff-card"
@@ -20,21 +26,31 @@ const booking = bookingUrl(kv);
         data-ig={s.instagram ?? ""}
         data-bio={stylistBio(s, locale)}
         data-book={booking}
+        data-photo={photo ?? ""}
         aria-haspopup="dialog"
       >
-        <span class="frame" aria-hidden="true"><span class="mono">{s.name.charAt(0)}</span><span class="duo"></span></span>
+        {/* The frame stays aria-hidden: the portrait carries the stylist's name,
+            which the card already prints below it, so announcing it twice is noise. */}
+        <span class="frame" aria-hidden="true">
+          {photo
+            ? <img class="portrait" src={photo} alt={s.name} loading="lazy" decoding="async" />
+            : <span class="mono">{s.name.charAt(0)}</span>}
+          <span class="duo"></span>
+        </span>
         <b>{s.name}</b>
         <span class="role">{s.specialty !== "TODO" ? s.specialty : s.role}</span>
         <span class="open">{t("labels.openProfile")} <span class="arr">→</span></span>
       </button>
     </li>
-  ))}
+    );
+  })}
 </ul>
 
 <div class="staff-modal" id="staffModal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="sm-name">
   <div class="sm-bg" data-close></div>
   <div class="sm-card">
     <button class="sm-close" id="sm-close" type="button" data-close aria-label={t("labels.close")}>✕</button>
+    <img class="sm-photo" id="sm-photo" src="" alt="" hidden />
     <span class="sm-role" id="sm-role"></span>
     <h3 id="sm-name"></h3>
     <p id="sm-bio"></p>
@@ -49,6 +65,11 @@ const booking = bookingUrl(kv);
   function open(d) {
     set("sm-role", d.role);
     set("sm-name", d.name);
+    // A stylist with no portrait yet keeps the card text-only rather than
+    // reserving a blank frame.
+    const photo = document.getElementById("sm-photo");
+    if (d.photo) { photo.src = d.photo; photo.alt = d.name; photo.hidden = false; }
+    else { photo.removeAttribute("src"); photo.alt = ""; photo.hidden = true; }
     set("sm-bio", d.bio || "");
     const ig = document.getElementById("sm-ig");
     if (d.ig) { ig.textContent = d.ig; ig.href = "https://instagram.com/" + d.ig.replace("@", ""); ig.style.display = ""; }
@@ -76,10 +97,13 @@ const booking = bookingUrl(kv);
     cursor: pointer; display: flex; flex-direction: column;
   }
   .frame {
-    position: relative; aspect-ratio: 3/4; overflow: hidden;
+    position: relative; aspect-ratio: 3/4; overflow: hidden; isolation: isolate;
     background: linear-gradient(160deg, #33302a, #1c1b18); display: grid; place-items: center;
   }
   .frame .mono { font-family: var(--font-serif); font-size: clamp(48px, 6vw, 84px); color: rgba(255,255,255,0.92); line-height: 1; }
+  /* The portrait sits UNDER .duo, so the bronze `mix-blend-mode: color` tones it
+     and hover releases it to true colour — the same treatment the monogram gets. */
+  .frame .portrait { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
   .frame .duo { position: absolute; inset: 0; background: var(--bronze); mix-blend-mode: color; opacity: 0.34; transition: opacity 1s ease; }
   .staff-card:hover .frame .duo { opacity: 0; }
   .staff-card b { font-family: var(--font-serif); font-weight: 500; font-size: 18px; margin-top: 16px; color: var(--ink); }
@@ -94,6 +118,8 @@ const booking = bookingUrl(kv);
   .sm-bg { position: absolute; inset: 0; background: rgba(10,10,10,0.55); backdrop-filter: blur(4px); }
   .sm-card { position: relative; background: var(--white); border: 1px solid var(--hairline); max-width: 460px; width: 100%; padding: clamp(28px, 4vw, 44px); color: var(--ink); }
   .sm-close { position: absolute; top: 1rem; right: 1rem; width: 44px; height: 44px; background: transparent; border: 1px solid var(--hairline); color: var(--ink); cursor: pointer; }
+  .sm-photo { display: block; width: 100%; aspect-ratio: 4/5; object-fit: cover; margin-bottom: clamp(18px, 2.5vw, 26px); }
+  .sm-photo[hidden] { display: none; }
   .sm-role { font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--bronze-muted); }
   .sm-card h3 { font-size: clamp(28px, 4vw, 40px); margin: 0.3rem 0 1rem; color: var(--ink); }
   .sm-card p { color: var(--on-variant); margin-bottom: 1.2rem; line-height: 1.7; }
