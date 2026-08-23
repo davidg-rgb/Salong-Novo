@@ -14,7 +14,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "db:migrate:local": "wrangler d1 migrations apply novo_db --local",
-    "db:migrate:remote": "wrangler d1 migrations apply novo_db --remote"
+    "db:migrate:remote": "wrangler d1 migrations apply novo_db --remote",
+    "bildbank:seed:local": "node scripts/bildbank-seed.mjs --local",
+    "bildbank:seed:remote": "node scripts/bildbank-seed.mjs --remote"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^14.1.7",

@@ -1,34 +1,34 @@
 {
-  "_note": "Structured awards from live site (Årets Frisör 2026) + old build AWARDS_MAPPING.md (Årets Frisör 2025, Nordic Hairshot 2025). Image keys reference the assets migrated from the old build's public/awards/. Photographers credited where known. The former `headline_stats` block now lives in site.json — the homepage numbers are site facts, and the CMS resolves editable facts against that one document.",
+  "_note": "Structured awards from live site (Årets Frisör 2026) + old build AWARDS_MAPPING.md (Årets Frisör 2025, Nordic Hairshot 2025). Every item carries an explicit `images` list of ROOTED STATIC PATHS (/images/awards-2026/…) — one entry per photo, in the order they should render; the admin may replace any entry with an R2 media key. Photographers credited where known. The former `headline_stats` block now lives in site.json — the homepage numbers are site facts, and the CMS resolves editable facts against that one document.",
   "awards": [
     {
       "year": 2026,
       "competition": "Årets Frisör",
       "items": [
-        { "category": "Årets Nykomling", "result": "Vinnare", "people": ["Ellen Rudd"], "photographer": "Ellen Rudd" },
-        { "category": "Årets Herr", "result": "Nominerad", "people": ["Isabella Valentino"], "photographer": "Ellen Simone" },
-        { "category": "Årets Färg", "result": "Nominerad", "people": ["Chriss Berner"], "photographer": "Fredrik Hjerling" },
-        { "category": "Årets Avantgarde", "result": "Nominerad", "people": ["Ola Oterkjaer"], "photographer": "Fredrik Hjerling" }
+        { "category": "Årets Nykomling", "result": "Vinnare", "people": ["Ellen Rudd"], "photographer": "Ellen Rudd", "images": ["/images/awards-2026/nykomling-1.jpg", "/images/awards-2026/nykomling-2.jpg", "/images/awards-2026/nykomling-3.jpg", "/images/awards-2026/nykomling-4.jpg"] },
+        { "category": "Årets Herr", "result": "Nominerad", "people": ["Isabella Valentino"], "photographer": "Ellen Simone", "images": ["/images/awards-2026/herr-1.jpg", "/images/awards-2026/herr-2.jpg", "/images/awards-2026/herr-3.jpg", "/images/awards-2026/herr-4.jpg"] },
+        { "category": "Årets Färg", "result": "Nominerad", "people": ["Chriss Berner"], "photographer": "Fredrik Hjerling", "images": ["/images/awards-2026/farg-1.jpg", "/images/awards-2026/farg-2.jpg", "/images/awards-2026/farg-3.jpg", "/images/awards-2026/farg-4.jpg"] },
+        { "category": "Årets Avantgarde", "result": "Nominerad", "people": ["Ola Oterkjaer"], "photographer": "Fredrik Hjerling", "images": ["/images/awards-2026/avantgarde-1.jpg", "/images/awards-2026/avantgarde-2.jpg", "/images/awards-2026/avantgarde-3.jpg", "/images/awards-2026/avantgarde-4.jpg"] }
       ]
     },
     {
       "year": 2025,
       "competition": "Årets Frisör",
       "items": [
-        { "category": "Årets Kollektion", "result": "Vinnare", "people": ["Chriss Berner", "Jannie Olofsson", "Ola Oterkjaer"], "photographer": "Andreas Lundberg", "note": "Vinst tredje året i rad", "images": "awards/arets-frisor-2025/kollektion1_*" },
-        { "category": "Årets Herr", "result": "Nominerad", "people": ["Isabella Valentino"], "photographer": "Ellen Simone", "images": "awards/arets-frisor-2025/herr2_*" },
-        { "category": "Årets Herr", "result": "Nominerad", "people": ["Ola Oterkjaer"], "photographer": "Andreas Lundberg", "images": "awards/arets-frisor-2025/herr1_*" },
-        { "category": "Årets Kollektion", "result": "Bidrag", "people": ["Isabella Valentino", "Emma Gahn"], "photographer": "Ellen Simone", "images": "awards/arets-frisor-2025/kollektion2_*" },
-        { "category": "Årets Avantgarde", "result": "Bidrag", "people": [], "images": "awards/arets-frisor-2025/avantgarde_*" },
-        { "category": "Årets Brud", "result": "Bidrag", "people": [], "images": "awards/arets-frisor-2025/brud_*" },
-        { "category": "Årets Dam", "result": "Bidrag", "people": [], "images": "awards/arets-frisor-2025/dam_*" }
+        { "category": "Årets Kollektion", "result": "Vinnare", "people": ["Chriss Berner", "Jannie Olofsson", "Ola Oterkjaer"], "photographer": "Andreas Lundberg", "note": "Vinst tredje året i rad", "images": ["/images/awards-2025/kollektion1-1.jpg", "/images/awards-2025/kollektion1-2.jpg", "/images/awards-2025/kollektion1-3.jpg", "/images/awards-2025/kollektion1-4.jpg"] },
+        { "category": "Årets Herr", "result": "Nominerad", "people": ["Isabella Valentino"], "photographer": "Ellen Simone", "images": ["/images/awards-2025/herr2-1.jpg", "/images/awards-2025/herr2-2.jpg", "/images/awards-2025/herr2-3.jpg", "/images/awards-2025/herr2-4.jpg"] },
+        { "category": "Årets Herr", "result": "Nominerad", "people": ["Ola Oterkjaer"], "photographer": "Andreas Lundberg", "images": ["/images/awards-2025/herr1-1.jpg", "/images/awards-2025/herr1-2.jpg", "/images/awards-2025/herr1-3.jpg", "/images/awards-2025/herr1-4.jpg"] },
+        { "category": "Årets Kollektion", "result": "Bidrag", "people": ["Isabella Valentino", "Emma Gahn"], "photographer": "Ellen Simone", "images": ["/images/awards-2025/kollektion2-1.jpg", "/images/awards-2025/kollektion2-2.jpg", "/images/awards-2025/kollektion2-3.jpg", "/images/awards-2025/kollektion2-4.jpg"] },
+        { "category": "Årets Avantgarde", "result": "Bidrag", "people": ["Ola Oterkjaer"], "photographer": "Andreas Lundberg", "images": ["/images/awards-2025/avantgarde-1.jpg", "/images/awards-2025/avantgarde-2.jpg", "/images/awards-2025/avantgarde-3.jpg", "/images/awards-2025/avantgarde-4.jpg"] },
+        { "category": "Årets Brud", "result": "Bidrag", "people": ["Chriss Berner"], "photographer": "Andreas Lundberg", "images": ["/images/awards-2025/brud-1.jpg", "/images/awards-2025/brud-2.jpg"] },
+        { "category": "Årets Dam", "result": "Bidrag", "people": ["Chriss Berner"], "photographer": "Andreas Lundberg", "images": ["/images/awards-2025/dam-1.jpg", "/images/awards-2025/dam-2.jpg", "/images/awards-2025/dam-3.jpg", "/images/awards-2025/dam-4.jpg"] }
       ]
     },
     {
       "year": 2025,
       "competition": "Nordic Hairshot Awards",
       "items": [
-        { "category": "Final", "result": "Finalist (Sverige)", "people": ["Ola Oterkjaer", "Chriss Berner"], "location": "Köpenhamn, 25 oktober", "images": "awards/nordic-hairshot-2025/nordichairshotawards2025_*" }
+        { "category": "Final", "result": "Finalist (Sverige)", "people": ["Ola Oterkjaer", "Chriss Berner"], "location": "Köpenhamn, 25 oktober", "images": ["/images/nordic-hairshot-2025/nordic-hairshot-1.jpg", "/images/nordic-hairshot-2025/nordic-hairshot-2.jpg", "/images/nordic-hairshot-2025/nordic-hairshot-3.jpg", "/images/nordic-hairshot-2025/nordic-hairshot-4.jpg"] }
       ]
     }
   ]

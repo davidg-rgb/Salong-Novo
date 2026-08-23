@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import { readFileSync, readdirSync, existsSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { join, relative, extname } from "node:path";
+import { flatAwards } from "~/lib/content";
+import { awardImages } from "~/lib/awards";
 
 /**
  * Static gates over the source tree. These are the checks that cannot be a unit
@@ -239,15 +241,49 @@ describe("bundled imagery", () => {
    * suite and obvious to the first visitor — and a renamed asset is exactly the
    * kind of change nothing else would catch.
    */
+  const bundled = (path: string) => existsSync(p("public", ...path.split("/")));
+
+  it("the check is real — a path with no file behind it comes back false", () => {
+    // Both assertions below are "the list of misses is empty", which a broken
+    // existence check would satisfy too. This is what stops that.
+    expect(bundled("/images/awards-2026/nykomling-1.jpg")).toBe(true);
+    expect(bundled("/images/awards-2026/does-not-exist.jpg")).toBe(false);
+  });
+
   it("every referenced /images/ asset exists in public/", () => {
     const sources = [...walk(p("src"), [".astro", ".ts"]), ...walk(p("content"), [".json"])];
     const missing: string[] = [];
     for (const file of sources) {
       for (const [, path] of read(file).matchAll(/["'`](\/images\/[a-z0-9/_.-]+\.[a-z0-9]+)["'`]/gi)) {
-        if (!existsSync(p("public", ...path!.split("/")))) missing.push(`${rel(file)} → ${path}`);
+        if (!bundled(path!)) missing.push(`${rel(file)} → ${path}`);
       }
     }
     expect(missing).toEqual([]);
+  });
+
+  it("every award photo the competitions page would render exists in public/", () => {
+    /**
+     * The text sweep above happens to see `content/awards.json` because its
+     * paths are quoted strings. This one goes through the DATA LAYER instead —
+     * `flatAwards()` → `awardImages()`, the exact pair `CompetitionsPage.astro`
+     * renders from — so the guarantee survives the document growing a shape the
+     * regex cannot read, and it fails on the thing that actually breaks: a photo
+     * the page tries to show and cannot.
+     */
+    const missing: string[] = [];
+    let checked = 0;
+    for (const award of flatAwards()) {
+      for (const image of awardImages(award)) {
+        // A media key (no leading slash) lives in R2, not in the repo.
+        if (!image.startsWith("/")) continue;
+        checked++;
+        if (!bundled(image)) missing.push(`${award.year} ${award.category} → ${image}`);
+      }
+    }
+    expect(missing).toEqual([]);
+    // Not vacuous: 16 photographs from Årets Frisör 2026, 26 from 2025, and the
+    // four Nordic Hairshot frames — the whole record, not a sampled corner.
+    expect(checked).toBe(46);
   });
 });
 

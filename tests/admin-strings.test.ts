@@ -68,6 +68,14 @@ const TAXONOMY = [
   "invalid_status",
   "key_required",
   "title_required",
+  /*
+   * The two answers "kopiera standardlistan" can give beyond the shared codes
+   * (`src/lib/collections.ts`). `not_empty` is the idempotency refusal the
+   * client can actually provoke; `invalid_default` is a repo bug reaching her
+   * screen, and it still gets a sentence rather than a machine string.
+   */
+  "not_empty",
+  "invalid_default",
 ] as const;
 
 describe("error taxonomy → Swedish (§11.1)", () => {
@@ -114,6 +122,10 @@ describe("interpolated strings keep their token", () => {
       "media.inUse": "{usage}",
       "media.cleared": "{usage}",
       "media.unclearable": "{usage}",
+      // Both halves of the collections fallback notice count the same rows; a
+      // button that reads "Kopiera standardlistan ()" is the failure mode.
+      "collection.fallbackNotice": "{n}",
+      "collection.copyDefaults": "{n}",
     };
     for (const [key, token] of Object.entries(tokens)) {
       expect(adminString(key), key).toContain(token);

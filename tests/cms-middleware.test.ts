@@ -260,6 +260,25 @@ describe("makeJwksFetcher", () => {
     expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
+  it("the DEFAULT deps call the global fetch with the global receiver (workerd throws Illegal invocation otherwise)", async () => {
+    // Regression for the production-only `jwks_unavailable` of 2026-08-23: the
+    // default deps used to be `{ fetch, now }` and `deps.fetch(url)` then ran the
+    // global fetch with the deps object as `this`. Node tolerates that, workerd
+    // does not. The fake below records the receiver the way workerd checks it.
+    let receiver: unknown = "never called";
+    const fake = function (this: unknown) {
+      receiver = this;
+      return Promise.resolve(new Response(JSON.stringify({ keys })));
+    };
+    vi.stubGlobal("fetch", fake);
+    try {
+      expect(await makeJwksFetcher()(URL_A)).toEqual(keys);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+    expect(receiver === undefined || receiver === globalThis).toBe(true);
+  });
+
   it("throws on a non-OK response rather than caching an empty key set", async () => {
     const fetchMock = vi.fn(async () => new Response("nope", { status: 503 }));
     const fetcher = makeJwksFetcher({ fetch: fetchMock as unknown as typeof fetch, now: () => 0 });
@@ -270,5 +289,50 @@ describe("makeJwksFetcher", () => {
     const fetchMock = vi.fn(async () => new Response(JSON.stringify({})));
     const fetcher = makeJwksFetcher({ fetch: fetchMock as unknown as typeof fetch, now: () => 0 });
     await expect(fetcher(URL_A)).resolves.toEqual([]);
+  });
+});
+
+describe("onRequest — the staging noindex stamp", () => {
+  /**
+   * The header is the layer markup cannot reach: redirects, `sitemap.xml`,
+   * streamed media and 404s all leave the origin without a `<head>`. Production
+   * leaves `PUBLIC_SITE_NOINDEX` unset, so the stamp must be invisible there —
+   * the "off" case is asserted as the ABSENCE of the header, not a different one.
+   */
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("stamps a public page when the var is set", async () => {
+    vi.stubEnv("PUBLIC_SITE_NOINDEX", "1");
+    const { res } = await run(ctx("/blogg"));
+    expect(res.headers.get("X-Robots-Tag")).toBe("noindex, nofollow");
+  });
+
+  it("stamps a legacy redirect too — a 301 has no head to carry a meta tag", async () => {
+    vi.stubEnv("PUBLIC_SITE_NOINDEX", "1");
+    const { res } = await run(ctx("/portfolio"));
+    expect(res.status).toBe(301);
+    expect(res.headers.get("X-Robots-Tag")).toBe("noindex, nofollow");
+  });
+
+  it("leaves the admin 403's own header alone", async () => {
+    // The gate's JSON rejection says plain `noindex` on purpose; the staging
+    // stamp must not reach in and rewrite the values the gate owns.
+    vi.stubEnv("PUBLIC_SITE_NOINDEX", "1");
+    const { res } = await run(ctx("/api/admin/posts"));
+    expect(res.status).toBe(403);
+    expect(res.headers.get("X-Robots-Tag")).toBe("noindex");
+  });
+
+  it("adds nothing at all on a production build (var unset)", async () => {
+    const { res } = await run(ctx("/blogg"));
+    expect(res.headers.get("X-Robots-Tag")).toBeNull();
+  });
+
+  it("an empty var is production, not staging", async () => {
+    vi.stubEnv("PUBLIC_SITE_NOINDEX", "");
+    const { res } = await run(ctx("/"));
+    expect(res.headers.get("X-Robots-Tag")).toBeNull();
   });
 });

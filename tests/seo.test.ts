@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { hairSalonJsonLd, ogMeta } from "../src/lib/seo";
+import { describe, it, expect, vi, afterEach } from "vitest";
+import { hairSalonJsonLd, ogMeta, isNoindex, siteNoindex } from "../src/lib/seo";
 
 describe("hairSalonJsonLd", () => {
   const ld = hairSalonJsonLd("https://salongnovo.se") as Record<string, any>;
@@ -50,5 +50,57 @@ describe("ogMeta", () => {
     expect(og["twitter:card"]).toBe("summary_large_image");
     expect(og["og:image"]).toBe("https://img/x.webp");
     expect(og["twitter:image"]).toBe("https://img/x.webp");
+  });
+});
+
+describe("isNoindex", () => {
+  /**
+   * The truth table is the whole feature: this one boolean decides whether a
+   * deployment is visible to Google. It fails towards PRODUCTION in every
+   * ambiguous case — a typo must never de-index the real site, and a staging
+   * copy is only hidden when someone said so in as many words.
+   */
+  it("is true for the four accepted spellings", () => {
+    for (const value of ["1", "true", "yes", "noindex"]) {
+      expect(isNoindex(value), value).toBe(true);
+    }
+  });
+
+  it("ignores case and surrounding whitespace", () => {
+    for (const value of ["TRUE", " 1 ", "Yes", "  NoIndex\n"]) {
+      expect(isNoindex(value), JSON.stringify(value)).toBe(true);
+    }
+  });
+
+  it("is false for unset, empty and whitespace — production is the default", () => {
+    for (const value of [undefined, null, "", "   "]) {
+      expect(isNoindex(value), JSON.stringify(value)).toBe(false);
+    }
+  });
+
+  it("is false for anything else, including near-misses and negations", () => {
+    for (const value of ["0", "false", "no", "off", "index", "ture", "1 1", "yes please"]) {
+      expect(isNoindex(value), value).toBe(false);
+    }
+  });
+});
+
+describe("siteNoindex", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("reads PUBLIC_SITE_NOINDEX, and is false when it is unset", () => {
+    expect(siteNoindex()).toBe(false);
+  });
+
+  it("is true once the staging var is set", () => {
+    vi.stubEnv("PUBLIC_SITE_NOINDEX", "1");
+    expect(siteNoindex()).toBe(true);
+  });
+
+  it("an explicitly empty var is production", () => {
+    vi.stubEnv("PUBLIC_SITE_NOINDEX", "");
+    expect(siteNoindex()).toBe(false);
   });
 });

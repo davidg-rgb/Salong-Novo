@@ -1,0 +1,168 @@
+---
+/**
+ * The competition record — every result NOVO has placed in, year by year, with
+ * the photography that won it.
+ *
+ * A template over `src/lib/awards.ts` and nothing else: grouping, ordering,
+ * tone, labels and which images are ours to render are all decided and tested
+ * there, so this file is markup. The rows come through `resolveCollection`
+ * exactly as the staff grid's do — JSON defaults until the client edits the
+ * list in the admin, D1 from her first save onward.
+ */
+import { type Locale, useT } from "../i18n";
+import { asAward, assetUrl } from "../lib/content";
+import { awardImages, groupAwards, peopleLine, resultLabel, resultTone } from "../lib/awards";
+import { resolveCollection } from "../lib/collections";
+import { bindings } from "../lib/cms/bindings";
+import { AWARDS } from "../cms.config";
+import BookingButton from "./BookingButton.astro";
+
+const { locale } = Astro.props as { locale: Locale };
+const { kv } = await Astro.locals.getCms();
+const t = useT(locale, kv);
+const years = groupAwards((await resolveCollection(Astro.locals.db, AWARDS)).items.map(asAward));
+// Award photography resolves through the same field whether it is a shipped
+// asset or a picture the client uploaded later (`assetUrl`).
+const imageBase = (await bindings()).PUBLIC_IMAGE_BASE ?? "";
+---
+<section class="wrap competitions">
+  <header class="shead">
+    <p class="kicker">N° 04 — {t("nav.competitions")}</p>
+    <h1>{t("competitions.heading")}</h1>
+    <p class="intro">{t("competitions.intro")}</p>
+  </header>
+
+  {years.map((group) => {
+    const yearText = Number.isFinite(group.year) ? String(group.year) : "";
+    return (
+      <section class="year" aria-label={yearText || t("nav.competitions")}>
+        <p class="year-mark"><span class="u">—</span>{yearText}</p>
+        {group.competitions.map((comp) => (
+          <div class="comp">
+            <h2>{comp.competition}</h2>
+            {comp.items.map((item) => {
+              const tone = resultTone(item.result);
+              const label = resultLabel(
+                item.result,
+                locale,
+                tone === "other" ? "" : t(`awards.result.${tone}`),
+              );
+              const people = peopleLine(item.people);
+              const aside = [item.note, item.location].filter((line) => line !== "").join(" · ");
+              const shots = awardImages(item);
+              return (
+                <article class="result">
+                  <div class="rhead">
+                    <h3>{item.category}</h3>
+                    {label && <span class="pill" data-tone={tone}>{label}</span>}
+                  </div>
+                  {people && <p class="people">{people}</p>}
+                  {item.photographer && (
+                    <p class="meta">{t("awards.photo")}: {item.photographer}</p>
+                  )}
+                  {aside && <p class="meta aside">{aside}</p>}
+                  {shots.length > 0 && (
+                    <ul class="shots" role="list">
+                      {shots.map((image, index) => (
+                        <li>
+                          <img
+                            src={assetUrl(image, imageBase)}
+                            alt={t("awards.imageAlt", {
+                              category: item.category,
+                              year: yearText,
+                              people: peopleLine(item.people, ", ") || comp.competition,
+                              n: index + 1,
+                              total: shots.length,
+                            })}
+                            width="934"
+                            height="1400"
+                            loading="lazy"
+                            decoding="async"
+                          />
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </article>
+              );
+            })}
+          </div>
+        ))}
+      </section>
+    );
+  })}
+
+  <BookingButton locale={locale} />
+</section>
+
+<style>
+  .competitions { padding-block: var(--section); }  /* padding-block only: the element is also .wrap, which owns the side gutters */
+  .shead { margin-bottom: clamp(38px, 5vw, 68px); }
+  .competitions h1 { margin: 18px 0 16px; }
+  .intro { color: var(--on-variant); max-width: 52ch; font-size: clamp(16px, 1.5vw, 19px); }
+
+  /* The global `section` rule pads every section like a page band; a year is a
+     block inside one, so it opts out and sets its own rhythm. */
+  .year { padding: 0; border-top: 1px solid var(--hairline); margin-top: clamp(44px, 6vw, 82px); }
+  /* Oversized serif year with the bronze accent the homepage stat trio uses. */
+  .year-mark {
+    font-family: var(--font-serif); font-size: clamp(42px, 6vw, 76px); line-height: 1;
+    color: var(--ink); margin: clamp(22px, 3vw, 38px) 0 clamp(26px, 3.5vw, 46px);
+  }
+  .year-mark .u { font-size: 0.34em; color: var(--bronze); vertical-align: super; margin-right: 10px; }
+
+  .comp + .comp { margin-top: clamp(38px, 5vw, 66px); }
+  .comp h2 {
+    font-size: clamp(11px, 1.1vw, 12.5px); font-family: var(--font-sans); font-weight: 600;
+    letter-spacing: 0.2em; text-transform: uppercase; color: var(--bronze-dark);
+    padding-bottom: 12px; border-bottom: 1px solid var(--hairline);
+  }
+
+  .result { padding: clamp(26px, 3.5vw, 44px) 0; }
+  .result + .result { border-top: 1px solid var(--hairline); }
+  .rhead { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+  .result h3 { font-size: clamp(24px, 3vw, 36px); color: var(--ink); }
+  .pill {
+    font-size: 10px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase;
+    padding: 6px 12px; border: 1px solid var(--hairline); color: var(--on-variant);
+    white-space: nowrap;
+  }
+  /* Bronze is texture, never a button — a result badge is exactly that. */
+  .pill[data-tone="winner"] { background: var(--bronze); border-color: var(--bronze); color: var(--ink); }
+  .pill[data-tone="nominated"], .pill[data-tone="finalist"] { border-color: var(--bronze); color: var(--bronze-dark); }
+
+  .people { margin-top: 12px; color: var(--ink); font-size: clamp(15px, 1.4vw, 17px); }
+  .meta { margin-top: 6px; font-size: 12.5px; letter-spacing: 0.04em; color: var(--on-variant); }
+  .meta.aside { color: var(--bronze-dark); }
+
+  /* Desktop: a 4-up contact sheet, hairline-gapped like the homepage strip. */
+  .shots {
+    list-style: none; display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px;
+    margin-top: clamp(20px, 2.6vw, 30px);
+  }
+  .shots li { position: relative; isolation: isolate; background: linear-gradient(160deg, #33302a, #1c1b18); }
+  .shots img { width: 100%; aspect-ratio: 2/3; object-fit: cover; }
+  /* The same bronze wash the strip and the portraits carry, released on hover. */
+  .shots li::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: var(--bronze); mix-blend-mode: color; opacity: 0.2; transition: opacity 0.8s ease;
+  }
+  .shots li:hover::after { opacity: 0; }
+
+  /* Mobile: the homepage's scroll-snap row rather than four thumbnails. */
+  @media (max-width: 900px) {
+    .shots { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (max-width: 680px) {
+    .shots {
+      display: flex; grid-template-columns: none; overflow-x: auto;
+      scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none;
+    }
+    .shots::-webkit-scrollbar { display: none; }
+    .shots li { flex: 0 0 62vw; scroll-snap-align: start; }
+  }
+
+  @media (prefers-reduced-motion: reduce) { .shots li::after { transition: none; } }
+
+  .competitions :global(.btn) { margin-top: clamp(44px, 6vw, 76px); }
+</style>

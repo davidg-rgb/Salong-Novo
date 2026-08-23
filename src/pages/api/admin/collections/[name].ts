@@ -9,6 +9,7 @@ import {
   validateCollectionItem,
   validateIdList,
 } from "../../../../lib/cms/collections";
+import { seedCollectionFromDefaults } from "../../../../lib/collections";
 import { CMS } from "../../../../cms.config";
 
 /**
@@ -18,10 +19,11 @@ import { CMS } from "../../../../cms.config";
  * passes it into the core validator. Adding a list to the site adds nothing
  * here — that is the whole point of the config-driven model (§12).
  *
- * POST is discriminated by the presence of `ids`: a body carrying them is a
- * reorder, anything else is a create. One endpoint because both are "write the
- * whole list's state", and a separate `/reorder` path would have to repeat the
- * name lookup and the guard for one UPDATE loop.
+ * POST is discriminated by the BODY: `ids` is a reorder, `seed: true` is the
+ * one-press copy of the JSON defaults into D1 (`seedCollectionFromDefaults`),
+ * and anything else is a create. One endpoint because all three are "write the
+ * whole list's state", and a separate `/reorder` or `/seed` path would have to
+ * repeat the name lookup and the guard for one loop each.
  */
 
 function siteUrl(env: Partial<Env>, request: Request): string {
@@ -66,7 +68,41 @@ export const POST: APIRoute = async ({ request, params, locals }) => {
     return json({ error: "invalid_input", field: "body" } satisfies ApiError, 400);
   }
 
-  const payload = (body ?? {}) as { ids?: unknown; data?: unknown };
+  const payload = (body ?? {}) as { ids?: unknown; data?: unknown; seed?: unknown };
+
+  // Literal `true` rather than presence: `{seed: false}` has no meaning, and
+  // falling through to the create branch answers it with a 400 rather than
+  // silently doing the opposite of what it says.
+  if (payload.seed === true) {
+    try {
+      const seeded = await seedCollectionFromDefaults(
+        guard.db,
+        def,
+        locals.adminEmail ?? "",
+        new Date().toISOString(),
+      );
+      if (seeded.ok) return json({ ok: true, inserted: seeded.inserted }, 201);
+      if (seeded.error === "not_empty") {
+        return json({ error: "not_empty" } satisfies ApiError, 409);
+      }
+      // A default the schema rejects is OUR bug, not the client's input — hence
+      // the 500 and the log. `index` rides on top of the envelope for whoever
+      // has to find the row; the client only ever sees the mapped message.
+      console.error(
+        `[admin/collections] "${def.name}" default #${seeded.index} is invalid`,
+        seeded.field,
+      );
+      return json(
+        { error: "invalid_default", index: seeded.index, field: seeded.field } satisfies ApiError & {
+          index?: number;
+        },
+        500,
+      );
+    } catch (error) {
+      console.error("[admin/collections] seed failed", error);
+      return json({ error: "internal" } satisfies ApiError, 500);
+    }
+  }
 
   if ("ids" in payload) {
     const ids = validateIdList(payload.ids);

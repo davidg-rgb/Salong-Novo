@@ -3,7 +3,7 @@ import "../styles/tokens.css";
 import SiteHeader from "../components/SiteHeader.astro";
 import SiteFooter from "../components/SiteFooter.astro";
 import { type Locale, type PageKey, alternates } from "../i18n";
-import { hairSalonJsonLd, ogMeta } from "../lib/seo";
+import { hairSalonJsonLd, ogMeta, siteNoindex } from "../lib/seo";
 
 interface Props {
   title: string;
@@ -29,6 +29,12 @@ const og = ogMeta({ title, description, canonical, locale, image });
 // memoized per request — awaiting it here costs nothing extra.
 const { kv } = await Astro.locals.getCms();
 const jsonld = hairSalonJsonLd(siteUrl, kv);
+// Staging builds only. The canonical stays as it is on purpose: a staging copy
+// that points at itself is exactly what must not be indexed, and rewriting the
+// canonical to production would instead invite a bot to go index production
+// from here. The `robots` meta is the honest signal; `noindex` wins over any
+// canonical anyway.
+const noindex = siteNoindex();
 ---
 <!doctype html>
 <html lang={locale}>
@@ -44,6 +50,7 @@ const jsonld = hairSalonJsonLd(siteUrl, kv);
       href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..700;1,400..600&family=Hanken+Grotesk:wght@300..700&display=swap"
     />
     <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
     {alts && alts.map((a) => (
       <link rel="alternate" hreflang={a.locale} href={siteUrl + a.path} />
     ))}

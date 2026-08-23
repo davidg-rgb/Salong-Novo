@@ -37,7 +37,7 @@ const mapQuery = encodeURIComponent(`${site.address.street}, ${site.address.post
 </section>
 
 <style>
-  .contact { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: clamp(34px, 4vw, 60px); padding: var(--section) 0; align-items: start; }
+  .contact { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: clamp(34px, 4vw, 60px); padding-block: var(--section); align-items: start; }  /* padding-block only: the element is also .wrap, which owns the side gutters */
   .info h1 { margin: 18px 0 clamp(28px, 4vw, 44px); }
   address { font-style: normal; line-height: 1.8; font-size: clamp(16px, 1.4vw, 18px); color: var(--ink); margin-bottom: 1.6rem; }
   .dir { color: var(--on-variant); margin-bottom: 1.8rem; max-width: 48ch; line-height: 1.65; }

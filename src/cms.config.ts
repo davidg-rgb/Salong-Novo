@@ -124,6 +124,15 @@ export const AWARDS: CollectionDef = {
     { name: "photographer", kind: "text", label: "Fotograf", maxLen: 80 },
     { name: "note", kind: "text", label: "Notering", maxLen: 160 },
     { name: "location", kind: "text", label: "Plats & datum", maxLen: 120 },
+    /**
+     * One image per line, in render order. A rooted path is a bundled asset
+     * (`/images/awards-2026/nykomling-1.jpg`); anything else is read as an R2
+     * media key, so the client can swap a shipped photo for an uploaded one
+     * without a second field — the same discriminator `assetUrl` applies.
+     * `FieldDef` carries no `hint` slot (that is a `ContentFieldDef` affordance),
+     * so the rule lives here rather than under the input.
+     */
+    { name: "images", kind: "list", label: "Bilder", maxItems: 8, maxLen: 160 },
   ],
 };
 

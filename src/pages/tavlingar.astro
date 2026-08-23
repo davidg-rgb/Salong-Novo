@@ -1,11 +1,11 @@
 ---
 export const prerender = false;
 import Base from "../layouts/Base.astro";
-import ArticlePage from "../components/ArticlePage.astro";
+import CompetitionsPage from "../components/CompetitionsPage.astro";
 import { useT } from "../i18n";
 const locale = "sv" as const;
 const t = useT(locale, (await Astro.locals.getCms()).kv);
 ---
 <Base locale={locale} pageKey="competitions" title={`${t("nav.competitions")} — Salong NOVO`} description={t("competitions.intro")}>
-  <ArticlePage locale={locale} no="04" kicker={t("nav.competitions")} heading={t("competitions.heading")} paragraphs={[t("competitions.intro")]} />
+  <CompetitionsPage locale={locale} />
 </Base>

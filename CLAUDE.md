@@ -27,9 +27,14 @@ Access (admin) · markdown-it (`html:false`) · Vitest. See `ARCHITECTURE.md`.
   an Access-gated draft preview. Vanilla-TS client (<8 KB), no framework.
 - ✅ **Visual design applied** ("Haute Editorial" + recognition layer, §11): `tokens.css` + every
   public component restyled; Playfair Display + Hanken Grotesk fonts wired globally.
-- ⏳ **Remaining = content/ops, not code:** real NOVO competition imagery via R2; the deferred WebP
-  variant Worker (render path already falls back gracefully); create Cloudflare Access app + D1/R2
-  + prod env vars at deploy (§8); GA4/consent.
+- ✅ **Forge CMS retrofit + client IA DONE (2026-08-11):** Astro 7 / Workers, all 7 client tabs
+  (22 public routes, SSR-from-D1 with JSON-default fallback), CMS-editable copy/facts/collections,
+  529+ tests. **`BUILD-LOG.md` is canonical** for everything after this line — read its tail first.
+- ✅ **Live on David's test account (2026-08-11):** `https://salong-novo.david-geborek.workers.dev`
+  (D1 `novo_db` + R2 `novo-images`; admin 403s on `*.workers.dev` by design — Access needs a zone).
+  Real staff portraits + 2026 award imagery + generated textures wired (2026-08-12).
+- ⏳ **Remaining:** client content for Bokning & priser / Utbildning / Våra brands; RUNBOOK §5 on the
+  client's Cloudflare account + domain (Access, DNS); the deferred WebP variant Worker; GA4/consent.
 - **Local dev:** `.dev.vars` (gitignored) sets `DEV_ADMIN_EMAIL` + `ADMIN_API_TOKEN`; run
   `npm run db:migrate:local` then `npm run dev` — admin works at `/admin` without Cloudflare Access.
 
@@ -52,7 +57,7 @@ Access (admin) · markdown-it (`html:false`) · Vitest. See `ARCHITECTURE.md`.
   moved to the **footer** — manual Access editor (§10) unchanged.
 - Per-tab copy + most imagery (salon video, hair strip, owners photo, stylist texts, prices) are being
   **mailed by the client as each tab is done** — pages ship a "Innehåll kommer snart" state until then.
-- **Not built yet** — this is the spec; Phase 5 (§12) is the code migration.
+- **Built** (Phase B2, 2026-08-11): every tab above is a live route in both locales; §12 is done.
 
 ## Where things live
 

@@ -456,4 +456,39 @@ export function wireCollectionManager(): void {
       location.reload();
     });
   });
+
+  /**
+   * "Kopiera standardlistan" — the empty-state button (`CollectionList.astro`).
+   *
+   * A reload rather than a client-side render: the eighteen rows it just created
+   * need their real ids, sort order and edit forms, and the server already knows
+   * how to draw all of that. The 409 is not an error the client caused twice —
+   * it is another tab (or the back button) having seeded first — so it reloads
+   * onto the now-populated list instead of leaving a dead button.
+   */
+  document.querySelectorAll<HTMLButtonElement>("[data-seed-endpoint]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const endpoint = button.dataset.seedEndpoint ?? "";
+      if (!endpoint || button.disabled) return;
+
+      button.disabled = true;
+      const res = await sendJson(endpoint, "POST", { seed: true });
+      if (!res) {
+        button.disabled = false;
+        return;
+      }
+
+      if (res.ok) {
+        location.reload();
+        return;
+      }
+      if (res.status === 409) {
+        toast(adminString("collection.copyDefaultsNotEmpty"));
+        window.setTimeout(() => location.reload(), 400);
+        return;
+      }
+      toast(adminString("collection.copyDefaultsFailed"), "error");
+      button.disabled = false;
+    });
+  });
 }

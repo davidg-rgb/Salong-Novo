@@ -35,6 +35,10 @@ export const home = {
     en: "{category}, Swedish Hairdressing Awards 2026",
   } as Bi,
   teamHeading: { sv: "Vårt fantastiska team.", en: "Our wonderful team." } as Bi,
+  // The label under the ×3 stat. It lives here rather than in `ui.*.json`
+  // because `home` is already a page-copy namespace and the two dictionary
+  // sources must stay disjoint — a second `home` object would shadow this one.
+  statCollection: { sv: "Årets Kollektion", en: "Collection of the Year" } as Bi,
 };
 
 // Closing champagne band above the footer (recognition layer — see DESIGN-SYSTEM §128).

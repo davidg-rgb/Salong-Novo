@@ -33,6 +33,16 @@
     "published": "Published",
     "comingSoon": "Coming soon"
   },
+  "awards": {
+    "photo": "Photo",
+    "result": {
+      "winner": "Winner",
+      "nominated": "Nominated",
+      "finalist": "Finalist",
+      "entry": "Entry"
+    },
+    "imageAlt": "{category} {year} — {people}, image {n} of {total}"
+  },
   "blog": {
     "title": "The Journal",
     "intro": "Trends, techniques and life at the salon — written by our stylists.",

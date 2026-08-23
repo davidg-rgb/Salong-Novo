@@ -52,6 +52,8 @@ export interface AwardRow {
   photographer: string;
   note: string;
   location: string;
+  /** Rooted asset paths and/or R2 media keys — see `assetUrl`. */
+  images: string[];
 }
 
 export function getStaff(): Stylist[] {
@@ -82,10 +84,11 @@ export function getAwards() {
  * one editable record with every column on it. Flattening here rather than
  * reshaping the JSON keeps the readable document as the source of truth.
  *
- * `images` is deliberately dropped: its values are asset GLOBS
- * (`awards/…/kollektion1_*`) left over from the old build, not media keys the
- * picker could resolve, and an unresolvable path in an admin form is worse than
- * an absent one. The globs stay in `content/awards.json`.
+ * `images` is carried like any other column. It used to be dropped, because the
+ * old build left asset GLOBS (`awards/…/kollektion1_*`) in the JSON and an
+ * unresolvable path in an admin form is worse than an absent one — the document
+ * now holds explicit rooted paths instead, one per photo, which is exactly the
+ * shape the `list` field kind stores and `assetUrl` resolves.
  */
 export function flatAwards(): AwardRow[] {
   const rows: AwardRow[] = [];
@@ -100,6 +103,7 @@ export function flatAwards(): AwardRow[] {
         photographer: String(item.photographer ?? ""),
         note: String(item.note ?? ""),
         location: String(item.location ?? ""),
+        images: Array.isArray(item.images) ? (item.images as unknown[]).map(String) : [],
       });
     }
   }
@@ -146,20 +150,53 @@ export function asStylist(row: Record<string, unknown>): Stylist {
 }
 
 /**
- * The URL of a stylist's portrait, or `null` when there is none.
+ * A stored collection row read back as an `AwardRow`.
  *
- * Two shapes reach the same `photo` field and both are legitimate. The JSON
- * defaults layer ships the roster's portraits as bundled asset paths
- * (`/images/staff/<slug>.jpg`), while the admin's image picker stores a bare R2
- * media key. A LEADING SLASH is the discriminator — a media key never has one —
- * so an uploaded portrait takes over from the shipped default through the same
- * field, with no second code path and no migration.
+ * The awards counterpart of `asStylist`, and defensive for the same reason: the
+ * row is a JSON document the admin wrote, so every field is coerced and a
+ * missing one is a blank. `year` goes through `Number` because the admin's
+ * number input round-trips as text — an unreadable year becomes `NaN`, which
+ * `groupAwards` sorts last rather than filing under year zero.
  */
-export function stylistPhotoUrl(photo: string | null | undefined, base = ""): string | null {
-  const value = (photo ?? "").trim();
-  if (value === "") return null;
-  return value.startsWith("/") ? value : servedUrl(base, value);
+export function asAward(row: Record<string, unknown>): AwardRow {
+  const text = (key: string) => (typeof row[key] === "string" ? (row[key] as string) : "");
+  const list = (key: string) =>
+    Array.isArray(row[key]) ? (row[key] as unknown[]).map(String) : [];
+  const year = row.year;
+  return {
+    year: typeof year === "number" ? year : Number(String(year ?? "").trim() || Number.NaN),
+    competition: text("competition"),
+    category: text("category"),
+    result: text("result"),
+    people: list("people"),
+    photographer: text("photographer"),
+    note: text("note"),
+    location: text("location"),
+    images: list("images"),
+  };
 }
+
+/**
+ * The URL of a client-editable image, or `null` when there is none.
+ *
+ * Two shapes reach the same field and both are legitimate. The JSON defaults
+ * layer ships imagery as bundled asset paths (`/images/staff/<slug>.jpg`,
+ * `/images/awards-2026/<class>-1.jpg`), while the admin's image picker stores a
+ * bare R2 media key. A LEADING SLASH is the discriminator — a media key never
+ * has one — so an uploaded picture takes over from the shipped default through
+ * the same field, with no second code path and no migration.
+ *
+ * One rule, every image on the site: portraits, award photography, and whatever
+ * the next collection ships.
+ */
+export function assetUrl(value: string | null | undefined, base = ""): string | null {
+  const trimmed = (value ?? "").trim();
+  if (trimmed === "") return null;
+  return trimmed.startsWith("/") ? trimmed : servedUrl(base, trimmed);
+}
+
+/** `assetUrl` under the name the staff grid and the homepage already call it by. */
+export const stylistPhotoUrl = assetUrl;
 
 /** Localized stylist bio with graceful fallback. */
 export function stylistBio(s: Stylist, locale: Locale): string {

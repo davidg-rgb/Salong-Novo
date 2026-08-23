@@ -205,3 +205,113 @@ publicly unrendered (rendering would publish unconfirmed prices — design task)
 labels still hardcoded Swedish on EN (moving them changes EN output pre-signoff); unseeded
 collections show an empty admin list while public renders JSON defaults — a "Kopiera standardlistan"
 affordance is a worthy follow-up.
+
+### 2026-08-23 10:30 — STAGING DOMAIN + ACCESS LIVE · Tävlingar page real · admin "Kopiera standardlistan" · staging noindex · site-wide mobile gutter fix
+**Ops (David's account, zone `bottomsup.fun` transferred in 2026-08-23):** `novo.bottomsup.fun` attached
+as a Workers custom domain on `salong-novo` (cert issued); Access app **"salong-novo admin (staging)"**
+on the existing Zero Trust org (`weathered-shadow-4287.cloudflareaccess.com`) covering
+`novo.bottomsup.fun/admin` + `/api/admin`, policy `david-only` (same allow-list as the scalpbot app).
+`wrangler.toml [vars]`: `PUBLIC_SITE_URL = https://novo.bottomsup.fun` (CSRF origin + canonicals
+follow it), real `ACCESS_AUD` (`a5e23b0c…`) + `ACCESS_TEAM_DOMAIN`, and `PUBLIC_SITE_NOINDEX = "1"`.
+`.dev.vars` got the RUNBOOK §4.3 shadow lines (`ACCESS_AUD=""`, `ACCESS_TEAM_DOMAIN=""`) — they were
+MISSING, so local dev would have died at this exact step. **Flip `PUBLIC_SITE_URL` back to
+`https://salongnovo.se` and `PUBLIC_SITE_NOINDEX` to `""` when the project moves to the client's account.**
+Live verification after deploy: ACCESS vars survived (`scripts/salong-novo/settings` bindings), every
+route 200 + `X-Robots-Tag: noindex, nofollow`, robots body `Disallow: /`, `/admin` + `/api/admin/*`
+302 → Access login with the right `kid`, `*.workers.dev/api/admin/*` still 403 `no_token` (bypass
+refused). Zone note: Cloudflare's managed "Content Signals" robots.txt is ON for the zone and prepends
+its own `User-agent: * … Allow: /` block above ours — harmless (meta + header noindex carry the
+weight), but it is a zone setting, not code.
+
+**Tävlingar page (builder-tavlingar, Opus):** `/tavlingar` + `/en/competitions` now render the full
+record year → competition → result with **46 photographs**: 16 × 2026 (already in repo) + 26 × Årets
+Frisör 2025 + 4 × Nordic Hairshot 2025 migrated from the old build donor (`salong-novo/public/awards/`,
+donor untouched; resized to h≤1400, q82 mozjpeg, 4.7 MB → 3.0 MB) into `public/images/awards-2025/`
++ `public/images/nordic-hairshot-2025/`. `content/awards.json` carries explicit rooted `images[]`
+(old `awards/…/*` globs removed) and the three 2025 entries that had `people: []` are filled from the
+donor's AWARDS_MAPPING (Brud/Dam = Chriss Berner, Avantgarde = Ola Oterkjaer, foto Andreas Lundberg).
+New pure module `src/lib/awards.ts` (`groupAwards`, `resultTone`, `resultLabel`, `awardImages`,
+`peopleLine`; 26 tests) + `CompetitionsPage.astro`; `AwardRow.images` + `asAward()` in content.ts;
+`stylistPhotoUrl` generalized to `assetUrl` (alias kept); AWARDS collection gained an `images` list
+field (rooted static path or media key — same validators as divergence #15, restated because the
+core's are module-private). **Namespace finding:** `DICTS` is a shallow spread of `ui.*.json` over
+`pageCopyDict()`, so a top-level `competitions`/`home` object in `ui.*.json` would be silently replaced
+wholesale — UI strings went under `awards.*`; `home.statCollection` lives in pagecopy (not allowlisted
+⇒ not client-editable). SV prints the client's own result wording verbatim ("Finalist (Sverige)");
+EN translates the tone word. Gate extended: every `awards.json` photo must exist in `public/`
+(proven non-vacuous). Home EN stat label "Årets Kollektion" → "Collection of the Year" (the only
+untranslated literal reaching EN; "Est." and the gallery class names are deliberate).
+
+**Admin "Kopiera standardlistan" (builder-seed, Opus):** the handover landmine is closed — an empty
+collection whose JSON defaults exist now shows a notice + one button that POSTs `{seed:true}` to the
+collection's own endpoint (third discriminator next to `{ids}` / `{data}`); server
+`seedCollectionFromDefaults()` in `src/lib/collections.ts` validates ALL defaults first, inserts in
+JSON order (sort_order 0…17 = file order, pinned), 409 `not_empty` on any existing row, 500
+`invalid_default` (+index/field, logged) if a default ever fails the validator. Strings in
+`src/lib/cms/strings.sv.ts` (the per-project chrome file — already diverged for NOVO; accepted).
+14 tests. Template-adoption candidate for `_templates/forge-cms`.
+
+**Staging noindex switch (builder-noindex, Opus):** `PUBLIC_SITE_NOINDEX` (build-time `PUBLIC_` var,
+read once in `src/lib/seo.ts`) ⇒ robots.txt `Disallow: /` (no sitemap line), `<meta name="robots"
+content="noindex, nofollow">` in Base, `X-Robots-Tag` stamped on the two non-admin middleware exits
+(admin paths keep their own deliberate values). Production output with the var unset is
+byte-for-byte unchanged (cmp-proven). `/images/*` and prerendered `sitemap.xml` are served by Static
+Assets ahead of the middleware ⇒ no header there; robots covers them. 17 tests.
+
+**Site-wide mobile bug found in the visual review (Fable, fixed directly):** six components put
+`padding: var(--section) 0` on the SAME element that carries `.wrap`; the scoped rule outranks
+`.wrap`'s `padding: 0 var(--mx)`, so every page section had **zero side gutters on phones** (Team,
+articles, contact, blog, post, competitions) — live on the test deploy since 08-11, masked on desktop
+by `margin: auto`. Changed to `padding-block: var(--section)` in ArticlePage / BlogList /
+ContactPage / PostView / StaffPage / CompetitionsPage. Probed all 16 public routes at 390 px: text
+left edge 24 px everywhere, zero horizontal overflow.
+
+**Gate (orchestrator-run):** `npm test` → **597/597 (28 files)** · `tsc` clean · `astro check` 0 errors
+(6 pre-existing hints) · `astro build` Complete · `dist/client/admin` absent · 30 new photos in dist.
+**Deployed:** `npx wrangler deploy --config dist/server/wrangler.json` → https://novo.bottomsup.fun
+(also still on salong-novo.david-geborek.workers.dev).
+**Ops gotcha:** a local `wrangler dev --config dist/server/wrangler.json` holds `dist/client` open —
+`astro build` then dies with `EPERM … dist\client`. Kill the whole tree (npx → wrangler.js → cli.js →
+workerd ×2) by PID before rebuilding; `taskkill //IM workerd.exe` alone leaves the node parents and
+the lock.
+
+**NEXT:** David logs in at https://novo.bottomsup.fun/admin (one-time PIN to his email) and runs the
+RUNBOOK §5.13 acceptance on the real CMS: edit a fact + a copy key in both languages, "Kopiera
+standardlistan" on staff then edit one bio, upload an image, publish a blog post, reorder. Then the
+walk-through with the client, then handover to the client's account (flip the two staging vars).
+Not committed — project rule is commit-on-ask.
+
+### 2026-08-23 13:50 — INCIDENT: admin 403 `jwks_unavailable` behind real Access → Forge core bug, fixed in template + both consumers (Amendment 18)
+David's first login at `novo.bottomsup.fun/admin`: Access ALLOWED him (Access log: `login | cloudflare`
+IdP), the `Cf-Access-Jwt-Assertion` header reached the Worker (tail), and the Worker 403'd. API
+reason: **`jwks_unavailable`**. Root cause: `makeJwksFetcher`'s default deps `{ fetch, now }` +
+`deps.fetch(url)` ⇒ the global `fetch` ran with the deps object as `this` ⇒ workerd throws
+`TypeError: Illegal invocation` (Node's fetch tolerates it ⇒ every test green, every `wrangler dev`
+smoke green — none ever ran behind Access, RUNBOOK §5.5). Proven at the edge with a well-formed fake
+JWT on the workers.dev host: `jwks_unavailable` before, **`unknown_kid` after** (keys now fetched).
+Fix (template `_templates/forge-cms/src/middleware.ts`, nicole-olmedo, salong-novo-v2 — same diff):
+default `fetch: (input, init) => fetch(input, init)`; `[admin] JWKS fetch threw/failed` logged before
+rethrow; `[admin] rejected <reason> <path>` logged on every refusal (visible in `wrangler tail`).
+Regression test in all three `cms-middleware.test.ts` (stubbed global `fetch` records its receiver;
+red on old code, green on fix). Gates: NOVO **598/598**, tsc clean, `astro check` 0 errors, build,
+deployed (version `b122784b…`); nicole-olmedo 531/531 + tsc clean (not redeployed — inert there
+until its Access app exists). Docs: ARCHITECTURE §16 **Amendment 18** + RUNBOOK §5 post-deploy
+fake-JWT probe. Lesson for the file: Web API functions (`fetch`, `crypto.subtle.*`, `caches.*`) must
+be wrapped in an arrow, never passed by reference, in anything that runs on workerd.
+
+### 2026-08-23 14:10 — Bildbank seeded: all 66 site photographs in the media library (R2 + D1)
+David is in the admin (Access + Worker both green after Amendment 18). Asked for "all the photos
+currently on the website" in the Bildbank. New reusable script **`scripts/bildbank-seed.mjs`**
+(`npm run bildbank:seed:remote|local`, `--dry-run` prints the plan): mirrors the upload route's
+contract exactly — one R2 object per image with `contentType`, one `media` row
+(`r2_key, alt, mime, bytes, created_at`), `INSERT OR IGNORE` so re-runs never duplicate. Keys are
+human, not UUIDs (the media page shows the key as caption): `bildbank/personal/<slug>.jpg` (18),
+`bildbank/arets-frisor-2026/` (16), `bildbank/arets-frisor-2025/` (26),
+`bildbank/nordic-hairshot-awards-2025/` (4), `bildbank/texturer/` (2). Alt text derived from
+`staff.json` / `awards.json` in Swedish ("Chriss Berner – frisör på Salong NOVO",
+"Årets Nykomling 2026 — Ellen Rudd, bild 1 av 4"); `created_at` staggered so the library lists
+portraits first. Verified remote: 66 rows under `bildbank/%`, objects stream via
+`/api/media/<key>` (200, image/jpeg, byte-exact). 6.1 MB against the shared R2 free tier.
+Windows gotchas baked into the script: `spawnSync(..., shell:true)` splits paths with spaces ⇒
+cwd-relative forward-slash paths only; `wrangler d1 execute --file` returns a summary, not rows.
+**Re-run on the client's account at handover** (after `db:migrate:remote`).

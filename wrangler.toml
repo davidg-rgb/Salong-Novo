@@ -39,7 +39,13 @@ bucket_name = "novo-images"
 
 # Public vars (non-secret). Secrets set via:  wrangler secret put ADMIN_API_TOKEN
 [vars]
-PUBLIC_SITE_URL = "https://salongnovo.se"
+# STAGING (David's test account, 2026-08-23): the Worker answers on novo.bottomsup.fun and the
+# CSRF origin check + canonicals follow this value. Flip back to "https://salongnovo.se" when the
+# project moves to the client's account and zone (RUNBOOK §5.5).
+PUBLIC_SITE_URL = "https://novo.bottomsup.fun"
+# STAGING ONLY: hides this copy from search engines (robots Disallow + meta robots + X-Robots-Tag)
+# so it never competes with salongnovo.se. Build-time PUBLIC_ var (RUNBOOK §4.12). Set to "" in production.
+PUBLIC_SITE_NOINDEX = "1"
 # Stage A: empty → images serve same-origin via /api/media/*. Flip to
 # "https://img.salongnovo.se" only at the Stage-B R2-domain cutover (ARCHITECTURE §10.7).
 PUBLIC_IMAGE_BASE = ""
@@ -53,5 +59,6 @@ PUBLIC_BOOKING_URL = "https://bokning.voady.se/novo"
 # hostname are public identifiers), which is why they live in version control.
 # Locally these must stay shadowed to "" by .dev.vars, so dev falls through to
 # DEV_ADMIN_EMAIL instead of verifying a real Access JWT no local request carries.
-ACCESS_AUD = ""
-ACCESS_TEAM_DOMAIN = ""
+# Staging Access app "salong-novo admin (staging)" on David's Zero Trust org (2026-08-23).
+ACCESS_AUD = "a5e23b0c6038260c1eb66261719cf90f1a840156c757784e4648b3d8926ad8d2"
+ACCESS_TEAM_DOMAIN = "weathered-shadow-4287.cloudflareaccess.com"

@@ -9,6 +9,13 @@
  * Reordering reuses `wireReorder` unchanged. The endpoint is the collection's
  * own POST, which discriminates a `{ids}` body from a create; no `data-category`
  * is set because a collection is not sliced the way the portfolio is.
+ *
+ * THE EMPTY STATE IS TWO STATES. This project does not seed (see
+ * `src/lib/collections.ts`), so an empty table usually means "the JSON defaults
+ * are still on the page", not "the page is blank" — and the difference decides
+ * what the client should do next. With defaults behind it the empty state says
+ * so and offers to copy them in; without them it is the plain "add the first
+ * one" text the core ships.
  */
 import CollectionItemForm from "./CollectionItemForm.astro";
 import { adminString } from "../../lib/cms/strings.sv";
@@ -31,11 +38,31 @@ function summarize(item: CollectionItem): string {
   }
   return `#${item.id}`;
 }
+
+/** How many rows the public page is rendering from JSON right now. */
+const defaultCount = items.length === 0 ? def.jsonFallback().length : 0;
+
+/** `{n}` filled the way `media.client.ts` fills `{usage}` — one token, one call site. */
+const withCount = (key: string): string =>
+  adminString(key).replace("{n}", String(defaultCount));
 ---
 
 {
   items.length === 0 ? (
-    <p class="admin-empty">{adminString("collection.empty")}</p>
+    defaultCount > 0 ? (
+      <div class="admin-empty">
+        <p>{withCount("collection.fallbackNotice")}</p>
+        <button
+          class="admin-btn"
+          type="button"
+          data-seed-endpoint={`/api/admin/collections/${def.name}`}
+        >
+          {withCount("collection.copyDefaults")}
+        </button>
+      </div>
+    ) : (
+      <p class="admin-empty">{adminString("collection.empty")}</p>
+    )
   ) : (
     <>
       {def.orderable && <p class="admin-field__hint">{adminString("collection.reorderHint")}</p>}

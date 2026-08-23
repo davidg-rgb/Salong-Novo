@@ -33,6 +33,16 @@
     "published": "Publicerad",
     "comingSoon": "Innehåll kommer snart"
   },
+  "awards": {
+    "photo": "Foto",
+    "result": {
+      "winner": "Vinnare",
+      "nominated": "Nominerad",
+      "finalist": "Finalist",
+      "entry": "Bidrag"
+    },
+    "imageAlt": "{category} {year} — {people}, bild {n} av {total}"
+  },
   "blog": {
     "title": "Journalen",
     "intro": "Trender, tekniker och liv på salongen — skrivet av våra stylister.",

@@ -290,6 +290,12 @@ describe("the awards flattening adapter", () => {
       photographer: "Ellen Rudd",
       note: "",
       location: "",
+      images: [
+        "/images/awards-2026/nykomling-1.jpg",
+        "/images/awards-2026/nykomling-2.jpg",
+        "/images/awards-2026/nykomling-3.jpg",
+        "/images/awards-2026/nykomling-4.jpg",
+      ],
     });
   });
 
@@ -307,12 +313,26 @@ describe("the awards flattening adapter", () => {
     expect(nordic?.location).toBe("Köpenhamn, 25 oktober");
   });
 
-  it("round-trips a flattened row through validation unchanged", () => {
-    const [first] = AWARDS.jsonFallback() as Record<string, unknown>[];
-    const saved = validateCollectionItem(AWARDS, first!, first!);
-    expect(saved.ok).toBe(true);
-    if (!saved.ok) return;
-    expect(saved.value).toEqual(first);
+  it("carries the photo list down, so the page has something to render", () => {
+    // It used to be dropped on the floor as an unresolvable glob. Every result
+    // now names its photographs explicitly, which is what makes them editable.
+    const rows = flatAwards();
+    expect(rows.every((award) => award.images.length >= 2)).toBe(true);
+    expect(rows.find((award) => award.competition.startsWith("Nordic"))?.images).toHaveLength(4);
+  });
+
+  it("round-trips EVERY flattened row through validation unchanged", () => {
+    // Not just the first: `images` was the newest column, and a row the client
+    // opens and saves untouched must come back byte-identical or the defaults
+    // erode one Spara at a time.
+    const items = AWARDS.jsonFallback() as Record<string, unknown>[];
+    expect(items.length).toBeGreaterThan(0);
+    for (const item of items) {
+      const saved = validateCollectionItem(AWARDS, item, item);
+      expect(saved.ok, `${item.year} ${item.category}`).toBe(true);
+      if (!saved.ok) continue;
+      expect(saved.value).toEqual(item);
+    }
   });
 });
 

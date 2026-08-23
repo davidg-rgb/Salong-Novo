@@ -98,6 +98,20 @@ export const STRINGS: Record<string, string> = {
   "collection.confirmDelete": "Ta bort posten? Detta går inte att ångra.",
   "collection.empty": "Listan är tom. Lägg till den första posten här nedanför.",
   "collection.emptyDb": "Listan är inte tillgänglig — databasen svarar inte just nu.",
+
+  /**
+   * The admin half of this project's no-seed provenance rule
+   * (`src/lib/collections.ts`): zero rows here does NOT mean an empty page, the
+   * JSON defaults are still showing. Saying so — and offering the one-press copy
+   * — is what stops the client from either panicking or typing a nineteenth
+   * stylist that makes the other eighteen vanish. `{n}` is the default count.
+   */
+  "collection.fallbackNotice":
+    "Listan är tom här, men hemsidan visar standardlistan ({n} poster). Kopiera in den för att kunna redigera posterna — efter det styr listan här vad som visas.",
+  "collection.copyDefaults": "Kopiera standardlistan ({n} poster)",
+  "collection.copyDefaultsNotEmpty": "Listan är inte tom längre — laddar om.",
+  "collection.copyDefaultsFailed":
+    "Kopieringen misslyckades. Försök igen, eller kontakta David.",
   "collection.reorderHint":
     "Dra en post för att flytta den, eller använd pilarna. Ordningen sparas direkt.",
   "collection.listHint": "En rad per punkt.",
@@ -205,6 +219,15 @@ export const STRINGS: Record<string, string> = {
   "error.misconfigured": "Servern är felkonfigurerad. Kontakta David.",
   "error.internal": "Något gick fel. Försök igen.",
   "error.network": "Ingen kontakt med servern. Kontrollera din uppkoppling.",
+
+  /**
+   * The two codes the "kopiera standardlistan" write can answer with. Only
+   * `not_empty` is reachable by pressing the button twice; `invalid_default`
+   * means a JSON default no longer passes its own schema, which is a repo bug —
+   * so the message points at the developer rather than asking her to fix it.
+   */
+  "error.not_empty": "Listan är inte tom längre — ladda om sidan.",
+  "error.invalid_default": "Standardlistan kunde inte kopieras. Kontakta David.",
 
   /*
    * The blog admin's own codes (§10.5). They predate the core's twelve-code

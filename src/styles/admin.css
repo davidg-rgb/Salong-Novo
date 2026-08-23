@@ -529,6 +529,16 @@ body.admin {
 }
 
 /*
+ * The empty state that carries an action (the collections fallback notice, where
+ * the box explains that the JSON defaults are still on the page and offers to
+ * copy them in). Stacked, not inline: the sentence is long enough that a button
+ * beside it would wrap badly on a phone.
+ */
+.admin-empty > * + * {
+  margin-top: var(--unit-md);
+}
+
+/*
  * The toast is a live region rather than an alert() so a save confirmation can
  * never block the next edit. It is announced, not just shown.
  */

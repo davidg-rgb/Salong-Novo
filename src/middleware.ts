@@ -1,8 +1,8 @@
 /**
- * Global middleware — legacy redirects, content distributor, admin identity gate
- * (ARCHITECTURE §6.4). Runs for EVERY request.
+ * Global middleware — legacy redirects, content distributor, admin identity gate,
+ * staging noindex stamp (ARCHITECTURE §6.4). Runs for EVERY request.
  *
- * THREE JOBS, in this order:
+ * FOUR JOBS, in this order:
  *
  * 0. LEGACY REDIRECTS. `resolveRedirect` maps the launched Next.js site's URLs
  *    onto this one's and answers a 301 before anything else runs. It stays first
@@ -19,6 +19,13 @@
  * 2. THE ADMIN GATE. `/admin*` and `/api/admin*` are the identity boundary's
  *    origin-side enforcement point. Rejection is a 403 BEFORE the route runs;
  *    admission stamps `locals.adminEmail` and the defense-in-depth headers.
+ *
+ * 3. THE STAGING NOINDEX STAMP. On a build made with `PUBLIC_SITE_NOINDEX` set,
+ *    every response the origin answers carries `X-Robots-Tag: noindex, nofollow`
+ *    — the layer that covers what markup cannot: redirects, `sitemap.xml`,
+ *    streamed media, 404s. Only the two non-admin exits stamp it, because the
+ *    admin's own 403s and `adminSecurityHeaders` already set the header on every
+ *    path they own and must keep their exact values.
  *
  * WHAT THIS FILE DROPPED when the Forge core landed: the third identity tier
  * that trusted a bare `Cf-Access-Authenticated-User-Email` header when
@@ -39,6 +46,7 @@ import { bindings } from "./lib/cms/bindings";
 import { resolveAdminIdentity, type Jwk } from "./lib/cms/access";
 import { adminSecurityHeaders } from "./lib/cms/http";
 import { loadCmsContent, type CmsContent } from "./lib/cms/content";
+import { siteNoindex } from "./lib/seo";
 
 /** The two gated prefixes: `/admin*` and `/api/admin*`. */
 const ADMIN_RE = /^\/(admin|api\/admin)(\/|$)/;
@@ -52,15 +60,34 @@ const ADMIN_RE = /^\/(admin|api\/admin)(\/|$)/;
  * behaviour is unit-testable against a fake fetch.
  */
 export function makeJwksFetcher(
-  deps: { fetch: typeof fetch; now: () => number } = { fetch, now: Date.now },
+  deps: { fetch: typeof fetch; now: () => number } = {
+    // WRAPPED, never passed by reference. In workerd the global `fetch` is a method
+    // of the global scope and throws `TypeError: Illegal invocation` when invoked
+    // with any other receiver — which `deps.fetch(url)` does. Node's fetch does not
+    // care, so every unit test passed while production answered `jwks_unavailable`
+    // to every Access-authenticated admin request (NOVO staging, 2026-08-23).
+    fetch: (input, init) => fetch(input, init),
+    now: Date.now,
+  },
 ): (url: string) => Promise<Jwk[]> {
   const cache = new Map<string, { keys: Jwk[]; at: number }>();
   const TTL_MS = 60 * 60 * 1000; // 1h
   return async (url: string): Promise<Jwk[]> => {
     const hit = cache.get(url);
     if (hit && deps.now() - hit.at < TTL_MS) return hit.keys;
-    const res = await deps.fetch(url);
-    if (!res.ok) throw new Error(`JWKS fetch failed: ${res.status}`);
+    let res: Response;
+    try {
+      res = await deps.fetch(url);
+    } catch (error) {
+      // Surfaced in `wrangler tail`: without this the only symptom is the opaque
+      // `jwks_unavailable` the caller maps every fetch failure to.
+      console.error("[admin] JWKS fetch threw", url, String(error));
+      throw error;
+    }
+    if (!res.ok) {
+      console.error("[admin] JWKS fetch failed", url, res.status);
+      throw new Error(`JWKS fetch failed: ${res.status}`);
+    }
     const data = (await res.json()) as { keys?: Jwk[] };
     const keys = Array.isArray(data.keys) ? data.keys : [];
     cache.set(url, { keys, at: deps.now() });
@@ -98,6 +125,18 @@ function adminUnauthorized(context: APIContext, reason: string): Response {
   });
 }
 
+/**
+ * Stamp a staging build's responses as unindexable. A no-op on production, where
+ * `PUBLIC_SITE_NOINDEX` is unset and the branch is inlined away at build time.
+ *
+ * Read per request rather than once at module scope so the switch stays a
+ * testable function call rather than an import-order side effect.
+ */
+function stampNoindex(response: Response): Response {
+  if (siteNoindex()) response.headers.set("X-Robots-Tag", "noindex, nofollow");
+  return response;
+}
+
 /** Load once per request, at most once, and only if someone actually asks. */
 function memoizeCms(db: Parameters<typeof loadCmsContent>[0]): () => Promise<CmsContent> {
   let pending: Promise<CmsContent> | null = null;
@@ -110,14 +149,14 @@ export const onRequest: MiddlewareHandler = async (
 ) => {
   const target = resolveRedirect(context.url.pathname);
   if (target && target !== context.url.pathname) {
-    return context.redirect(target, 301);
+    return stampNoindex(context.redirect(target, 301));
   }
 
   const env = await bindings();
   context.locals.db = env.DB ?? null;
   context.locals.getCms = memoizeCms(context.locals.db);
 
-  if (!ADMIN_RE.test(context.url.pathname)) return next();
+  if (!ADMIN_RE.test(context.url.pathname)) return stampNoindex(await next());
 
   let identity;
   try {
@@ -136,7 +175,10 @@ export const onRequest: MiddlewareHandler = async (
     return adminUnauthorized(context, "misconfigured");
   }
 
-  if (identity.kind === "rejected") return adminUnauthorized(context, identity.reason);
+  if (identity.kind === "rejected") {
+    console.warn("[admin] rejected", identity.reason, context.url.pathname);
+    return adminUnauthorized(context, identity.reason);
+  }
 
   context.locals.adminEmail = identity.email;
   // The layout reads the write token off locals for its meta tag; no component

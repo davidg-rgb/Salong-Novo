@@ -10,6 +10,8 @@ type Env = {
   PUBLIC_IMAGE_BASE: string;
   PUBLIC_BOOKING_URL: string;
   PUBLIC_GA4_ID?: string;
+  /** STAGING ONLY — "1"/"true"/"yes"/"noindex" hides the deployment from search engines. */
+  PUBLIC_SITE_NOINDEX?: string;
 
   // secrets
   ADMIN_API_TOKEN?: string;

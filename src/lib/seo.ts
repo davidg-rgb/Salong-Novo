@@ -69,3 +69,30 @@ export function ogMeta(meta: PageMeta): Record<string, string> {
   }
   return og;
 }
+
+/** The values that mean "yes" for `PUBLIC_SITE_NOINDEX`, matched case-insensitively. */
+const NOINDEX_TRUE = new Set(["1", "true", "yes", "noindex"]);
+
+/**
+ * Is this build a staging copy that must stay out of the index?
+ *
+ * Pure, so the truth table is a unit test rather than a deploy-time surprise.
+ * Unset and `""` are FALSE — production is the default and never has to
+ * remember to opt out. Anything unrecognised is also false: a typo in the var
+ * must fail towards the production behaviour, never towards silently
+ * de-indexing the real site.
+ */
+export function isNoindex(value: string | undefined | null): boolean {
+  return NOINDEX_TRUE.has((value ?? "").trim().toLowerCase());
+}
+
+/**
+ * The one place `PUBLIC_SITE_NOINDEX` is read. A `PUBLIC_` var is INLINED at
+ * build time (RUNBOOK §4.12) — on the Cloudflare target `wrangler.toml [vars]`
+ * is the build environment — so this is a property of the artefact, not a
+ * runtime toggle. Flipping the var on a deployed site changes nothing until
+ * something rebuilds.
+ */
+export function siteNoindex(): boolean {
+  return isNoindex(import.meta.env.PUBLIC_SITE_NOINDEX);
+}
