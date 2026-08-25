@@ -14,7 +14,7 @@ const booking = bookingUrl(kv);
 const imageBase = (await bindings()).PUBLIC_IMAGE_BASE ?? "";
 ---
 <ul class="staff-grid" role="list">
-  {staff.map((s) => {
+  {staff.map((s, i) => {
     const photo = stylistPhotoUrl(s.photo, imageBase);
     return (
     <li>
@@ -31,15 +31,27 @@ const imageBase = (await bindings()).PUBLIC_IMAGE_BASE ?? "";
       >
         {/* The frame stays aria-hidden: the portrait carries the stylist's name,
             which the card already prints below it, so announcing it twice is noise. */}
+        {/* The first row is above the fold on every breakpoint (4 cards at
+            ≥1000px, fewer below), so it loads eagerly — lazy-loading it meant
+            the dark frame sat empty while the fetch waited on layout. Rows 2+
+            stay lazy. The intrinsic size is declared so the decode is sized;
+            .frame already pins aspect-ratio: 3/4, so there is no CLS either way. */}
         <span class="frame" aria-hidden="true">
           {photo
-            ? <img class="portrait" src={photo} alt={s.name} loading="lazy" decoding="async" />
+            ? <img
+                class="portrait"
+                src={photo}
+                alt={s.name}
+                width="600"
+                height="800"
+                loading={i < 4 ? "eager" : "lazy"}
+                fetchpriority={i < 4 ? "high" : undefined}
+                decoding="async"
+              />
             : <span class="mono">{s.name.charAt(0)}</span>}
           <span class="duo"></span>
         </span>
         <b>{s.name}</b>
-        <span class="role">{s.specialty !== "TODO" ? s.specialty : s.role}</span>
-        <span class="open">{t("labels.openProfile")} <span class="arr">→</span></span>
       </button>
     </li>
     );
@@ -54,14 +66,19 @@ const imageBase = (await bindings()).PUBLIC_IMAGE_BASE ?? "";
     <span class="sm-role" id="sm-role"></span>
     <h3 id="sm-name"></h3>
     <p id="sm-bio"></p>
-    <a class="sm-ig" id="sm-ig" target="_blank" rel="noopener"></a>
-    <a class="btn" id="sm-book" target="_blank" rel="noopener"></a>
+    {/* One wrapping row: the handle can be long, so it wraps above the button
+        rather than colliding with it. */}
+    <div class="sm-foot">
+      <a class="sm-ig" id="sm-ig" target="_blank" rel="noopener"></a>
+      <a class="btn" id="sm-book" target="_blank" rel="noopener"></a>
+    </div>
   </div>
 </div>
 
-<script define:vars={{ bookWith: t("cta.bookWith", { name: "%s" }) }}>
+<script define:vars={{ bookLabel: t("cta.book") }}>
   const modal = document.getElementById("staffModal");
   const set = (id, txt) => { document.getElementById(id).textContent = txt; };
+  let opener = null;
   function open(d) {
     set("sm-role", d.role);
     set("sm-name", d.name);
@@ -75,18 +92,41 @@ const imageBase = (await bindings()).PUBLIC_IMAGE_BASE ?? "";
     if (d.ig) { ig.textContent = d.ig; ig.href = "https://instagram.com/" + d.ig.replace("@", ""); ig.style.display = ""; }
     else ig.style.display = "none";
     const book = document.getElementById("sm-book");
-    book.textContent = bookWith.replace("%s", d.name.split(" ")[0]);
+    // Plain "Boka tid" — the per-stylist label read as a promise of a personal
+    // booking flow, which Voady's link does not give (client round 2, 2026-08-25).
+    book.textContent = bookLabel;
     book.href = d.book;
     modal.classList.add("open");
     modal.setAttribute("aria-hidden", "false");
+    modal.scrollTop = 0;
     document.getElementById("sm-close")?.focus();
   }
-  function close() { modal.classList.remove("open"); modal.setAttribute("aria-hidden", "true"); }
+  function close() {
+    modal.classList.remove("open");
+    modal.setAttribute("aria-hidden", "true");
+    // Back to the card that opened the dialog, not to the top of the document.
+    opener?.focus();
+    opener = null;
+  }
   document.querySelectorAll(".staff-card").forEach((c) =>
-    c.addEventListener("click", () => open(c.dataset)),
+    c.addEventListener("click", () => { opener = c; open(c.dataset); }),
   );
   modal.querySelectorAll("[data-close]").forEach((e) => e.addEventListener("click", close));
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
+  // aria-modal="true" is a promise to assistive tech that the rest of the page is
+  // inert; without a trap, Tab walked straight out of the dialog into the roster
+  // behind it. Cycle between the first and last visible control instead.
+  modal.addEventListener("keydown", (e) => {
+    if (e.key !== "Tab") return;
+    const items = [...modal.querySelectorAll("a[href], button")].filter(
+      (el) => el.getClientRects().length > 0,
+    );
+    if (!items.length) return;
+    const first = items[0];
+    const last = items[items.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
 </script>
 
 <style>
@@ -100,31 +140,69 @@ const imageBase = (await bindings()).PUBLIC_IMAGE_BASE ?? "";
     position: relative; aspect-ratio: 3/4; overflow: hidden; isolation: isolate;
     background: linear-gradient(160deg, #33302a, #1c1b18); display: grid; place-items: center;
   }
+  /* A frame that HAS a portrait needs neither the dark plate nor the wash. The
+     plate exists for the monogram fallback, whose letter is white — but on a
+     photo card it is what the visitor stares at while the image loads, reading
+     as a black hole rather than an empty frame. Clay reads as unexposed paper.
+     And .duo is now dead paint there: grayscale() below already does its job,
+     and a zero-saturation charcoal blended over an already-grey image is a
+     no-op. The monogram keeps both. */
+  .frame:has(.portrait) { background: var(--clay); }
+  .frame:has(.portrait) .duo { opacity: 0; }
   .frame .mono { font-family: var(--font-serif); font-size: clamp(48px, 6vw, 84px); color: rgba(255,255,255,0.92); line-height: 1; }
-  /* The portrait sits UNDER .duo, so the bronze `mix-blend-mode: color` tones it
-     and hover releases it to true colour — the same treatment the monogram gets. */
-  .frame .portrait { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-  .frame .duo { position: absolute; inset: 0; background: var(--bronze); mix-blend-mode: color; opacity: 0.34; transition: opacity 1s ease; }
-  .staff-card:hover .frame .duo { opacity: 0; }
+  /* Portraits are black-and-white at rest and release to full colour on hover
+     (client re-theme 2026-08-25 — "mer svart" on the team page). .duo keeps a
+     faint neutral wash so the monogram fallback still reads as toned. */
+  .frame .portrait { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: grayscale(1); transition: filter 0.55s ease; }
+  .frame .duo { position: absolute; inset: 0; background: var(--charcoal); mix-blend-mode: color; opacity: 0.34; transition: opacity 0.55s ease; }
+  /* :focus-visible carries the same release as :hover — the card is a <button>,
+     so without it a keyboard user tabbing the roster never sees a portrait in
+     colour at all. (Restores the approved spec; the re-theme pass dropped it.) */
+  .staff-card:hover .frame .portrait,
+  .staff-card:focus-visible .frame .portrait { filter: grayscale(0); }
+  .staff-card:hover .frame .duo,
+  .staff-card:focus-visible .frame .duo { opacity: 0; }
   .staff-card b { font-family: var(--font-serif); font-weight: 500; font-size: 18px; margin-top: 16px; color: var(--ink); }
-  .staff-card .role { font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--on-variant); margin-top: 5px; }
-  .staff-card .open { font-size: 11px; letter-spacing: 0.04em; color: var(--bronze-muted); margin-top: 9px; display: inline-flex; align-items: center; gap: 6px; }
-  .staff-card .open .arr { transition: transform 0.35s; }
-  .staff-card:hover .open .arr { transform: translateX(5px); }
 
-  /* Modal — light gallery card, hairline border, 0 radius. */
-  .staff-modal { position: fixed; inset: 0; z-index: 100; display: none; align-items: center; justify-content: center; padding: 1.5rem; }
+  /* Modal — light gallery card, hairline border, 0 radius. The OVERLAY is the scroll
+     container, not the card: `align-items: center` centred a card taller than the
+     viewport, which clipped it off BOTH edges with no way to reach either. Flex-start
+     + `margin: auto` is the safe pattern — the auto margins still centre a short card,
+     and collapse to 0 when the card outgrows the viewport so it scrolls from the top. */
+  .staff-modal {
+    position: fixed; inset: 0; z-index: 100; display: none;
+    align-items: flex-start; justify-content: center; padding: 1.5rem;
+    overflow-y: auto; overscroll-behavior: contain;
+  }
   .staff-modal.open { display: flex; }
-  .sm-bg { position: absolute; inset: 0; background: rgba(10,10,10,0.55); backdrop-filter: blur(4px); }
-  .sm-card { position: relative; background: var(--white); border: 1px solid var(--hairline); max-width: 460px; width: 100%; padding: clamp(28px, 4vw, 44px); color: var(--ink); }
-  .sm-close { position: absolute; top: 1rem; right: 1rem; width: 44px; height: 44px; background: transparent; border: 1px solid var(--hairline); color: var(--ink); cursor: pointer; }
-  .sm-photo { display: block; width: 100%; aspect-ratio: 4/5; object-fit: cover; margin-bottom: clamp(18px, 2.5vw, 26px); }
+  /* Fixed, not absolute: an absolute scrim is sized to the padding box but scrolls
+     with the content, so a scrolled-down tall card left the page showing through. */
+  .sm-bg { position: fixed; inset: 0; background: rgba(10,10,10,0.55); backdrop-filter: blur(4px); }
+  .sm-card { position: relative; margin: auto; background: var(--white); border: 1px solid var(--hairline); max-width: 460px; width: 100%; padding: clamp(28px, 4vw, 44px); color: var(--ink); }
+  /* Solid rather than transparent-over-the-photo: the ✕ sat on the portrait's top
+     corner and read as part of the picture. Inverts on hover/keyboard focus. */
+  .sm-close {
+    position: absolute; top: 1rem; right: 1rem; width: 44px; height: 44px;
+    display: grid; place-items: center; font-size: 18px; line-height: 1;
+    background: var(--white); border: 1px solid var(--hairline); color: var(--ink);
+    cursor: pointer; transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+  }
+  .sm-close:hover, .sm-close:focus-visible { background: var(--ink); border-color: var(--ink); color: var(--snow); }
+  /* The 4/5 frame is the intent, but on a short viewport the portrait alone filled the
+     screen and pushed the bio out of sight — cap it and let object-fit crop. */
+  .sm-photo { display: block; width: 100%; aspect-ratio: 4/5; max-height: min(52dvh, 420px); object-fit: cover; margin-bottom: clamp(18px, 2.5vw, 26px); }
   .sm-photo[hidden] { display: none; }
-  .sm-role { font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--bronze-muted); }
+  .sm-role { font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink); }
   .sm-card h3 { font-size: clamp(28px, 4vw, 40px); margin: 0.3rem 0 1rem; color: var(--ink); }
   .sm-card p { color: var(--on-variant); margin-bottom: 1.2rem; line-height: 1.7; }
-  .sm-ig { display: inline-block; color: var(--bronze-dark); margin-bottom: 1.6rem; font-size: 0.9rem; }
-  .sm-ig:hover { color: var(--bronze); }
+  /* Handle + book button share a wrapping row so a long @handle never sits
+     under the button. */
+  .sm-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; }
+  .sm-ig { color: var(--ink); font-size: 0.9rem; text-decoration: underline; text-underline-offset: 3px; }
+  .sm-ig:hover { text-decoration-thickness: 2px; opacity: 0.7; }
+  /* The team page is black, not bronze — this .btn override is scoped to the modal. */
+  .sm-foot .btn { background: var(--ink); border-color: var(--ink); color: var(--snow); }
+  .sm-foot .btn:hover { background: #333; border-color: #333; }
   @media (max-width: 1000px) { .staff-grid { grid-template-columns: repeat(3, 1fr); } }
   @media (max-width: 680px) { .staff-grid { grid-template-columns: repeat(2, 1fr); } }
 </style>

@@ -24,8 +24,8 @@ export const home = {
   kicker: { sv: "Schwarzkopf Flaggskepp · Vasastan", en: "Schwarzkopf Flagship · Vasastan" } as Bi,
   heading: { sv: "Stockholms mest prisbelönta frisörsalong.", en: "Stockholm's most awarded hair salon." } as Bi,
   sub: {
-    sv: "18 stylister i hjärtat av Vasastan. Klippning, färg och styling på tävlingsnivå — tre gånger vinnare av Årets Kollektion.",
-    en: "18 stylists in the heart of Vasastan. Cut, colour and styling at competition level — three-time winners of Collection of the Year.",
+    sv: "17 stylister i hjärtat av Vasastan. Klippning, färg och styling på tävlingsnivå — tre gånger vinnare av Årets Kollektion.",
+    en: "17 stylists in the heart of Vasastan. Cut, colour and styling at competition level — three-time winners of Collection of the Year.",
   } as Bi,
   galleryLabel: { sv: "Utvalda hårbilder", en: "Selected hair looks" } as Bi,
   // {category} is the competition class, a Swedish proper noun in both locales —
@@ -82,12 +82,12 @@ export const work = {
 // Team page (grid → modal). The heading is the nav label; only the intro is prose.
 export const staff = {
   intro: {
-    sv: "18 stylister, ett kollektiv. Klicka på en stylist för bio och bokning.",
-    en: "18 stylists, one collective. Tap a stylist to view and book.",
+    sv: "Vårat fantastiska stjärnteam består idag av dessa 17 utbildade frisörer.",
+    en: "Our fantastic star team consists of these 17 trained hairdressers.",
   } as Bi,
   metaDescription: {
-    sv: "Möt NOVO:s 18 prisbelönta stylister i Vasastan, Stockholm.",
-    en: "Meet NOVO's 18 award-winning stylists in Vasastan, Stockholm.",
+    sv: "Möt NOVO:s 17 prisbelönta stylister i Vasastan, Stockholm.",
+    en: "Meet NOVO's 17 award-winning stylists in Vasastan, Stockholm.",
   } as Bi,
 };
 
@@ -98,8 +98,8 @@ export const contact = {
   } as Bi,
   heading: { sv: "Hitta hit.", en: "Find us." } as Bi,
   directions: {
-    sv: "Från T-bana S:t Eriksplan är det en kort promenad (ca 3–5 min). Ta uppgången mot Sankt Eriksgatan/Torsgatan och följ Rörstrandsgatan till nr 39C. Salongen ligger i gatuplan.",
-    en: "From S:t Eriksplan metro it's a short walk (approx. 3–5 min). Take the exit toward Sankt Eriksgatan/Torsgatan and follow Rörstrandsgatan to no. 39C. The salon is at street level.",
+    sv: "Från T-bana S:t Eriksplan är det en kort promenad (ca 3–5 min). Ta uppgången mot Sankt Eriksgatan/Torsgatan och följ Rörstrandsgatan till nr 39C. Entrén till Novos egna trapphus finner du i gatuplan, med salongen en trappa upp, ingen hiss.",
+    en: "From S:t Eriksplan metro it's a short walk (approx. 3–5 min). Take the exit toward Sankt Eriksgatan/Torsgatan and follow Rörstrandsgatan to no. 39C. The entrance to NOVO's own stairwell is at street level, with the salon one flight up — no elevator.",
   } as Bi,
   cancellation: {
     sv: "Ändring eller avbokning gör du enklast själv via Voady, eller mejla info@salongnovo.se. Av-/ombokning senare än 48 h innan debiteras 50 %; utebliven tid (no show) debiteras 100 %.",
@@ -107,9 +107,12 @@ export const contact = {
   } as Bi,
 };
 
-// "Tävlingar" (client IA 2026-06-01) — carries the awards/competition record.
+// "Utmärkelser" (client IA 2026-06-01, renamed from "Tävlingar" 2026-08-25) — carries
+// the awards/competition record. The route slugs stay /tavlingar and /en/competitions.
 export const competitions = {
-  heading: { sv: "Tävlingar & utmärkelser.", en: "Competitions & awards." } as Bi,
+  // Not "Utmärkelser & utmärkelser": the nav label now carries the word, so the H1
+  // drops the old "Tävlingar &" half rather than repeating it.
+  heading: { sv: "Utmärkelser.", en: "Awards." } as Bi,
   intro: {
     sv: "Tre gånger vinnare av Årets Kollektion, finalister i Nordic Hairshot och fleråriga nomineringar i Årets Frisör.",
     en: "Three-time winners of Collection of the Year, Nordic Hairshot finalists, and repeated nominees in Hairdresser of the Year.",

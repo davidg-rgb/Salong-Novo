@@ -7,6 +7,7 @@
 export const REDIRECTS: Record<string, string> = {
   // Legacy heavy-build slugs -> nearest new page
   "/team": "/personal",
+  "/en/team": "/en/staff",
   "/karriar": "/jobba-pa-novo",
   "/portfolio": "/tavlingar",
   "/villkor": "/integritet",

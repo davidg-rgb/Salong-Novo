@@ -302,7 +302,7 @@ export const CMS: CmsConfig = {
     },
     {
       page: "copy-competitions",
-      label: "Tävlingar",
+      label: "Utmärkelser",
       keys: [
         { key: "competitions.heading", label: "Rubrik" },
         { key: "competitions.intro", label: "Ingress" },
@@ -354,13 +354,13 @@ export const CMS: CmsConfig = {
       keys: [
         { key: "nav.staff", label: "Team" },
         { key: "nav.pricing", label: "Bokning & priser" },
-        { key: "nav.competitions", label: "Tävlingar" },
+        { key: "nav.competitions", label: "Utmärkelser" },
         { key: "nav.education", label: "Utbildning & kurser" },
         { key: "nav.brands", label: "Våra brands" },
         { key: "nav.work", label: "Jobba hos oss" },
         { key: "nav.contact", label: "Kontakta oss" },
         { key: "nav.about", label: "Om oss (sidfoten)" },
-        { key: "nav.blog", label: "Blogg (sidfoten)" },
+        { key: "nav.blog", label: "Blogg" },
       ],
     },
     {

@@ -101,7 +101,7 @@ describe("seedCollectionFromDefaults — copying the JSON defaults into D1", () 
     const result = await seedCollectionFromDefaults(db, STAFF, AUTHOR, NOW);
 
     const expected = defaultNames(STAFF);
-    expect(expected.length).toBe(18);
+    expect(expected.length).toBe(17);
     expect(result).toEqual({ ok: true, inserted: expected.length });
     expect(db.rows.length).toBe(expected.length);
   });
@@ -252,12 +252,12 @@ describe("POST /api/admin/collections/[name] — the seed discriminator", () => 
   it("201s with the count, then 409s on the second press", async () => {
     const first = await POST(context(seedRequest()));
     expect(first.status).toBe(201);
-    expect(await first.json()).toEqual({ ok: true, inserted: 18 });
+    expect(await first.json()).toEqual({ ok: true, inserted: 17 });
 
     const second = await POST(context(seedRequest()));
     expect(second.status).toBe(409);
     expect(await second.json()).toEqual({ error: "not_empty" });
-    expect(db.rows.length).toBe(18);
+    expect(db.rows.length).toBe(17);
   });
 
   it("leaves the other two discriminators alone", async () => {

@@ -14,9 +14,10 @@ const { locale, pageKey } = Astro.props;
 const { kv } = await Astro.locals.getCms();
 const t = useT(locale, kv);
 
-// Primary nav = the seven client-confirmed tabs, in client order (ARCHITECTURE §2A.1).
-// about + blog live in the footer (SiteFooter), not here.
-const navKeys: PageKey[] = ["contact", "staff", "pricing", "competitions", "education", "brands", "work"];
+// Primary nav = the client-confirmed tabs, in client order (ARCHITECTURE §2A.1), plus
+// BLOGG, promoted out of the footer on client request (round 2, 2026-08-25). The blog
+// stays in the footer too. `about` is still footer-only.
+const navKeys: PageKey[] = ["contact", "staff", "pricing", "competitions", "education", "brands", "blog", "work"];
 const otherLocale = LOCALES.find((l) => l !== locale)!;
 ---
 <header class="site-header">
@@ -128,10 +129,13 @@ const otherLocale = LOCALES.find((l) => l !== locale)!;
   }
   .header-inner { display: flex; align-items: center; justify-content: space-between; height: 74px; gap: 1.5rem; }
   .logo { display: inline-flex; align-items: center; }
-  .nav-desktop ul { display: flex; align-items: center; gap: clamp(18px, 2.4vw, 40px); list-style: none; }
+  /* The gap was clamp(18px, 2.4vw, 40px) for seven tabs, which left ~68px of slack at
+     the 1152px max inner width. BLOGG plus the longer "Utmärkelser" need ~110px more
+     than that, so the gap tightens rather than the nav overflowing into the CTA. */
+  .nav-desktop ul { display: flex; align-items: center; gap: clamp(14px, 1.8vw, 28px); list-style: none; }
   /* Block-level anchor so a wrapped two-line label (e.g. "BOKNING &" / "PRISER")
      stays one box: the ::after underline spans the FULL item, not just the last
-     line. Stays text-wrappable (block, not inline-flex) so the 7 li flex-items
+     line. Stays text-wrappable (block, not inline-flex) so the 8 li flex-items
      still shrink toward min-content and the nav fits without overflowing. */
   .nav-desktop a {
     position: relative; display: block; padding: 6px 0;
@@ -193,7 +197,7 @@ const otherLocale = LOCALES.find((l) => l !== locale)!;
     padding: 18px var(--gutter, 1.5rem) 24px; border-top: 1px solid var(--hairline);
   }
 
-  /* Seven tabs with longer SV labels (Bokning & priser, Utbildning & kurser) need more room,
+  /* Eight tabs with longer SV labels (Bokning & priser, Utbildning & kurser) need more room,
      so the hamburger takes over below 1180px instead of 820px. */
   @media (max-width: 1180px) {
     .nav-desktop { display: none; }

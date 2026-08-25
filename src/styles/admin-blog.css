@@ -16,8 +16,9 @@
   --admin-text: #d8d8d8;       /* body copy — AA on #161616 */
   --admin-text-dim: #a9a39a;   /* secondary — still AA-ish for non-essential */
   --admin-heading: var(--cream, #f8f8f8);
-  --admin-accent: var(--terracotta, #cc5a31);
-  --admin-accent-deep: var(--terracotta-deep, #b34a26);
+  /* Fallbacks track tokens.css: darkened 2026-08-25 so white-on-fill clears AA. */
+  --admin-accent: var(--terracotta, #836044);
+  --admin-accent-deep: var(--terracotta-deep, #6b4f37);
   --admin-gold: var(--bronze, #a68b67);
   --admin-radius: 4px;
 }

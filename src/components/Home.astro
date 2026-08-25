@@ -30,15 +30,21 @@ const gallery = [
   { src: "/images/awards-2026/nykomling-3.jpg", category: "Årets Nykomling" },
 ];
 ---
-<!-- 1 ── HERO. "Nu kan vi ha loggan eller något snyggt mjukt" — soft brand hero now; a muted,
-     looped salon-ambience video drops in behind .hero-inner later (gated on prefers-reduced-motion
-     + Save-Data). The wordmark/soft wash is the permanent no-JS / reduced-motion fallback. -->
+<!-- 1 ── HERO. Dark editorial plate (approved mockup novo-editorial-v1-b): a full-bleed
+     photograph carries the first screen, headline in cream over it. The brand hair texture is
+     the standing image; a muted, looped salon-ambience video drops in behind .hero-inner later
+     (gated on prefers-reduced-motion + Save-Data), at which point the texture becomes the
+     no-JS / reduced-motion fallback rather than the subject. -->
 <section class="hero">
   <div class="hero-soft" aria-hidden="true"></div>
-  <Logo tone="black" class="hero-logo" height="clamp(220px, 46vh, 520px)" decorative />
   <div class="wrap hero-inner">
     <p class="kicker">{t("home.kicker")}</p>
-    <h1>{t("home.heading")}</h1>
+    {/* The brand itself is the headline (client round 2, 2026-08-25). The mark is
+        decorative, so the <h1> carries the word for screen readers and the document
+        outline; the line that used to be the h1 is now the tagline under it, still
+        rendered from `home.heading` so the client can still edit it. */}
+    <h1 class="hero-brand"><Logo tone="white" decorative /><span class="hero-brand-text">NOVO</span></h1>
+    <p class="hero-tagline">{t("home.heading")}</p>
     <p class="sub">{t("home.sub")}</p>
     <div class="cta">
       <BookingButton locale={locale} />
@@ -61,6 +67,10 @@ const gallery = [
           loading="lazy"
           decoding="async"
         />
+        {/* The class name is already in the alt text above, so the caption is
+            aria-hidden: it names the frame for sighted readers without making a
+            screen reader announce the same words twice per tile. */}
+        <span class="cap" aria-hidden="true">{shot.category}</span>
       </li>
     ))}
   </ul>
@@ -96,16 +106,26 @@ const gallery = [
       <a class="team-all" href={localizePath("staff", locale)}>{t("cta.allTeam")} <span class="arr">→</span></a>
     </div>
     <ul class="team-grid" role="list">
-      {staff.map((s) => {
+      {staff.map((s, i) => {
         const bio = stylistBio(s, locale);
         const role = s.specialty !== "TODO" ? s.specialty : s.role;
         const photo = stylistPhotoUrl(s.photo, imageBase);
         return (
           <li>
             <a class="team-card" href={localizePath("staff", locale)} aria-label={`${s.name} — ${role}`}>
+              {/* First row eager (see StaffGrid for the reasoning); rows 2+ lazy. */}
               <span class="frame" aria-hidden="true">
                 {photo
-                  ? <img class="portrait" src={photo} alt={s.name} loading="lazy" decoding="async" />
+                  ? <img
+                      class="portrait"
+                      src={photo}
+                      alt={s.name}
+                      width="600"
+                      height="800"
+                      loading={i < 4 ? "eager" : "lazy"}
+                      fetchpriority={i < 4 ? "high" : undefined}
+                      decoding="async"
+                    />
                   : <span class="mono">{s.name.charAt(0)}</span>}
                 <span class="duo"></span>
                 {bio && <span class="bio"><span class="bio-inner">{bio}</span></span>}
@@ -120,37 +140,65 @@ const gallery = [
   </div>
 </section>
 
-<!-- 5 ── TEXTURE BAND. Decorative full-bleed divider before the champagne closing band —
-     generated brand texture (dark hair, bronze glints; public/images/textures/), approved
-     2026-08-12. Purely presentational: no landmark, no alt. -->
-<div class="texture-band" aria-hidden="true"></div>
+<!-- The texture band that used to close the page is gone (2026-08-25): the hero now carries
+     hair-band.jpg, so a second full-bleed copy of the same texture 4 sections later read as a
+     repeat, and the champagne closing band already makes the tonal hand-off into the black
+     footer on its own. -->
 
 <style>
-  /* ── 1. Hero — soft, light, brand-forward (DESIGN-SYSTEM §6; client: "loggan eller något mjukt"). */
+  /* ── 1. Hero — dark editorial plate (approved mockup novo-editorial-v1-b). `padding: 0`
+     is deliberate: the global `section` rule in tokens.css adds clamp(88px, 13vw, 170px),
+     which stacked on top of .hero-inner's own inset inside an already 82vh-tall box. */
   .hero {
-    position: relative; overflow: hidden;
+    position: relative; overflow: hidden; padding: 0;
     min-height: clamp(520px, 82vh, 860px);
     display: flex; flex-direction: column; justify-content: flex-end;
-    background: var(--cream);
+    background: #0a0e11;
   }
+  /* The scrim is what makes the headline legible over the photograph, so it ramps
+     downward — lightest at the top where the header sits, near-opaque at the baseline
+     where the copy lands. Solid #0a0e11 stays the paint-order fallback. */
   .hero-soft {
     position: absolute; inset: 0;
     background:
-      radial-gradient(120% 90% at 80% 0%, rgba(176, 141, 107, 0.18), transparent 60%),
-      linear-gradient(180deg, #fbf8f2 0%, #f3ede3 60%, #efe7da 100%);
-  }
-  /* Faint brand mark behind the hero copy (black logo on the light cream surface). */
-  .hero-logo {
-    position: absolute; left: 50%; top: 46%; transform: translate(-50%, -50%);
-    opacity: 0.06; pointer-events: none; user-select: none; z-index: 1;
+      linear-gradient(180deg, rgba(10, 14, 17, 0.45) 0%, rgba(10, 14, 17, 0.72) 55%, rgba(10, 14, 17, 0.93) 100%),
+      url("/images/textures/hair-band.jpg") center / cover no-repeat,
+      #0a0e11;
   }
   .hero-inner { position: relative; z-index: 2; padding-top: clamp(72px, 12vh, 140px); padding-bottom: clamp(48px, 8vh, 96px); }
-  .hero h1 { max-width: 17ch; margin: 24px 0 22px; font-weight: 400; color: var(--ink); }
-  .hero .sub { max-width: 48ch; color: var(--on-variant); margin-bottom: 32px; line-height: 1.55; }
+  /* The wordmark IS the headline now, so the faint 10%-opacity watermark that used to
+     sit behind the copy is gone — the brand cannot appear twice on one screen. The mark
+     is near-square (viewBox 758×707), so it is capped on viewport HEIGHT as well as
+     width: 70vw on a landscape phone would otherwise be taller than the hero itself. */
+  .hero-brand { margin: clamp(16px, 2.4vh, 30px) 0 clamp(14px, 2vh, 24px); line-height: 0; }
+  .hero-brand :global(.novo-logo) { display: block; }
+  .hero-brand :global(.novo-logo svg) { width: min(70vw, 540px, 48vh); height: auto; }
+  /* Names the mark in the a11y tree and the outline; the SVG beside it is aria-hidden. */
+  .hero-brand-text {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
+  /* 22ch + balance: `home.heading` is client-editable (cms.config.ts), and a ragged
+     three-line break reads far worse over a photograph than over flat cream. */
+  .hero-tagline {
+    font-family: var(--font-serif); font-weight: 400; line-height: 1.2; letter-spacing: -0.01em;
+    font-size: clamp(20px, 2.2vw, 30px); color: var(--cream);
+    max-width: 22ch; text-wrap: balance; margin-bottom: 22px;
+  }
+  .hero .sub { max-width: 48ch; color: rgba(248, 248, 248, 0.72); margin-bottom: 32px; line-height: 1.55; }
   .cta { display: flex; gap: 16px; flex-wrap: wrap; }
+  /* Dark-surface overrides for the two globals that assume a light page. --bronze-dark is
+     6.1:1 on cream but ~2.4:1 on #0a0e11, and .btn--ghost is ink-on-transparent, i.e.
+     invisible here. Champagne and cream restore both to AA on this plate. */
+  .hero .kicker { color: var(--champagne); }
+  .hero .kicker::before { background: var(--champagne); }
+  .hero .btn--ghost { color: var(--cream); border-color: rgba(248, 248, 248, 0.5); }
+  .hero .btn--ghost:hover { background: var(--cream); color: var(--ink); border-color: var(--cream); }
 
-  /* ── 2. Hair strip — horizontal scroll-snap row of tonal placeholders. */
-  .strip { border-top: 1px solid var(--hairline); border-bottom: 1px solid var(--hairline); background: var(--white); }
+  /* ── 2. Hair strip — horizontal scroll-snap row of captioned award frames. `padding: 0`
+     drops the global `section` inset, which was putting up to 170px of white above AND
+     below the row INSIDE its own hairlines; the band now runs edge to edge. */
+  .strip { padding: 0; border-top: 1px solid var(--hairline); border-bottom: 1px solid var(--hairline); background: var(--white); }
   .strip-track {
     list-style: none; display: flex; gap: 1px; overflow-x: auto; scroll-snap-type: x mandatory;
     -webkit-overflow-scrolling: touch; scrollbar-width: none;
@@ -161,22 +209,42 @@ const gallery = [
     background: linear-gradient(150deg, #34302a, #1d1c19);
     position: relative; isolation: isolate;
   }
-  .tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-  /* The bronze wash sits ON the photograph — the ramp keeps the row reading as one
-     graded sequence rather than five unrelated pictures. */
+  /* Desaturating the photograph is what unifies the row, not a tint. The old bronze wash
+     ramped 0.16 → 0.28 across the five tiles, so they read as five differently-tinted
+     pictures — and on the three white-seamless studio shots a `mix-blend-mode: color`
+     bronze turned clean white backgrounds tan. The wash stays, flat and faint, as warmth.
+     `--i` is still set on each <li> for the next thing that wants a per-tile ramp. */
+  .tile img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: grayscale(0.9) contrast(1.05); }
   .tile::after {
     content: ""; position: absolute; inset: 0;
-    background: var(--bronze); mix-blend-mode: color; opacity: calc(0.16 + (var(--i) * 0.03));
+    background: var(--bronze); mix-blend-mode: color; opacity: 0.1;
+  }
+  /* Caption — .tile is `isolation: isolate` and .tile::after has no z-index, so the
+     caption needs one to sit above the wash. */
+  .tile .cap {
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: 1;
+    padding: 26px 16px 14px;
+    font-size: 10.5px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase;
+    color: var(--cream);
+    background: linear-gradient(to top, rgba(10, 14, 17, 0.85), transparent);
   }
 
   /* ── 3. Founders story — media + copy, hairline-gridded stat trio. */
   .story { padding: var(--section) 0; }
   .story-grid { display: grid; grid-template-columns: 0.85fr 1fr; gap: clamp(28px, 5vw, 72px); align-items: center; }
+  /* Standing in for the owners photo the client still owes us. Backed by a real brand
+     texture rather than a flat gradient so the slot reads as art direction instead of a
+     missing image — the monogram drops back to a watermark over it. Swap the background
+     for the photograph when it lands; the geometry does not change. */
   .story-frame {
     display: grid; place-items: center; aspect-ratio: 4/5; width: 100%;
-    background: linear-gradient(160deg, #33302a, #1c1b18); position: relative; overflow: hidden;
+    background:
+      linear-gradient(rgba(10, 14, 17, 0.55), rgba(10, 14, 17, 0.55)),
+      url("/images/textures/silk-band.jpg") center / cover no-repeat,
+      #1c1b18;
+    position: relative; overflow: hidden;
   }
-  .story-frame .mono { font-family: var(--font-serif); font-size: clamp(70px, 9vw, 140px); color: rgba(255,255,255,0.9); }
+  .story-frame .mono { font-family: var(--font-serif); font-size: clamp(70px, 9vw, 140px); color: rgba(255,255,255,0.28); }
   .story-copy h2 { font-weight: 400; margin: 14px 0 22px; max-width: 16ch; }
   .story-copy p { color: var(--ink); line-height: 1.65; max-width: 54ch; margin-bottom: 22px; }
   .story-more { display: inline-flex; align-items: center; gap: 8px; color: var(--bronze-dark); font-weight: 500; }
@@ -200,11 +268,18 @@ const gallery = [
     position: relative; aspect-ratio: 3/4; overflow: hidden; isolation: isolate;
     background: linear-gradient(160deg, #33302a, #1c1b18); display: grid; place-items: center;
   }
+  /* Clay plate + dead-paint kill for photo cards — same reasoning as StaffGrid. */
+  .team-card .frame:has(.portrait) { background: var(--clay); }
+  .team-card .frame:has(.portrait) .duo { opacity: 0; }
   .team-card .mono { font-family: var(--font-serif); font-size: clamp(40px, 5vw, 72px); color: rgba(255,255,255,0.92); }
-  /* Portrait under .duo and under .bio: bronze-toned at rest, true colour on reveal. */
-  .team-card .portrait { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-  .team-card .duo { position: absolute; inset: 0; background: var(--bronze); mix-blend-mode: color; opacity: 0.32; transition: opacity 0.8s ease; }
-  .team-card:hover .duo, .team-card:focus-visible .duo { opacity: 0; }
+  /* Portrait under .duo and under .bio: black-and-white at rest, true colour on
+     reveal — matches the team page (client re-theme 2026-08-25). :focus-within
+     is listed alongside :focus-visible so the portrait un-greys on exactly the
+     same trigger that reveals .bio below. */
+  .team-card .portrait { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: grayscale(1); transition: filter 0.55s ease; }
+  .team-card .duo { position: absolute; inset: 0; background: var(--charcoal); mix-blend-mode: color; opacity: 0.32; transition: opacity 0.55s ease; }
+  .team-card:hover .portrait, .team-card:focus-within .portrait, .team-card:focus-visible .portrait, .team-card.is-revealed .portrait { filter: grayscale(0); }
+  .team-card:hover .duo, .team-card:focus-within .duo, .team-card:focus-visible .duo { opacity: 0; }
   /* Bio overlay — always in the DOM; revealed on hover, keyboard focus, and tap (.is-revealed). */
   .team-card .bio {
     position: absolute; inset: 0; display: flex; align-items: flex-end;
@@ -227,13 +302,6 @@ const gallery = [
     .story-media { max-width: 420px; }
   }
   @media (max-width: 620px) { .team-grid { grid-template-columns: repeat(2, 1fr); } }
-
-  /* ── 5. Texture band — fixed-height full-bleed strip; cover-cropped, so any viewport just
-     crops the 21:9 source. Kept shallow to stay a divider, not a hero. */
-  .texture-band {
-    height: clamp(110px, 20vw, 210px);
-    background: url("/images/textures/hair-band.jpg") center / cover no-repeat;
-  }
 
   @media (prefers-reduced-motion: reduce) {
     .tile::after, .team-card .duo, .team-card .bio, .story-more .arr, .team-all .arr { transition: none; }

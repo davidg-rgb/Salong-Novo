@@ -14,8 +14,8 @@ import {
 
 describe("staff", () => {
   const staff = getStaff();
-  it("has the full 18-person roster", () => {
-    expect(staff).toHaveLength(18);
+  it("has the full 17-person roster", () => {
+    expect(staff).toHaveLength(17);
   });
   it("every stylist has name + slug", () => {
     for (const s of staff) {
@@ -77,9 +77,9 @@ describe("services", () => {
 });
 
 describe("awards + site", () => {
-  it("reports three Collection-of-the-Year wins and 18 stylists", () => {
+  it("reports three Collection-of-the-Year wins and 17 stylists", () => {
     expect(getStats().arets_kollektion_wins).toBe(3);
-    expect(getStats().stylists).toBe(18);
+    expect(getStats().stylists).toBe(17);
   });
   it("has award years", () => {
     expect(getAwards().some((a) => a.year === 2026)).toBe(true);

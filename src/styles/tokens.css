@@ -15,7 +15,9 @@
   --hairline: #e3e0da;
   --clay: #d8cbb8;
 
-  /* bronze — texture only, NEVER a CTA fill */
+  /* bronze — texture/duotone only, NEVER a CTA fill. The rule is about THIS
+     bronze: since the 2026-08-25 client re-theme the CTA fill is also a bronze,
+     but it lives under the --terracotta names below. */
   --bronze: #a68b67;
   --bronze-muted: #8c7352;
   --bronze-dark: #725a3a;
@@ -23,8 +25,15 @@
   /* recognition layer (exact live-site colors) */
   --black: #000000;
   --champagne: #c2a581;
-  --terracotta: #cc5a31;
-  --terracotta-deep: #b34a26;
+  /* Re-themed 2026-08-25: the client picked the mockup's bronze over the live
+     coral for every CTA. Names kept — everything already routes through them.
+     Both shades are sampled from the mockup's own button. The pair was darkened
+     one step the same day: .btn is white-on-fill at .8rem/600, which computes
+     to ~13–14px and is therefore NORMAL text under WCAG, needing 4.5:1. The
+     first pass (#a37f5d rest / #836044 hover) gave white only 3.65:1 and failed;
+     these give 5.64:1 rest and 7.4:1 hover. */
+  --terracotta: #836044;
+  --terracotta-deep: #6b4f37;
 
   /* aliases kept for existing components */
   --snow: var(--cream);
@@ -111,9 +120,11 @@ h1, h2, h3 { font-family: var(--font-serif); font-weight: 400; line-height: 1.05
   font-size: .8rem; font-weight: 600; letter-spacing: .14em; text-transform: uppercase;
   padding: .9rem 1.6rem; background: var(--terracotta); color: #fff;
   border: 1px solid var(--terracotta); border-radius: 0;
-  transition: background .3s, transform .25s;
+  transition: background .3s, border-color .3s;
 }
-.btn:hover { background: var(--terracotta-deep); border-color: var(--terracotta-deep); transform: translateY(-1px); }
+/* No lift on hover: a rising button is a SaaS idiom, not an editorial one, and it
+   was the only hover on the site that moved its own layout bounds. */
+.btn:hover { background: var(--terracotta-deep); border-color: var(--terracotta-deep); }
 .btn--ghost { background: transparent; color: var(--ink); border-color: var(--ink); }
 .btn--ghost:hover { background: var(--ink); color: #fff; }
 .kicker { font-size: .72rem; font-weight: 600; letter-spacing: .2em; text-transform: uppercase; color: var(--bronze-dark); }

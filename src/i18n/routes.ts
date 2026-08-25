@@ -24,7 +24,8 @@ export type PageKey =
 /**
  * Localized slug for each page (empty string = locale root).
  * Primary nav order (client-confirmed 2026-06-01, ARCHITECTURE §2A): contact, staff,
- * pricing, competitions, education, brands, work. about/blog/privacy are footer-only.
+ * pricing, competitions, education, brands, blog, work (blog promoted into the nav
+ * on client request 2026-08-25). about/privacy are footer-only.
  */
 export const ROUTES: Record<PageKey, Record<Locale, string>> = {
   home: { sv: "", en: "" },

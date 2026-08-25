@@ -158,7 +158,7 @@ describe("every editable site fact actually reaches the page", () => {
 
 describe("site facts resolve through the kv merge", () => {
   it("the homepage numbers come from site.json and survive an edit", () => {
-    expect(getStats()).toEqual({ arets_kollektion_wins: 3, stylists: 18, founded: 2013 });
+    expect(getStats()).toEqual({ arets_kollektion_wins: 3, stylists: 17, founded: 2013 });
     const kv = toKvMap([row("site.stats.stylists", "19", "")]);
     expect(getStats(kv).stylists).toBe("19");
     // Untouched keys keep their defaults — the merge is a clone, not a replace.
@@ -223,9 +223,9 @@ describe("services bullets survive a save (RUNBOOK §8 landmine 5)", () => {
 });
 
 describe("the staff roster as a collection", () => {
-  it("the defaults are the 18 stylists, minus the JSON's own notes", () => {
+  it("the defaults are the 17 stylists, minus the JSON's own notes", () => {
     const items = STAFF.jsonFallback() as Record<string, unknown>[];
-    expect(items).toHaveLength(18);
+    expect(items).toHaveLength(17);
     expect(items.map((item) => item.slug)).toEqual(getStaff().map((s) => s.slug));
   });
 
@@ -340,7 +340,7 @@ describe("resolveCollection — this project's no-seed provenance rule", () => {
   it("falls back to the JSON defaults with no database at all", async () => {
     const resolved = await resolveCollection(null, STAFF);
     expect(resolved.source).toBe("fallback");
-    expect(resolved.items).toHaveLength(18);
+    expect(resolved.items).toHaveLength(17);
   });
 
   it("falls back when the table holds no rows for this collection", async () => {
@@ -349,7 +349,7 @@ describe("resolveCollection — this project's no-seed provenance rule", () => {
     // "deleted". The core's loadCollection would render an empty team grid.
     const resolved = await resolveCollection(new FakeD1(() => []), STAFF);
     expect(resolved.source).toBe("fallback");
-    expect(resolved.items).toHaveLength(18);
+    expect(resolved.items).toHaveLength(17);
   });
 
   it("hands the whole list to D1 as soon as one row exists", async () => {
@@ -376,6 +376,6 @@ describe("resolveCollection — this project's no-seed provenance rule", () => {
     });
     const resolved = await resolveCollection(db, STAFF);
     expect(resolved.source).toBe("fallback");
-    expect(resolved.items).toHaveLength(18);
+    expect(resolved.items).toHaveLength(17);
   });
 });
