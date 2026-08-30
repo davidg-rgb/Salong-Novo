@@ -1,0 +1,51 @@
+{
+  "_note": "The product brands NOVO carries, client-supplied 2026-08-27 (feedback round 3). ORDER IS THE CLIENT'S. `logo` and `product` are empty until the assets land — the grid renders a typeset wordmark in the logo's place, so the page is complete without them and upgrades the moment one is uploaded in the admin. Descriptions are deliberately CATEGORY-level: NOVO does not speak for a third-party brand, and an invented product claim is the salon's liability under MFL 2008:486 §10, not the manufacturer's.",
+  "_pending": "Names now use each brand's OWN mark, not the client's informal list: 'RichyHair extensions' -> 'Richy Hair' (two words, verified against their own wordmark) and 'DC Hair extensions' -> 'DC Hair' (company is DC Hair Solutions); the category sits in desc_* where it belongs. ghd is lowercase always. 'Signaturdoftljus' arrived from the client with a question mark - confirm it belongs on this page at all.",
+  "brands": [
+    {
+      "slug": "keune",
+      "name": "Keune",
+      "desc_sv": "Hårvård, färg och styling från Nederländerna.",
+      "desc_en": "Haircare, colour and styling from the Netherlands.",
+      "url": "https://www.keune.com",
+      "logo": "",
+      "product": ""
+    },
+    {
+      "slug": "ghd",
+      "name": "ghd",
+      "desc_sv": "Värmeverktyg för styling — plattänger, föner och rundborstar.",
+      "desc_en": "Heat styling tools — straighteners, dryers and hot brushes.",
+      "url": "https://www.ghdhair.com",
+      "logo": "",
+      "product": ""
+    },
+    {
+      "slug": "dc-hair",
+      "name": "DC Hair",
+      "desc_sv": "Hårförlängning och löshår.",
+      "desc_en": "Hair extensions.",
+      "url": "https://dc-hair.com",
+      "logo": "",
+      "product": ""
+    },
+    {
+      "slug": "richy-hair",
+      "name": "Richy Hair",
+      "desc_sv": "Hårförlängning och löshår.",
+      "desc_en": "Hair extensions.",
+      "url": "https://richyhair.se",
+      "logo": "",
+      "product": ""
+    },
+    {
+      "slug": "signaturdoftljus",
+      "name": "Signaturdoftljus",
+      "desc_sv": "NOVO:s egna doftljus — till salongen, och att ta med hem.",
+      "desc_en": "NOVO's own scented candles — for the salon, and to take home.",
+      "url": "",
+      "logo": "",
+      "product": ""
+    }
+  ]
+}

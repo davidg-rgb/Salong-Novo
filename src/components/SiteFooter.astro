@@ -27,16 +27,20 @@ const site = getSite(kv);
         <p class="muted">T-bana {site.transit.metro}</p>
       </div>
       <div>
-        <h4>{t("labels.address")}</h4>
+        <h2 class="fh">{t("labels.address")}</h2>
         <p><a href={`tel:${site.contact.phone.replace(/\s/g, "")}`}>{site.contact.phone_display}</a></p>
         <p><a href={`mailto:${site.contact.email}`}>{site.contact.email}</a></p>
         <p><a href={site.contact.instagram} target="_blank" rel="noopener">{site.contact.instagram_handle}</a></p>
         <p class="book"><BookingButton locale={locale} /></p>
       </div>
+      {/* Client round 3 (2026-08-27): the salon keeps no fixed hours — they vary
+          per stylist — so the two invented time rows are gone and the column is
+          the explanation itself. `.hours-note` widens this one column: the same
+          11px muted line at the width of an address block would set eight
+          two-word lines. */}
       <div>
-        <h4>{t("labels.hours")}</h4>
-        <p>{site.hours.mon_fri}<br />{site.hours.sat}</p>
-        <p class="muted">{t("footer.openingNote")}</p>
+        <h2 class="fh">{t("labels.hours")}</h2>
+        <p class="muted hours-note">{t("footer.openingNote")}</p>
       </div>
     </div>
     <nav class="foot-nav" aria-label={t("labels.menu")}>
@@ -62,11 +66,15 @@ const site = getSite(kv);
   .fc-inner { display: flex; flex-direction: column; align-items: center; gap: 22px; }
   .fc-eyebrow {
     font-family: var(--font-sans); font-size: 11px; font-weight: 600;
-    letter-spacing: 0.22em; text-transform: uppercase; color: rgba(26, 26, 26, 0.66);
+    letter-spacing: 0.22em; text-transform: uppercase; color: rgba(26, 26, 26, 0.8);
   }
+  /* `text-wrap: balance` because this line ends in a hyphenated compound: on a
+     phone "Redo för din NOVO-stund?" broke after the hyphen and left "stund?"
+     orphaned on a line of its own. Balanced, it splits before NOVO instead. The
+     band is on every page, so the orphan was too. */
   .fc-head {
     font-weight: 400; color: var(--ink); max-width: 18ch; margin: 0;
-    font-size: clamp(30px, 4.4vw, 60px); line-height: 1.04;
+    font-size: clamp(30px, 4.4vw, 60px); line-height: 1.04; text-wrap: balance;
   }
   .footer-cta :global(.btn) { margin-top: 6px; }
 
@@ -84,11 +92,11 @@ const site = getSite(kv);
     padding: clamp(64px, 8vw, 100px) 0 0;
   }
   .foot {
-    display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 40px;
+    display: grid; grid-template-columns: 1.3fr 0.9fr 1.5fr; gap: 40px;
     padding-bottom: 60px; border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   }
   .brand .wm { display: inline-flex; }
-  .foot h4 {
+  .foot .fh {
     font-family: var(--font-sans); font-size: 10.5px; font-weight: 600;
     letter-spacing: 0.2em; text-transform: uppercase; color: var(--champagne);
     margin-bottom: 20px;
@@ -97,7 +105,20 @@ const site = getSite(kv);
   .brand p:first-of-type { margin-top: 22px; }
   .foot p, .foot a { color: #cfc8bd; font-size: 14px; line-height: 1.6; transition: color 0.3s; }
   .foot a:hover { color: #fff; }
+  /* Touch targets. The <a> is inline by default, so vertical padding does not
+     grow its hit box — inline-block is what makes the 44px real. */
+  @media (max-width: 820px) {
+    .foot p a, .foot-nav a {
+      display: inline-block; min-height: 44px; line-height: 44px;
+    }
+    .foot p { margin-bottom: 0; }
+    .foot-nav { gap: 0 28px; }
+  }
   .muted { color: #a9a298; }
+  /* The Öppettider column is a paragraph now, not two time rows: it takes the
+     widest track and a shorter measure so it sets as prose rather than as a
+     ladder of two-word lines. */
+  .hours-note { max-width: 40ch; line-height: 1.7; }
   .book { margin-top: 8px; }
   /* Footer nav — blog + about (not in primary nav) + privacy. */
   .foot-nav {
@@ -109,7 +130,7 @@ const site = getSite(kv);
   .foot-nav a:hover { color: var(--champagne); }
   .legal {
     display: flex; flex-wrap: wrap; gap: 14px 28px; justify-content: space-between; align-items: center;
-    padding: 12px 0 28px; font-size: 11px; letter-spacing: 0.08em; color: #8a8478;
+    padding: 12px 0 28px; font-size: 12px; letter-spacing: 0.08em; color: #8a8478;
   }
   .legal .issue { font-family: var(--font-serif); letter-spacing: 0.2em; }
   @media (max-width: 820px) { .foot { grid-template-columns: 1fr; gap: 32px; } }

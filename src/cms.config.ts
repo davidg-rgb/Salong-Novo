@@ -26,7 +26,7 @@
  * model exists to prevent.
  */
 import type { CmsConfig, CollectionDef } from "./lib/cms/config-types";
-import { flatAwards, getServices, getStaff } from "./lib/content";
+import { flatAwards, getBrands, getCourses, getServices, getStaff } from "./lib/content";
 import { paraKeys } from "./lib/pagecopy";
 
 /**
@@ -68,7 +68,14 @@ export const STAFF: CollectionDef = {
     { name: "slug", kind: "text", label: "Nyckel (slug)", readOnly: true, maxLen: 60 },
     { name: "name", kind: "text", label: "Namn", required: true, maxLen: 80 },
     { name: "role", kind: "text", label: "Roll", maxLen: 60 },
-    { name: "specialty", kind: "text", label: "Specialitet", maxLen: 80 },
+    /**
+     * Client round 3 (2026-08-27): "Ta bort nyckelord typ 'blondt' 'herr' i
+     * nuläget. Behåll bara namn + instagram." The field is KEPT — "i nuläget"
+     * is a pause, not a deletion, and the seventeen values are the client's —
+     * but nothing renders it, so the label says so rather than letting her
+     * type into a dead input.
+     */
+    { name: "specialty", kind: "text", label: "Specialitet (visas inte just nu)", maxLen: 80 },
     { name: "instagram", kind: "text", label: "Instagram (@namn)", maxLen: 60 },
     { name: "bio", kind: "textarea", label: "Presentation", bilingual: true, maxLen: 1200 },
     { name: "awards", kind: "list", label: "Utmärkelser", maxItems: 12, maxLen: 140 },
@@ -136,14 +143,74 @@ export const AWARDS: CollectionDef = {
   ],
 };
 
+/**
+ * The product lines the salon carries (client round 3, 2026-08-27).
+ *
+ * `logo` and `product` ship EMPTY on every default row, which is the point: the
+ * client asked for logos on all five brands and the assets do not exist yet, so
+ * the grid types the brand name as a wordmark until one is uploaded here. A
+ * page that is complete without the assets beats a page that waits for them.
+ *
+ * `desc` stays category-level in the defaults on purpose — NOVO does not speak
+ * for a third-party manufacturer, and an invented product claim is the salon's
+ * exposure under MFL 2008:486 §10, not the brand's. The client can say more in
+ * her own words; the defaults will not do it for her.
+ */
+export const BRANDS: CollectionDef = {
+  name: "brands",
+  label: "Våra brands",
+  orderable: true,
+  jsonFallback: () => withoutNotes(getBrands() as unknown as Record<string, unknown>[]),
+  fields: [
+    { name: "slug", kind: "text", label: "Nyckel (slug)", readOnly: true, maxLen: 60 },
+    { name: "name", kind: "text", label: "Varumärke", required: true, maxLen: 80 },
+    { name: "desc", kind: "textarea", label: "Beskrivning", bilingual: true, maxLen: 400 },
+    { name: "url", kind: "url", label: "Varumärkets webbplats" },
+    { name: "logo", kind: "image", label: "Logotyp" },
+    { name: "product", kind: "image", label: "Produktbild" },
+  ],
+};
+
+/**
+ * The course programme. THE ONE COLLECTION THAT SHIPS EMPTY, deliberately.
+ *
+ * The client's education copy promises a programme "här nedan"; the salon has
+ * not published one. Seeding a plausible-looking course would put a fabricated
+ * date and price on a live client site, so the defaults are `[]` and the page
+ * renders `education.coursesEmpty` until the first real row is saved. The
+ * "collections are never empty" rule in `tests/cms-config.test.ts` carries a
+ * named carve-out for exactly this collection, and nothing else.
+ */
+export const COURSES: CollectionDef = {
+  name: "courses",
+  label: "Kurser & utbildningar",
+  orderable: true,
+  jsonFallback: () => withoutNotes(getCourses() as unknown as Record<string, unknown>[]),
+  fields: [
+    { name: "title", kind: "text", label: "Kursens namn", bilingual: true, required: true, maxLen: 120 },
+    {
+      name: "when",
+      kind: "text",
+      label: "När",
+      maxLen: 80,
+    },
+    { name: "desc", kind: "textarea", label: "Beskrivning", bilingual: true, maxLen: 800 },
+    { name: "price", kind: "text", label: "Pris", maxLen: 60 },
+    { name: "link", kind: "url", label: "Anmälningslänk" },
+    { name: "image", kind: "image", label: "Bild" },
+  ],
+};
+
 export const CMS: CmsConfig = {
   /**
    * The site FACTS — the scalars in `content/site.json` a visitor can read.
    *
    * What is deliberately absent: `geo` (unverified coordinates, and a map pin is
    * not a text field), `locales` and `cancellation_policy.window_hours` (nothing
-   * renders them), `hours.note_*` (the footer prints the dictionary's
-   * `footer.openingNote`, and two knobs for one line is how they drift apart),
+   * renders them), the whole `hours` container and `stats` (client round 3
+   * 2026-08-27 took the fixed opening times and the homepage stat trio off the
+   * site — the Öppettider column now prints the dictionary's `footer.openingNote`,
+   * which is editable under "Öppettider" in the copy list instead),
    * and `showPrices` in `content/services.json` — a boolean, and the content
    * form has no checkbox renderer, so exposing it would mean asking the client
    * to type "true".
@@ -185,26 +252,6 @@ export const CMS: CmsConfig = {
       ],
     },
     {
-      /**
-       * DRAFT in the JSON: the live site only ever said "även öppet på kvällar
-       * och helger", so these three are invented and carry the placeholder
-       * badge until the salon confirms them.
-       */
-      key: "oppettider",
-      label: "Öppettider",
-      fields: [
-        {
-          key: "site.hours.mon_fri",
-          label: "Måndag–fredag",
-          kind: "text",
-          hint: "Lämna tomt så visas ingen rad.",
-          placeholderUntilEdited: true,
-        },
-        { key: "site.hours.sat", label: "Lördag", kind: "text", placeholderUntilEdited: true },
-        { key: "site.hours.sun", label: "Söndag", kind: "text", placeholderUntilEdited: true },
-      ],
-    },
-    {
       key: "bokning",
       label: "Bokning",
       fields: [
@@ -229,14 +276,12 @@ export const CMS: CmsConfig = {
           bilingual: true,
           hint: "Används i sökmotorer och delningar.",
         },
-        { key: "site.brand.founded", label: "Grundad år", kind: "number" },
         {
-          key: "site.stats.arets_kollektion_wins",
-          label: "Vinster i Årets Kollektion",
+          key: "site.brand.founded",
+          label: "Grundad år",
           kind: "number",
-          hint: "Siffran i sifferraden på startsidan.",
+          hint: "Används av sökmotorer (foundingDate), syns inte som text på sidan.",
         },
-        { key: "site.stats.stylists", label: "Antal stylister", kind: "number" },
       ],
     },
   ],
@@ -310,10 +355,10 @@ export const CMS: CmsConfig = {
     },
     {
       page: "copy-pricing",
-      label: "Bokning & priser",
+      label: "Behandlingar & priser",
       keys: [
         { key: "pricing.heading", label: "Rubrik" },
-        { key: "pricing.note", label: "Text" },
+        ...paraKeys("pricing", "body").map(paragraph),
       ],
     },
     {
@@ -321,7 +366,13 @@ export const CMS: CmsConfig = {
       label: "Utbildning & kurser",
       keys: [
         { key: "education.heading", label: "Rubrik" },
-        { key: "education.note", label: "Text" },
+        ...paraKeys("education", "body").map(paragraph),
+        { key: "education.coursesHeading", label: "Rubrik över kurslistan" },
+        {
+          key: "education.coursesEmpty",
+          label: "Text när inga kurser är inlagda",
+          hint: "Visas bara så länge listan Kurser & utbildningar är tom.",
+        },
       ],
     },
     {
@@ -329,7 +380,7 @@ export const CMS: CmsConfig = {
       label: "Våra brands",
       keys: [
         { key: "brands.heading", label: "Rubrik" },
-        { key: "brands.note", label: "Text" },
+        { key: "brands.intro", label: "Ingress" },
       ],
     },
     {
@@ -338,6 +389,11 @@ export const CMS: CmsConfig = {
       keys: [
         { key: "work.heading", label: "Rubrik" },
         ...paraKeys("work", "body").map(paragraph),
+        { key: "work.aplHeading", label: "Mellanrubrik — APL & traineeplats" },
+        ...paraKeys("work", "apl").map((key, index) => ({
+          key,
+          label: `APL — stycke ${index + 1}`,
+        })),
       ],
     },
     {
@@ -349,11 +405,23 @@ export const CMS: CmsConfig = {
       ],
     },
     {
+      /**
+       * The whole Öppettider surface, now that the salon keeps no fixed hours:
+       * one paragraph in the footer column, editable in one place.
+       */
+      page: "copy-oppettider",
+      label: "Öppettider",
+      keys: [
+        { key: "labels.hours", label: "Rubrik" },
+        { key: "footer.openingNote", label: "Text" },
+      ],
+    },
+    {
       page: "copy-meny",
       label: "Menyn",
       keys: [
         { key: "nav.staff", label: "Team" },
-        { key: "nav.pricing", label: "Bokning & priser" },
+        { key: "nav.pricing", label: "Behandlingar" },
         { key: "nav.competitions", label: "Utmärkelser" },
         { key: "nav.education", label: "Utbildning & kurser" },
         { key: "nav.brands", label: "Våra brands" },
@@ -378,8 +446,11 @@ export const CMS: CmsConfig = {
         { key: "cta.allTeam", label: "Hela teamet" },
         { key: "cta.readMore", label: "Läs mer" },
         { key: "labels.openProfile", label: "Visa & boka (stylistkort)" },
-        { key: "labels.address", label: "Adress (sidfotsrubrik)" },
-        { key: "labels.hours", label: "Öppettider (sidfotsrubrik)" },
+        {
+          key: "labels.address",
+          label: "Kontakt (sidfotsrubrik)",
+          hint: "Rubriken över telefon, e-post och Instagram i sidfoten.",
+        },
         { key: "labels.menu", label: "Meny (mobilknapp)" },
         { key: "labels.close", label: "Stäng" },
       ],
@@ -397,13 +468,12 @@ export const CMS: CmsConfig = {
           label: "Lästid",
           hint: "{n} byts automatiskt mot antalet minuter. Låt den stå kvar.",
         },
-        { key: "footer.openingNote", label: "Öppettidsnotis i sidfoten" },
         { key: "footer.privacy", label: "Integritetspolicy (länk & rubrik)" },
       ],
     },
   ],
 
-  collections: [STAFF, SERVICES, AWARDS],
+  collections: [STAFF, SERVICES, AWARDS, BRANDS, COURSES],
 
   /**
    * The R2 key prefix for uploads. `blog/` is the prefix this project has

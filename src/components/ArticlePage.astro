@@ -1,8 +1,26 @@
 ---
 import { type Locale } from "../i18n";
 import BookingButton from "./BookingButton.astro";
-interface Props { locale: Locale; kicker?: string; no?: string; heading: string; paragraphs: string[]; }
-const { locale, kicker, no, heading, paragraphs } = Astro.props;
+/**
+ * `sections` is a SECOND audience on the same page, under its own <h2>, after
+ * the body has finished addressing the first one. Added for "Jobba hos oss",
+ * where the founders sign off to prospective hyrstol renters ("— Chriss &
+ * Jannie") and the APL/traineeplats block that follows speaks to students: run
+ * as a fourth paragraph it read as a postscript to the signature.
+ *
+ * A slot for arbitrary content is deliberately NOT what this is — heading plus
+ * paragraphs, both plain strings, both client-editable through the same
+ * dictionary as the body above them.
+ */
+interface Props {
+  locale: Locale;
+  kicker?: string;
+  no?: string;
+  heading: string;
+  paragraphs: string[];
+  sections?: { heading: string; paragraphs: string[] }[];
+}
+const { locale, kicker, no, heading, paragraphs, sections = [] } = Astro.props;
 ---
 <section class="article wrap">
   {kicker && <p class="kicker">{no ? `N° ${no} — ${kicker}` : kicker}</p>}
@@ -10,15 +28,34 @@ const { locale, kicker, no, heading, paragraphs } = Astro.props;
   <div class="prose">
     {paragraphs.map((p) => <p>{p}</p>)}
   </div>
+  {sections.map((section) => (
+    <div class="sub">
+      <h2>{section.heading}</h2>
+      {section.paragraphs.map((p) => <p>{p}</p>)}
+    </div>
+  ))}
+  <slot />
   <BookingButton locale={locale} />
 </section>
 
 <style>
   .article { max-width: 820px; padding-block: var(--section); }  /* padding-block only: the element is also .wrap, which owns the side gutters */
-  .article h1 { margin: 18px 0 clamp(28px, 4vw, 48px); max-width: 18ch; }
+  .article h1 { margin: 18px 0 clamp(28px, 4vw, 48px); max-width: 18ch; text-wrap: balance; }
   .prose { font-size: clamp(17px, 1.5vw, 21px); }
   .prose p { color: var(--ink); margin-bottom: 1.4rem; line-height: 1.6; max-width: 62ch; }
   /* lead paragraph — larger serif opener for editorial feel */
   .prose p:first-child { font-family: var(--font-serif); font-size: clamp(22px, 2.6vw, 31px); line-height: 1.42; color: var(--ink); }
+  /* A section under its own heading. Separated by a hairline and real space
+     rather than by size: it is a NEW address to a NEW reader, not a subsection
+     of the prose above, and it must not borrow the lead paragraph's serif. */
+  .sub {
+    margin-top: clamp(38px, 5vw, 64px); padding-top: clamp(30px, 4vw, 48px);
+    border-top: 1px solid var(--hairline);
+  }
+  .sub h2 {
+    font-weight: 400; font-size: clamp(22px, 2.6vw, 32px); line-height: 1.25;
+    max-width: 24ch; margin-bottom: clamp(18px, 2.2vw, 26px);
+  }
+  .sub p { color: var(--ink); font-size: clamp(17px, 1.5vw, 21px); margin-bottom: 1.4rem; line-height: 1.6; max-width: 62ch; }
   .article :global(.btn) { margin-top: clamp(28px, 4vw, 48px); }
 </style>

@@ -9,6 +9,7 @@
     "positioning": "Schwarzkopf flaggskepp / flagship"
   },
   "stats": {
+    "_note": "NOT RENDERED since client round 3 (2026-08-27), which asked for the ×3 / 17 / 2013 stat trio to come off the homepage story section. Kept as a recorded fact (the same way `cancellation_policy.window_hours` is) but deliberately absent from the admin: a field that edits nothing is worse than no field.",
     "arets_kollektion_wins": 3,
     "stylists": 17
   },
@@ -28,14 +29,7 @@
     "instagram_handle": "@salongnovo"
   },
   "booking": { "provider": "Voady", "url": "https://bokning.voady.se/novo" },
-  "hours": {
-    "_verify": "DRAFT — live site only states 'även öppet på kvällar och helger'. Confirm exact hours with salon.",
-    "mon_fri": "10:00–19:00",
-    "sat": "10:00–16:00",
-    "sun": "Stängt",
-    "note_sv": "Vi har även öppet på kvällar och helger",
-    "note_en": "We're also open evenings and weekends"
-  },
+  "_hours_removed": "Client round 3 (2026-08-27): the salon does NOT keep fixed hours — they vary per stylist — so the invented DRAFT times and the whole `hours` container are gone rather than left to rot behind an admin field nobody should fill in. The footer's Öppettider column now prints `footer.openingNote` from the dictionary, which is where the client edits it.",
   "cancellation_policy": {
     "window_hours": 48,
     "late_cancel_fee": "50%",

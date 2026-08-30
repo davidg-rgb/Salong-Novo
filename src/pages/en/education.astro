@@ -2,10 +2,18 @@
 export const prerender = false;
 import Base from "../../layouts/Base.astro";
 import ArticlePage from "../../components/ArticlePage.astro";
+import CourseList from "../../components/CourseList.astro";
 import { useT } from "../../i18n";
+import { paraKeys } from "../../lib/pagecopy";
 const locale = "en" as const;
 const t = useT(locale, (await Astro.locals.getCms()).kv);
+const body = paraKeys("education", "body").map((key) => t(key));
 ---
-<Base locale={locale} pageKey="education" title={`${t("nav.education")} — Salong NOVO`} description={t("education.note")}>
-  <ArticlePage locale={locale} no="05" kicker={t("nav.education")} heading={t("education.heading")} paragraphs={[t("education.note")]} />
+{/* The prose promises a programme "här nedan", so the course list is a CHILD of
+    the article rather than a section after it — same measure, same rhythm, and
+    the promise resolves inside the same column the sentence was read in. */}
+<Base locale={locale} pageKey="education" title={`${t("nav.education")} — Salong NOVO`} description={t("education.body1")}>
+  <ArticlePage locale={locale} no="05" kicker={t("nav.education")} heading={t("education.heading")} paragraphs={body}>
+    <CourseList locale={locale} />
+  </ArticlePage>
 </Base>

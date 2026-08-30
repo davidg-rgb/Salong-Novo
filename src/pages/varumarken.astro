@@ -2,10 +2,13 @@
 export const prerender = false;
 import Base from "../layouts/Base.astro";
 import ArticlePage from "../components/ArticlePage.astro";
+import BrandGrid from "../components/BrandGrid.astro";
 import { useT } from "../i18n";
 const locale = "sv" as const;
 const t = useT(locale, (await Astro.locals.getCms()).kv);
 ---
-<Base locale={locale} pageKey="brands" title={`${t("nav.brands")} — Salong NOVO`} description={t("brands.note")}>
-  <ArticlePage locale={locale} no="06" kicker={t("nav.brands")} heading={t("brands.heading")} paragraphs={[t("brands.note")]} />
+<Base locale={locale} pageKey="brands" title={`${t("nav.brands")} — Salong NOVO`} description={t("brands.intro")}>
+  <ArticlePage locale={locale} no="06" kicker={t("nav.brands")} heading={t("brands.heading")} paragraphs={[t("brands.intro")]}>
+    <BrandGrid locale={locale} />
+  </ArticlePage>
 </Base>

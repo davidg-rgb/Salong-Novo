@@ -184,14 +184,40 @@ describe("CMS config — every key points at something real", () => {
     }
   });
 
+  /**
+   * The ONE collection allowed to ship empty, by name.
+   *
+   * `courses` is the salon's education programme, and the salon has not
+   * published one. Seeding a plausible course would put a fabricated date and
+   * price on a live client site, so the page renders `education.coursesEmpty`
+   * instead and the list becomes real on the first save. Adding a name here is
+   * a deliberate act with a reason attached — which is the point of a named
+   * carve-out rather than a softened rule.
+   */
+  const MAY_SHIP_EMPTY = new Set(["courses"]);
+
   it("every collection has defaults, and they are not empty lists", () => {
     // A collection whose fallback is empty renders a blank section on a site
     // nobody has edited yet — the defaults ARE the launch content here.
     for (const collection of CMS.collections) {
+      if (MAY_SHIP_EMPTY.has(collection.name)) continue;
       expect(
         (collection.jsonFallback() as unknown[]).length,
         `${collection.name} has no defaults`,
       ).toBeGreaterThan(0);
+    }
+  });
+
+  it("a collection carved out of that rule really is empty", () => {
+    // The carve-out is not a licence to be lazy about the others: if `courses`
+    // ever gains defaults, the exemption should be deleted, not left standing.
+    for (const name of MAY_SHIP_EMPTY) {
+      const collection = CMS.collections.find((c) => c.name === name);
+      expect(collection, `${name} is carved out but not registered`).toBeDefined();
+      expect(
+        (collection!.jsonFallback() as unknown[]).length,
+        `${name} has defaults now — remove it from MAY_SHIP_EMPTY`,
+      ).toBe(0);
     }
   });
 

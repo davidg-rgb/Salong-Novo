@@ -2,7 +2,7 @@
   "nav": {
     "home": "Home",
     "staff": "Team",
-    "pricing": "Booking & prices",
+    "pricing": "Treatments",
     "competitions": "Awards",
     "education": "Education & courses",
     "brands": "Our brands",
@@ -26,7 +26,7 @@
     "language": "Language",
     "phone": "Phone",
     "email": "Email",
-    "address": "Address",
+    "address": "Contact",
     "hours": "Opening hours",
     "findUs": "Find us",
     "readingTime": "{n} min read",
@@ -44,13 +44,13 @@
     "imageAlt": "{category} {year} — {people}, image {n} of {total}"
   },
   "blog": {
-    "title": "The Journal",
-    "intro": "Trends, techniques and life at the salon — written by our stylists.",
+    "title": "NOVO Blog",
+    "intro": "A look at our days behind the chair. We post regularly about what's happening at NOVO, and about our stylists' projects and thinking.",
     "empty": "No posts yet.",
-    "back": "Back to the journal"
+    "back": "Back to the blog"
   },
   "footer": {
-    "openingNote": "We're also open evenings and weekends",
+    "openingNote": "Our opening hours vary from stylist to stylist. We are flexible both early and late in the day, and at weekends. Available times are in our booking system — or email us your booking request.",
     "privacy": "Privacy policy",
     "cookies": "Cookies"
   }

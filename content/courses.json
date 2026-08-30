@@ -1,0 +1,4 @@
+{
+  "_note": "The course programme — DELIBERATELY EMPTY. Client feedback round 3 (2026-08-27) asked for a kursprogram on /utbildning-och-kurser; the salon has not published one yet. An empty defaults array is the honest launch state: the page renders its own empty-state line instead of a fabricated course, and the list becomes real the moment the salon adds a row in the admin. This is the ONE collection allowed to ship empty — see the carve-out in tests/cms-config.test.ts.",
+  "courses": []
+}

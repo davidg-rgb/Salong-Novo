@@ -74,8 +74,6 @@ const imageBase = (await bindings()).PUBLIC_IMAGE_BASE ?? "";
                               n: index + 1,
                               total: shots.length,
                             })}
-                            width="934"
-                            height="1400"
                             loading="lazy"
                             decoding="async"
                           />
@@ -98,7 +96,7 @@ const imageBase = (await bindings()).PUBLIC_IMAGE_BASE ?? "";
 <style>
   .competitions { padding-block: var(--section); }  /* padding-block only: the element is also .wrap, which owns the side gutters */
   .shead { margin-bottom: clamp(38px, 5vw, 68px); }
-  .competitions h1 { margin: 18px 0 16px; }
+  .competitions h1 { margin: 18px 0 16px; text-wrap: balance; }
   .intro { color: var(--on-variant); max-width: 52ch; font-size: clamp(16px, 1.5vw, 19px); }
 
   /* The global `section` rule pads every section like a page band; a year is a
@@ -141,7 +139,27 @@ const imageBase = (await bindings()).PUBLIC_IMAGE_BASE ?? "";
     margin-top: clamp(20px, 2.6vw, 30px);
   }
   .shots li { position: relative; isolation: isolate; background: linear-gradient(160deg, #33302a, #1c1b18); }
-  .shots img { width: 100%; aspect-ratio: 2/3; object-fit: cover; }
+  /*
+   * `height: auto` is LOAD-BEARING. These <img>s used to carry width/height
+   * attributes, which map to presentational hints for the `height` PROPERTY — so
+   * with no CSS height the box took the attribute's 1400px, `aspect-ratio` was
+   * ignored (both axes definite), and every award photo rendered as a ~198x1400
+   * sliver with 80–86 % of its width cropped away. At every breakpoint, not just
+   * mobile. Setting `height: auto` is what lets the ratio govern.
+   *
+   * `contain`, not `cover`, because four of these 46 files are not photographs:
+   * the Nordic Hairshot entries are composite award CARDS with type on them —
+   * "FINALIST 2025", the stylist's name, "SWEDEN", sponsor logos — and they are
+   * near-square (~1:1) against portrait tiles. Any cover crop cuts words in half.
+   * Contained, nothing is ever cut: the portraits (0.667–0.753) sit inside a 3/4
+   * tile with a hairline of plate showing, and the square cards mat top and bottom
+   * against the same dark gradient. This also holds for whatever the client
+   * uploads next, whose ratio nobody can predict.
+   *
+   * 3/4 rather than the old 2/3 because 0.714 is the median of the 46 — it is the
+   * ratio that wastes the least plate across the set.
+   */
+  .shots img { width: 100%; height: auto; aspect-ratio: 3/4; object-fit: contain; }
   /* The same bronze wash the strip and the portraits carry, released on hover. */
   .shots li::after {
     content: ""; position: absolute; inset: 0; pointer-events: none;
@@ -159,7 +177,16 @@ const imageBase = (await bindings()).PUBLIC_IMAGE_BASE ?? "";
       scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none;
     }
     .shots::-webkit-scrollbar { display: none; }
-    .shots li { flex: 0 0 62vw; scroll-snap-align: start; }
+    /*
+     * The phone row is a JUSTIFIED contact sheet: one height, natural widths.
+     * A horizontal scroller has no column grid to honour, so nothing has to be
+     * forced into a shared tile — which means no crop AND no mat. A portrait
+     * comes out ~0.71x the height, a square Nordic award card comes out square,
+     * and the row still reads as a row because the tops and bottoms line up.
+     * The tile takes its width from the image, so `li` gets no flex-basis.
+     */
+    .shots li { flex: 0 0 auto; height: 82vw; scroll-snap-align: start; }
+    .shots img { width: auto; height: 100%; aspect-ratio: auto; }
   }
 
   @media (prefers-reduced-motion: reduce) { .shots li::after { transition: none; } }

@@ -8,5 +8,5 @@ const locale = "sv" as const;
 const t = useT(locale, (await Astro.locals.getCms()).kv);
 ---
 <Base locale={locale} pageKey="privacy" title={`${t("footer.privacy")} — Salong NOVO`} description={t("privacy.metaDescription")}>
-  <ArticlePage locale={locale} heading={t("footer.privacy")} paragraphs={paraKeys("privacy", "body").map((key) => t(key))} />
+  <ArticlePage locale={locale} no="10" kicker={t("footer.privacy")} heading={t("footer.privacy")} paragraphs={paraKeys("privacy", "body").map((key) => t(key))} />
 </Base>

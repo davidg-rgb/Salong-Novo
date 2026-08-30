@@ -8,7 +8,6 @@ import {
   flatAwards,
   getSite,
   getStaff,
-  getStats,
   stylistPhotoUrl,
 } from "~/lib/content";
 import { resolveCollection } from "~/lib/collections";
@@ -157,12 +156,16 @@ describe("every editable site fact actually reaches the page", () => {
 });
 
 describe("site facts resolve through the kv merge", () => {
-  it("the homepage numbers come from site.json and survive an edit", () => {
-    expect(getStats()).toEqual({ arets_kollektion_wins: 3, stylists: 17, founded: 2013 });
-    const kv = toKvMap([row("site.stats.stylists", "19", "")]);
-    expect(getStats(kv).stylists).toBe("19");
-    // Untouched keys keep their defaults — the merge is a clone, not a replace.
-    expect(getStats(kv).arets_kollektion_wins).toBe(3);
+  it("a nested fact survives an edit, and its neighbours keep their defaults", () => {
+    // Was written against the homepage stat trio, which client round 3 removed.
+    // Retargeted rather than deleted: what it actually proves is that
+    // `mergeSiteOverrides` reaches a LEAF two levels down and clones the rest,
+    // and that is worth a test whichever fact happens to be rendering today.
+    expect(getSite().contact.phone_display).toBe("08-663 30 14");
+    const kv = toKvMap([row("site.contact.phone_display", "08-000 00 00", "")]);
+    expect(getSite(kv).contact.phone_display).toBe("08-000 00 00");
+    expect(getSite(kv).contact.email).toBe("info@salongnovo.se");
+    expect(getSite(kv).brand.founded).toBe(2013);
   });
 
   it("the booking url every CTA points at is editable", () => {

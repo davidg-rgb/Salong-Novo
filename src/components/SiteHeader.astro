@@ -23,7 +23,12 @@ const otherLocale = LOCALES.find((l) => l !== locale)!;
 <header class="site-header">
   <div class="wrap header-inner">
     <a href={localizePath("home", locale)} class="logo" aria-label="Salong NOVO">
-      <Logo tone="black" height="32px" decorative />
+      {/* Client round 3 (2026-08-27): "NOVO luggen uppe i rubriken kan vara lite
+          större — på webvarianten ser den lite liten ut i jämförelse med
+          mobilvarianten." A fixed 32px was the same mark on a 375px bar and a
+          1152px one, so it only LOOKED small on the wide one. The clamp holds
+          mobile at 32px and grows it to 46px on desktop, inside the 74px bar. */}
+      <Logo tone="black" height="clamp(32px, 3.2vw, 46px)" decorative />
     </a>
     <nav class="nav-desktop" aria-label="Huvudmeny">
       <ul>
@@ -122,13 +127,20 @@ const otherLocale = LOCALES.find((l) => l !== locale)!;
   /* Sticky glass header — high-opacity white blur, hairline base (DESIGN-SYSTEM §6 Nav). */
   .site-header {
     position: sticky; top: 0; z-index: 60;
-    background: rgba(255, 255, 255, 0.82);
+    /* 0.82 let high-contrast content read straight through the bar. Worst at the
+       bottom of every page, where the footer's large white NOVO wordmark sat
+       directly under the header and ghosted into a DOUBLED logo, with the bar
+       itself going grey instead of cream over the black footer. 14px of blur
+       softens a photograph but cannot hide a 46px wordmark. 0.94 keeps the
+       frosted-glass read over imagery while stopping anything behind it from
+       being legible. */
+    background: rgba(255, 255, 255, 0.94);
     backdrop-filter: blur(14px) saturate(1.3);
     -webkit-backdrop-filter: blur(14px) saturate(1.3);
     border-bottom: 1px solid var(--hairline);
   }
   .header-inner { display: flex; align-items: center; justify-content: space-between; height: 74px; gap: 1.5rem; }
-  .logo { display: inline-flex; align-items: center; }
+  .logo { display: inline-flex; align-items: center; min-height: 44px; }
   /* The gap was clamp(18px, 2.4vw, 40px) for seven tabs, which left ~68px of slack at
      the 1152px max inner width. BLOGG plus the longer "Utmärkelser" need ~110px more
      than that, so the gap tightens rather than the nav overflowing into the CTA. */

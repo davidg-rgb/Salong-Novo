@@ -7,7 +7,7 @@ const blogBase = localizePath("blog", locale);
 ---
 <section class="blog wrap">
   <header class="shead">
-    <p class="kicker">{t("blog.title")}</p>
+    <p class="kicker">N° 09 — {t("nav.blog")}</p>
     <h1>{t("blog.title")}</h1>
     <p class="intro">{t("blog.intro")}</p>
   </header>
@@ -32,8 +32,14 @@ const blogBase = localizePath("blog", locale);
 <style>
   .blog { max-width: 940px; padding-block: var(--section); }  /* padding-block only: the element is also .wrap, which owns the side gutters */
   .shead { margin-bottom: clamp(38px, 5vw, 68px); }
-  .blog h1 { margin: 18px 0 16px; }
-  .intro { color: var(--on-variant); max-width: 60ch; font-size: clamp(16px, 1.5vw, 19px); }
+  .blog h1 { margin: 18px 0 16px; text-wrap: balance; }
+  /* The serif lead every other page opens with (`.prose p:first-child` in
+     ArticlePage). The blog was the one page that opened in the sans body face,
+     so it read visibly lighter than its siblings. */
+  .intro {
+    font-family: var(--font-serif); color: var(--ink); max-width: 46ch;
+    font-size: clamp(22px, 2.6vw, 31px); line-height: 1.42;
+  }
   .post-list { list-style: none; display: grid; gap: 0; border-top: 1px solid var(--hairline); }
   .post-list li a {
     display: block; padding: clamp(28px, 3.5vw, 44px) 0; border-bottom: 1px solid var(--hairline);

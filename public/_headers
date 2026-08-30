@@ -1,3 +1,22 @@
+# Build-shipped photography (ARCHITECTURE §10.8). Measured 2026-08-28: a phone
+# that scrolls /tavlingar pulls ~4.9 MB across 46 files, and /  pulls ~1.65 MB —
+# with NO cache rule, Workers Static Assets falls back to revalidate-on-every-
+# visit, so a returning visitor pays 46 round trips before seeing a photo.
+#
+# One day fresh, thirty days stale-while-revalidate. Deliberately NOT the
+# `immutable, max-age=31536000` that /_astro/* gets: those filenames are content
+# hashed, these are not. `/images/staff/chriss-berner.jpg` is a STABLE path whose
+# contents are expected to change — the client owes us a new portrait of Chriss
+# for that exact file — and a year of immutable caching would hide the new photo
+# from everyone who had seen the old one. SWR gives the repeat-visit win without
+# that trap: the stale copy paints instantly and the new one lands in the
+# background, live everywhere within a day.
+#
+# Client-uploaded images do NOT come through here; they are served from R2 by
+# /api/media/<key> under their own UUID keys.
+/images/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=2592000
+
 # Cloudflare Pages headers (ARCHITECTURE §10.8) — defense-in-depth alongside the
 # admin branch of src/middleware.ts. Admin surfaces are never indexed, never
 # framed, never cached, and run under a strict CSP.

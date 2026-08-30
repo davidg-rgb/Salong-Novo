@@ -1,6 +1,8 @@
 import staffData from "../../content/staff.json";
 import servicesData from "../../content/services.json";
 import awardsData from "../../content/awards.json";
+import brandsData from "../../content/brands.json";
+import coursesData from "../../content/courses.json";
 import type { Locale } from "../i18n/routes";
 import { getSite } from "./site";
 import { servedUrl } from "./media";
@@ -42,6 +44,47 @@ export interface Service {
   desc_en: string;
 }
 
+/**
+ * One product line the salon carries (`/varumarken`, `/en/brands`).
+ *
+ * `logo` and `product` are the same client-editable image field every other
+ * picture on this site uses — a rooted path is a bundled asset, anything else is
+ * an R2 media key (`assetUrl`). Both start EMPTY: the brand grid types the name
+ * as a wordmark when there is no logo, so the page is complete before a single
+ * asset has been sourced and upgrades one upload at a time.
+ */
+export interface Brand {
+  slug: string;
+  name: string;
+  desc_sv: string;
+  desc_en: string;
+  /** The brand's own site. Blank renders an unlinked card, not a dead anchor. */
+  url: string;
+  logo?: string;
+  product?: string;
+}
+
+/**
+ * One course in the education programme (`/utbildning-och-kurser`).
+ *
+ * The ONLY collection that ships with no defaults, deliberately — the salon has
+ * not published a programme yet, and inventing one would put a fake course on a
+ * live client site. `content/courses.json` and the carve-out in
+ * `tests/cms-config.test.ts` both carry the reasoning.
+ */
+export interface Course {
+  title_sv: string;
+  title_en: string;
+  /** Free text: "14 oktober", "Hösten 2026", "Två tillfällen i november". */
+  when: string;
+  desc_sv: string;
+  desc_en: string;
+  price: string;
+  /** Sign-up link. Blank renders the card without a button. */
+  link: string;
+  image?: string;
+}
+
 /** One competition result, flattened out of the nested awards document. */
 export interface AwardRow {
   year: number;
@@ -76,6 +119,14 @@ export function getAwards() {
   return awardsData.awards;
 }
 
+export function getBrands(): Brand[] {
+  return brandsData.brands as Brand[];
+}
+
+export function getCourses(): Course[] {
+  return coursesData.courses as Course[];
+}
+
 /**
  * The nested award document, one row per result.
  *
@@ -108,16 +159,6 @@ export function flatAwards(): AwardRow[] {
     }
   }
   return rows;
-}
-
-/** The three homepage numbers. `founded` is the site's own, not a second copy. */
-export function getStats(kv?: KvMap | null) {
-  const site = getSite(kv);
-  return {
-    arets_kollektion_wins: site.stats.arets_kollektion_wins,
-    stylists: site.stats.stylists,
-    founded: site.brand.founded,
-  };
 }
 
 export function bookingUrl(kv?: KvMap | null): string {
@@ -195,6 +236,38 @@ export function assetUrl(value: string | null | undefined, base = ""): string | 
   return trimmed.startsWith("/") ? trimmed : servedUrl(base, trimmed);
 }
 
+/**
+ * A stored collection row read back as a `Brand` — same defensive contract as
+ * `asStylist`: every property coerced, a missing one blank rather than a crash.
+ */
+export function asBrand(row: Record<string, unknown>): Brand {
+  const text = (key: string) => (typeof row[key] === "string" ? (row[key] as string) : "");
+  return {
+    slug: text("slug"),
+    name: text("name"),
+    desc_sv: text("desc_sv"),
+    desc_en: text("desc_en"),
+    url: text("url"),
+    logo: text("logo") || undefined,
+    product: text("product") || undefined,
+  };
+}
+
+/** A stored collection row read back as a `Course`. */
+export function asCourse(row: Record<string, unknown>): Course {
+  const text = (key: string) => (typeof row[key] === "string" ? (row[key] as string) : "");
+  return {
+    title_sv: text("title_sv"),
+    title_en: text("title_en"),
+    when: text("when"),
+    desc_sv: text("desc_sv"),
+    desc_en: text("desc_en"),
+    price: text("price"),
+    link: text("link"),
+    image: text("image") || undefined,
+  };
+}
+
 /** `assetUrl` under the name the staff grid and the homepage already call it by. */
 export const stylistPhotoUrl = assetUrl;
 
@@ -210,4 +283,17 @@ export function serviceName(svc: Service, locale: Locale): string {
 }
 export function serviceDesc(svc: Service, locale: Locale): string {
   return locale === "en" ? svc.desc_en : svc.desc_sv;
+}
+
+/** Localized brand description. */
+export function brandDesc(brand: Brand, locale: Locale): string {
+  return locale === "en" ? brand.desc_en : brand.desc_sv;
+}
+
+/** Localized course title/description. */
+export function courseTitle(course: Course, locale: Locale): string {
+  return locale === "en" ? course.title_en : course.title_sv;
+}
+export function courseDesc(course: Course, locale: Locale): string {
+  return locale === "en" ? course.desc_en : course.desc_sv;
 }

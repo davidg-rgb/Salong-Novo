@@ -315,3 +315,359 @@ portraits first. Verified remote: 66 rows under `bildbank/%`, objects stream via
 Windows gotchas baked into the script: `spawnSync(..., shell:true)` splits paths with spaces ⇒
 cwd-relative forward-slash paths only; `wrangler d1 execute --file` returns a summary, not rows.
 **Re-run on the client's account at handover** (after `db:migrate:remote`).
+
+### 2026-08-27 — Client feedback ROUND 3: hero + price + education + APL copy, brands & courses as collections, team hover reversed, fixed öppettider retired
+Client sent a full pass over the staging site. Everything below is shipped; **three items are
+asset-blocked on the client** and one is a question back to her.
+
+**Copy, both locales** (`src/lib/pagecopy.ts`, `src/i18n/ui.*.json`):
+- **Hero, all three lines replaced.** Kicker "Schwarzkopf Flaggskepp · Vasastan" → "Stockholms
+  vassaste frisörteam"; tagline "Stockholms mest prisbelönta frisörsalong." → "En av Sveriges mest
+  prisbelönta frisörsalonger"; sub "17 stylister i hjärtat av Vasastan…" → "Vi har skapat vår
+  drömsalong där inget lämnas åt slumpen." Net MFL effect is a REDUCTION in exposure: the absolute
+  "Stockholms mest prisbelönta" became a relative claim the /tavlingar record actually supports.
+- **Behandlingar & priser** (client's own rename of "Bokning & priser"; route slug `/priser`
+  unchanged so no link breaks). `pricing.note` → `pricing.body`, three paragraphs: frånpriser +
+  Voady consultation, 930 kr/h cutting rate and the 2 500–3 700 kr cut+colour band, and the 10 %
+  out-of-hours surcharge. Prisinformationslagen (2004:347) satisfied — frånpriser declared as such,
+  surcharge stated before booking. Nav label is **"Behandlingar"** alone: "Behandlingar & priser"
+  is ~29 px wider than the old label and the desktop nav had no slack at 1181 px (measured).
+- **Utbildning & kurser**: `education.note` → three paragraphs. Two typos corrected on the way in —
+  "inspirerade" → "inspirerande", and **`info@salognovo.se` → `info@salongnovo.se`** (a live mailto:
+  that bounces is worse than a rewrite).
+- **Jobba hos oss**: the APL/traineeplats block added as `work.aplHeading` + `work.apl`. It is a
+  `sections` entry under its own h2, not a fourth body paragraph — it addresses students, and run
+  as a paragraph it read as a postscript to "— Chriss & Jannie".
+- **Blogg**: `blog.title` "Journalen" → **"NOVO Blogg"**, new intro. This settles the open
+  Journalen-vs-BLOGG naming conflict from round 2 — the client picked, in her own copy.
+- The client's register is PRESERVED where it is hers ("vårat", "samt hårlängd"); only errors were
+  corrected. `staff.intro` already said "Vårat fantastiska stjärnteam", so this is her voice.
+
+**Two new collections** (`content/brands.json`, `content/courses.json`, `BRANDS`/`COURSES` in
+`cms.config.ts`, `BrandGrid.astro`, `CourseList.astro`):
+- **Våra brands** is now a real list — Keune, ghd, DC Hair Extensions, RichyHair Extensions,
+  Signaturdoftljus — with `logo` + `product` image slots the client fills in the admin. Every
+  default ships with BOTH images empty on purpose: the card types the brand name as a serif
+  wordmark until a logo exists, so the page is complete before a single asset has been sourced.
+  Descriptions stay category-level; NOVO does not speak for a third-party manufacturer, and an
+  invented product claim is the salon's exposure under MFL §10, not the brand's. The grid breaks
+  out of `.article`'s 820 px measure to the full 1152 px content box above 1248 px (a logo wall is
+  not prose).
+- **Kurser & utbildningar** — **THE ONE COLLECTION THAT SHIPS EMPTY**, with a named carve-out in
+  `tests/cms-config.test.ts` (plus a second test asserting the carve-out is still true, so it gets
+  deleted rather than left standing). The client's copy promises a programme "här nedan" and the
+  salon has not published one; a fabricated course on a live client site is worse than an honest
+  `education.coursesEmpty` line with the enquiry address in it.
+
+**Behaviour + chrome:**
+- **Team hover REVERSED, both grids** (home + `/personal`): portraits are full colour at rest and
+  desaturate under pointer/focus. Verbatim client request. `.duo`'s charcoal wash stays killed on
+  photo cards — it would now be a permanent half-desaturation.
+- **Specialty keywords removed** from the homepage cards, the card `aria-label`, and the modal
+  ("Behåll bara namn + instagram"). The FIELD is kept — "i nuläget" is a pause, not a deletion —
+  but relabelled "Specialitet (visas inte just nu)" so nobody types into a dead input.
+- **Header wordmark** 32 px → `clamp(32px, 3.2vw, 46px)`: mobile is untouched (which is the variant
+  the client liked), desktop grows inside the 74 px bar. It only ever looked small because the same
+  fixed size sat against a 1152 px bar and a 375 px one.
+- **Homepage stat trio removed** (×3 Årets Kollektion / 17 / 2013). `getStats()` and the two
+  `site.stats.*` admin fields went with it — a fact nothing renders must not be editable
+  (`contentGroups`' own stated rule). The numbers stay recorded in `site.json`.
+- **Fixed öppettider retired.** The salon keeps none — they vary per stylist — so the invented
+  DRAFT times, the whole `site.hours` container and the three admin fields are gone. The footer
+  column is now one paragraph (`footer.openingNote`), editable under a new **"Öppettider"** page in
+  the copy list rather than buried in "Bloggens texter".
+- **Utmärkelser chronological order: ALREADY CORRECT.** `groupAwards()` sorts years descending
+  (2026 above 2025, verified in the browser); within a year, order is the client's to drag.
+
+**Gate:** 606/606 tests (28 files, +8 new), `tsc --noEmit` clean, `astro check` 0 errors, build
+green. Verified in the browser at 1440 / 1181 / 375 px: no horizontal overflow anywhere, desktop nav
+still fits at 1181 px with the longer label and bigger mark, hover reversal confirmed by computed
+`filter` (grayscale 0 at rest → 1 revealed), EN parity confirmed on `/en`.
+
+**ASSET-BLOCKED on the client (not buildable here):**
+1. A new portrait of Chriss — "Står så jävla konstigt på den." Only one shot per stylist exists in
+   the repo, so there is nothing to swap to. Slot is ready.
+2. The founders photo (C + J in the salon, from the last shoot) to replace the "N" monogram plate in
+   the homepage story section. Geometry unchanged when it lands — drop the file in.
+3. Brand logos + product images for all five lines. `BrandGrid` renders complete without them.
+
+**QUESTION BACK TO THE CLIENT: is the Schwarzkopf relationship over?** She removed "Schwarzkopf
+flaggskepp" from the hero herself and her brand list leads with **Keune**, a competing colour house.
+The flagship sentence was pulled from `brands` copy rather than left standing unverified. Three
+references remain, all currently unrendered: `site.json` `brand.positioning`, the
+"Schwarzkopf-behandlingar" row in `services.json`, and `content/copy.md`. Do not re-publish any
+version of the claim before she confirms.
+
+**Also open:** "RichyHair Extensions" / "DC Hair Extensions" spellings are hers, unverified;
+"Signaturdoftljus" arrived with a question mark (include it at all?).
+
+**Deploy caveat:** `content_kv` rows OVERRIDE these file defaults. Before deploying, check staging
+D1 for rows on the keys this round changed — a row from the §5.13 acceptance run would mask the new
+copy. `SELECT key FROM content_kv;` then delete any of: `copy.home.kicker`, `copy.home.heading`,
+`copy.home.sub`, `copy.blog.*`, `copy.footer.openingNote`, `copy.nav.pricing`,
+`copy.pricing.heading`. Renamed keys (`copy.pricing.note`, `copy.education.note`,
+`copy.brands.note`) and the removed `site.hours.*` / `site.stats.*` rows are inert orphans — safe to
+leave, tidier to delete.
+
+Not committed — project rule is commit-on-ask.
+
+### 2026-08-27 (addendum) — Brand-logo sourcing: files found for all four, NONE shipped. ghd + Keune need written permission
+Research lane (Opus) checked all four third-party lines. **Headline: not one of them publishes a
+press kit, media page or brand-guidelines PDF.** Every file below came out of live site markup on
+the brand's own domain/CDN — no scraper re-hosts (Brandfetch, worldvectorlogo, seeklogo,
+brandsoftheworld, logotyp.us et al. all carry these marks and all dominated the search results;
+none was used).
+
+**Files staged, NOT in the repo** — scratchpad `…/e7412c80-…/scratchpad/brand-logos/`:
+
+| Brand | File(s) | Licence verdict |
+|---|---|---|
+| Keune | `keune-black.png` 476×197, alpha | **RED** — T&C Art. 4: no part of the site may be reproduced "without written permission from Keune Haircosmetics" |
+| ghd | `ghd-black.svg` (165×100, use this), `ghd-black-cdn.svg` | **RED** — Terms §3.3 explicitly prohibits reproducing/displaying/distributing site IP; §3.1 grants no IP rights. Parent is Coty (Jemella Ltd) |
+| DC Hair | `dc-hair-transparent.png` 300×300 alpha (use this), `dc-hair-main.png` | **SILENT** — no terms-of-use page exists; only the footer "All rights reserved to DC Hair Solutions ©". Stockist use NOT VERIFIED |
+| Richy Hair | `richy-footer-black.svg` (585.94×213.32, **use this one**), `richy-secondary-black.svg` (monogram, good for a tight grid), `richy-wordmark.png`; `richy-primary-black.svg` — see provenance note | **SILENT** — no terms page, only a privacy policy. Their authorised-salon programme suggests stockist display is intended, but that is an INFERENCE, not a permission |
+
+**NOTHING WAS WIRED IN.** Silent is not the same as permitted — two of the four carry an explicit
+written prohibition and the other two say nothing at all, so none of the nine files is licensed for
+this use. Being the brands' own hosted assets establishes AUTHENTICITY, never permission. The salon,
+not us, holds the reseller relationship, so the ask is theirs to make — and `BrandGrid` renders
+complete without any of it (wordmark fallback), so there is no pressure to publish first and ask
+later. When a logo is cleared: upload it in `/admin` under
+Våra brands → Logotyp, or drop the file in `public/images/brands/` and set the row's `logo` to
+`/images/brands/<slug>.svg`. Same field either way (`assetUrl`'s leading-slash discriminator).
+
+**Names corrected to each brand's own mark** (client's list had three of four wrong): "Ghd" →
+**ghd** (lowercase always — it stands for "good hair day"); "RichyHair extensions" → **Richy Hair**
+(two words, verified against their own wordmark); "DC Hair extensions" → **DC Hair** (the mark; the
+company is DC Hair Solutions). The category moved into `desc_*` where it belongs. Slugs followed
+(`richy-hair`, `dc-hair`) — free to change, nothing is in D1 yet.
+
+**Exact source of every file** (all brand-owned; no press kit exists for any of the four, so these
+are live-markup pulls, which is also what a distributor will want to see when granting permission):
+- `keune-black.png` ← `images.ctfassets.net/9kjqrnn60hxu/…/2022-Keune-Logo-Black-Online.png`
+  (Keune's own Contentful CMS CDN, referenced from the keune.com homepage)
+- `ghd-black.svg` ← `ghdhair.com/assets/images/ghdlogo_black.svg` — **prefer this one**
+- `ghd-black-cdn.svg` ← `ghd.a.bigcontent.io/v1/static/ghdlogo` (ghd's own Amplience CDN; the
+  homepage header `<img alt="Ghd logo">`)
+- `dc-hair-main.png` / `dc-hair-transparent.png` ← `dc-hair.com/wp-content/uploads/2020/12/…`
+- `richy-footer-black.svg`, `richy-secondary-black.svg`, `richy-wordmark.png` ← `richyhair.se`
+  Shopify CDN, all three page-referenced
+- `richy-primary-black.svg` — **WEAKEST PROVENANCE OF THE NINE.** Found by probing filename
+  variants, not by any page reference. It returns 200, so it is genuinely on Richy's CDN, but the
+  brand links to it nowhere. Use `richy-footer-black.svg` instead — same wordmark, same viewBox,
+  and it IS page-referenced.
+
+**Swedish routes for the permission ask** (the distributor is who supplies salon marketing assets):
+- **Keune Haircosmetics Sweden AB**, Stockholm, org.nr 559489-4015 — a direct subsidiary, not an
+  independent importer, so it can grant permission fast. Salon contact:
+  `keune.com/se/page-contact-for-salons/`.
+- **ghd** — no Swedish site at all (`ghdhair.com/se` and `pro.ghdhair.com` both fail); Sweden is
+  served via wholesalers (Hairstuff, Salontotal, Frisorshop). Verified on-page:
+  `customerservice@ghdhair.com`, `ghd-online@ghdhair.com`. (`prohelp@ghdhair.com` surfaced in a
+  search summary but could NOT be confirmed on any page — treat as UNVERIFIED.)
+- **DC Hair** — the contact page names a direct Sweden contact, Christopher Rosen.
+- **Richy Hair** — `richyhair.se/pages/kontakta-oss`.
+
+**TRAP for any client-facing deck:** searches for "ghd media contacts" surface **ghd.com**, which is
+GHD Group, an Australian engineering consultancy with no connection to the hair brand. Do not let
+that URL reach the client.
+
+Caveats carried forward: `keune-black.png`, `dc-hair-transparent.png` and `richy-wordmark.png` were
+visually rendered and confirmed to be the right marks; the SVGs were NOT rendered (provenance is
+strong — the ghd one came from an `<img alt="Ghd logo">` in ghdhair.com's own header) so eyeball
+them before shipping. No brand publishes a white/reversed variant (probed and 404 for both ghd and
+Richy — DC was NOT probed for a white variant), but the SVGs are single-colour black paths, so a
+reversed version is a one-line `fill` change rather than a missing asset.
+
+Terms quoted above were read on the page, not from memory: Keune at
+`keune.com/terms-and-conditions/` Art. 4, ghd at `ghdhair.com/terms-and-conditions/terms-of-use`
+§3.3 and §3.1 (that page 403s to a normal fetch; it was read with curl).
+
+### 2026-08-28 (overnight) — MOBILE PASS: award photos were rendering as 198×1400 slivers at every breakpoint; 69 measured defects → 0
+David asked for a mobile sweep so "nothing looks off, letters get cut from images or formatting
+being wrong". Built a measuring harness rather than eyeballing screenshots, because the worst defect
+on the site turned out to be invisible in a thumbnail and obvious in a number.
+
+**The harness** (scratchpad, not in the repo — `scratchpad/audit/`): headless Chromium over **all 22
+public routes × 6 widths** (320/360/375/390/430/768), reporting measured defects — document
+overflow with the culprit element, text clipped by its own box, a word wider than its container,
+`object-fit: cover` crops over 25 %, tap targets under 44 px, type under 12 px. Plus a slice
+capturer (viewport-sized, overlapping) for the eyeball pass.
+
+**First run: 69 unique defects. Final run: 0.**
+
+**THE BIG ONE — every award photo on /tavlingar was a 198×1400 sliver, at EVERY breakpoint.**
+`.shots img` set `width: 100%` and `aspect-ratio: 2/3` but no `height`. The markup carried
+`width="934" height="1400"` attributes, which map to presentational hints for the `height`
+PROPERTY — so with no CSS height the box took 1400 px, both axes were definite, `aspect-ratio` was
+ignored entirely, and `object-fit: cover` threw away **80–86 % of every image's width**. This was
+never a mobile-only bug; the desktop 4-up grid had it too and nobody had caught it.
+- Fix: `height: auto` (what lets the ratio govern), and the wrong width/height attributes deleted —
+  not one of the 46 files is 934×1400, and the CSS now pins the box so no attribute is needed.
+- **`contain`, not `cover`**, because four of the 46 are not photographs: the Nordic Hairshot
+  entries are composite award CARDS with type printed on them — "FINALIST 2025", the stylist's
+  name, "SWEDEN", L'Oréal/Goldwell/Aveda sponsor logos — and they are near-square (~1:1) against
+  portrait tiles. Any cover crop cuts those words in half. **This is exactly the failure David
+  named.** Contained, nothing is ever cut, and it holds for whatever the client uploads next.
+- Tile ratio 2/3 → **3/4**, the median of the 46, so the set wastes the least plate.
+- On phones the strip is now a **justified contact sheet**: one uniform height, each image at its own
+  natural width. A horizontal scroller has no column grid to honour, so nothing is forced into a
+  shared tile — no crop AND no mats.
+
+**Other defects found and fixed:**
+- **Homepage team bio overlay was clipped on small phones** — measured `scrollWidth` 164 in a 129 px
+  box at 320–375 px. A three-sentence Swedish bio is unreadable in a 2-up phone grid regardless, so
+  `.bio` is hidden below 620 px and the card goes straight to the team page, where the modal shows
+  the same text at a readable width. The touch handler had to change with it: it tested whether
+  `.bio` EXISTS, so with the element still in the DOM the first tap was swallowed and nothing
+  appeared. It now tests computed `display`. Verified race-free by dispatching a cancelable click
+  and reading `defaultPrevented`: ≤620 px not swallowed (navigates), >620 px swallowed (reveals).
+- **h1 overflowed at 320 px** — "Integritetspolicy" set 283 px into a 272 px column, "NOVO-familjen."
+  277 px. `body { overflow-x: hidden }` was HIDING the spill rather than fixing it, which is why no
+  overflow check ever caught it. Added `overflow-wrap: break-word` on h1/h2/h3 and dropped the h1
+  floor to 32 px below 360 px only, so 375 px and up are untouched.
+- **Tap targets**: the header wordmark (34×32), every footer contact and nav link (18 px tall), the
+  contact page's phone/email/Instagram (21 px), `.story-more`, `.team-all`, and the brand cards'
+  "Läs mer" — all under the 44 px minimum, several under even WCAG 2.5.8's 24 px. Fixed with
+  `inline-block` + `min-height` scoped to ≤820 px; desktop rhythm untouched.
+- **Footer legal line** 11 px → 12 px.
+- **Closing band orphan**: "Redo för din NOVO-stund?" broke after the hyphen and left "stund?" alone
+  on its own line — on every page. `text-wrap: balance` on `.fc-head`.
+- **Footer column heading said "Adress" above the phone number, email and Instagram** — the actual
+  street address is in the column BEFORE it. Easy to miss in three desktop columns, glaring stacked
+  on a phone ("ADRESS: 08-663 30 14"). Now "Kontakt" / "Contact". The dictionary KEY stays
+  `labels.address` deliberately: renaming it would orphan any `content_kv` row already saved.
+
+**Mobile performance, measured:** a phone that scrolls the whole page pulls **~1.65 MB of images on
+the homepage and ~4.9 MB on /tavlingar** (46 files). An earlier reading of 10.4 MB was wrong — those
+were 304 revalidations double-counted off `response` events; at the request level there are zero
+duplicate fetches. `/images/*` had **no cache rule at all**, so Workers Static Assets falls back to
+revalidate-on-every-visit and a returning visitor pays 46 round trips before seeing a photo. Added
+`public, max-age=86400, stale-while-revalidate=2592000` to `public/_headers` — deliberately NOT the
+`immutable` year that `/_astro/*` gets, because those filenames are content-hashed and these are
+not: `/images/staff/chriss-berner.jpg` is a stable path whose contents are expected to change (the
+client owes us exactly that file), and a year of immutable caching would hide the new portrait from
+everyone who had seen the old one.
+
+**NOT done, deliberately: the WebP/responsive-variant pipeline.** 4.9 MB on /tavlingar is still
+heavy, and the honest fix is generating variants + `srcset` — which the BUILD-LOG already records as
+a DEFERRED decision (the WebP variant Worker). Re-opening a logged deferral overnight, and adding an
+image dependency to a client project, is David's call and not a 1 a.m. one. The numbers above are so
+he can make it.
+
+**Gate:** 606/606 tests, `tsc --noEmit` clean, `astro check` 0 errors, build green. Final measured
+sweep: **0 defects across 22 routes × 6 widths**. Visual pass done on the slices by hand
+(home, team, awards, brands, education, contact, careers, blog, footer, plus 320 px spot checks).
+
+**Process note for next time:** three review subagents were spawned to read the 52 slices in
+parallel and **none of them ever delivered a report**, despite two direct requests each — the same
+pattern as the brand-logo lane earlier in the session, which only delivered after two nudges. The
+visual review in this entry was done first-hand, not by those agents. Do not assume a spawned
+reviewer's findings will arrive; budget for doing it yourself.
+
+Also fixed in the harness itself, both of which would have produced false findings: the capture
+script wiped its whole output directory on a partial re-run (deleting slices out from under a
+reader), and flipping `img.loading = "eager"` after parse does NOT retroactively start a fetch in
+Chromium — stepping the viewport down the page is what actually satisfies a lazy loader. Without
+that, tall pages screenshot with most images unpainted and every reviewer reports "missing images"
+that are perfectly fine.
+
+Not committed — project rule is commit-on-ask.
+
+### 2026-08-28 (overnight, cont.) — Accessibility sweep: skip link, AA contrast on the closing band, heading order
+Same harness, second lens (`scratchpad/audit/a11y.js`): 22 routes, only checks decidable from the
+rendered DOM with certainty — computed contrast with alpha blended onto the real painted background,
+missing `alt`, heading-level jumps, links/buttons with no accessible name, `lang`, `main`, skip link.
+No heuristics that need judgement; a false finding costs more attention than it saves.
+
+**7 findings → 0.** Clean already: every image had an `alt`, `lang` set per locale, one `<h1>` per
+page, `<main>` present, no nameless link or button anywhere.
+
+- **No skip link on any page** (WCAG 2.4.1). A keyboard user tabbed through eight nav items, a
+  language switch and the BOKA CTA before reaching the content — on every page. Added one in
+  `Base.astro`, localised, off-screen until focused; `<main id="main">` already existed. Verified:
+  first Tab lands on it, it becomes visible at top-left, Enter moves to `#main`.
+- **Closing-band eyebrow failed AA** — "BOKA TID · VASASTAN, STOCKHOLM" was `rgba(26,26,26,0.66)` on
+  champagne = **3.75:1**, under the 4.5 floor for 11px text, on all 11 pages in both locales. Now
+  0.8 alpha = **5.13:1**, still visibly subordinate. Exactly the class of bug the 2026-06-01 review
+  caught on `--bronze-muted`.
+- **Heading-level jumps** (WCAG 1.3.1): the footer's column headings were `<h4>` straight after an
+  `<h2>` on every page, and the brand-card names were `<h3>` straight after the page `<h1>`. Footer
+  headings are now `<h2 class="fh">` (sections of the footer landmark; the class carries the
+  styling), brand names `<h2>`.
+
+**A stale dev server nearly cost me this.** The contrast fix measured as unchanged at 3.75:1 after
+the edit — the source said 0.8, the browser said 0.66. Astro's dev server had been up for hours
+across dozens of edits and was serving stale scoped CSS. Restarted it and re-ran BOTH sweeps from
+scratch against fresh code: **0 layout findings (22 routes × 6 widths) and 0 accessibility findings
+(22 routes)**. Lesson: after a long editing session, verify against a restarted server or you are
+grading yesterday's build.
+
+Second measurement trap, hit twice: `getComputedStyle` during a CSS transition returns the
+INTERPOLATED value, not the target. The greyscale reversal and the skip link both read as "not
+applied" until measured after the transition settled. Assert on state after it lands, or disable the
+transition for the probe.
+
+**Gate:** 606/606 tests, tsc clean, `astro check` 0 errors, build green.
+
+### 2026-08-28 (overnight, cont.) — CORRECTION: the three review subagents DID deliver, and found four real defects I had missed
+The previous entry says the review subagents never reported. **That is wrong and is retracted.** All
+three delivered after a third request — roughly 20 minutes after going idle, which is why two rounds
+of asking looked like silence. Anything in the earlier entry claiming otherwise should be read as an
+error of mine, not a fact about the agents.
+
+Their lists were worth the wait. **Four real defects I had not found, all now fixed:**
+
+- **The sticky header was translucent enough to read through, worst at the bottom of every page.**
+  `rgba(255,255,255,0.82)` + `backdrop-filter: blur(14px)`: over the black footer the bar went grey
+  and the footer's large white NOVO wordmark ghosted straight through it, directly under the
+  header's own NOVO — a doubled, half-clipped logo. I nearly dismissed this as a headless-capture
+  artefact (backdrop-filter often does not composite in headless Chromium), so I re-shot it in a
+  HEADED browser with real GPU compositing: **the reviewer was right, it reproduces**. 14px of blur
+  softens a photograph but cannot hide a 46px wordmark. Now 0.94 — still frosted over imagery,
+  nothing legible behind it.
+- **The hair-strip captions were white type on near-white photographs.** The scrim was a two-stop
+  `rgba(10,14,17,0.85) -> transparent` ramp that only reached full strength at the very bottom EDGE,
+  below the line of type. On the white-seamless studio shots — "AVANTGARDE" worst — the caption sat
+  on mid-grey and was barely legible, while "ÅRETS NYKOMLING" on the dark tile beside it was fine.
+  Now a three-stop ramp holding 0.78 across the type and deepening to 0.92 under it, with taller top
+  padding so the fade has somewhere to happen.
+- **The blog page's eyebrow printed its own H1 verbatim** — "NOVO BLOGG" above "NOVO Blogg" — and was
+  the only eyebrow on the site with no "N° xx —" number. Now `N° 09 — BLOGG`. Its intro was also the
+  only page opener set in the sans body face instead of the Playfair lead every sibling uses; now
+  matched.
+- **The privacy page had no eyebrow at all** — it passed neither `no` nor `kicker`, so the H1 sat
+  alone over an empty band. Now `N° 10 — Integritetspolicy`.
+
+Plus two typographic breaks all three of us had seen and I had let pass: "Utbildning &" / "kurser."
+dangling the ampersand, and "Förnyelse, sedan" / "2013." orphaning five characters. `text-wrap:
+balance` on every page H1 (`ArticlePage`, `BlogList`, `StaffPage`, `CompetitionsPage`).
+
+**Two findings I rejected, on measurement rather than opinion:**
+- *"Team-page right column captions misaligned ~14px, Jasmina Rosengren runs past the photo edge."*
+  Reported with a caveat, then UPGRADED to high confidence after a second read. **False.** Measured
+  every cell: `li.left == frame.left == img.left == name.left` and the same on the right, both
+  columns 157px wide at 24–181 and 195–351. Pixel-perfect. Serif letterforms with different left
+  side bearings ("T" vs "J") read as an offset that is not there. A confident second look is not
+  evidence; the DOM is.
+- *"The hair strip breaks out of the page gutter, left tile starts ~9px from the edge."* **False on
+  the premise** — it starts at 0. `.strip` is deliberately full-bleed with a scroll-snap track
+  (scrollWidth 1104 vs clientWidth 375) and the sliced second tile is the peek affordance. Design,
+  not overflow.
+
+**One content question for the client, found by a reviewer:** the 2025 Nordic Hairshot Awards row
+has `category: "Final"`, which renders as a lone heading "Final" beside a `FINALIST (SVERIGE)` tag.
+The award card in that row's own photography reads **"COMMERCIAL COLLECTION"**, so "Final" looks like
+truncated source data. NOT changed — recorded award data is not ours to rewrite. Ask her.
+
+Also correct, and worth recording: the dark icon pill at the bottom of the capture slices is the
+**Astro dev toolbar**, not browser chrome from the capture tool as I had told the reviewers. Verified
+absent from `dist/` — dev-only, never ships.
+
+**Gate after all of it:** 606/606 tests, tsc clean, `astro check` 0 errors, build green, and both
+sweeps re-run from scratch: **0 layout findings (22 routes × 6 widths), 0 accessibility findings**.
+
+**Process lesson, the real one:** a subagent going idle is NOT the same as a subagent having nothing
+to say. Both this lane and the brand-logo lane delivered only on the third ask, and in both cases the
+content was materially better than what I had without it. Ask again before concluding silence — and
+never write "they never reported" into a memory entry a future session will trust.

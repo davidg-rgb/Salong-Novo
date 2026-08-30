@@ -77,9 +77,27 @@ const noindex = siteNoindex();
         overflow-x: hidden;
       }
       ::selection { background: var(--bronze); color: #fff; }
+      /* Off-screen until focused, then a solid plate above the sticky header. */
+      .skip-link {
+        position: absolute; left: 8px; top: -100px; z-index: 200;
+        padding: 12px 18px; background: var(--ink); color: var(--snow);
+        font-size: 13px; font-weight: 600; letter-spacing: 0.08em;
+        transition: top 0.2s ease;
+      }
+      .skip-link:focus { top: 8px; }
       h1 { font-size: clamp(40px, 8vw, 118px); line-height: 1.0; letter-spacing: -0.02em; }
       h2 { font-size: clamp(28px, 4.4vw, 62px); line-height: 1.04; letter-spacing: -0.02em; }
       h3 { font-size: clamp(18px, 2vw, 24px); line-height: 1.1; letter-spacing: -0.01em; }
+      /* A single word longer than the column is the one thing a clamp cannot
+         solve, and `body { overflow-x: hidden }` above HIDES it rather than
+         fixing it — so the spill is silent. Belt and braces: let a long word
+         break, and drop the h1 floor on the narrowest phones, where 40px was
+         wider than the measure. Measured at 320px: "Integritetspolicy" set 283px
+         into a 272px column, "NOVO-familjen." 277px. */
+      h1, h2, h3 { overflow-wrap: break-word; }
+      @media (max-width: 360px) {
+        h1 { font-size: clamp(32px, 10vw, 40px); }
+      }
       em { font-style: italic; }
       /* full-bleed page gutter — replaces the scaffold's narrow .wrap padding */
       .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 var(--mx); }
@@ -98,6 +116,7 @@ const noindex = siteNoindex();
     </style>
   </head>
   <body>
+    <a class="skip-link" href="#main">{locale === "en" ? "Skip to content" : "Hoppa till innehållet"}</a>
     <SiteHeader locale={locale} pageKey={pageKey} />
     <main id="main">
       <slot />

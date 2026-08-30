@@ -21,11 +21,20 @@ export const home = {
     sv: "Salong NOVO — Frisör i Vasastan, Stockholm",
     en: "Salong NOVO — Hair salon in Vasastan, Stockholm",
   } as Bi,
-  kicker: { sv: "Schwarzkopf Flaggskepp · Vasastan", en: "Schwarzkopf Flagship · Vasastan" } as Bi,
-  heading: { sv: "Stockholms mest prisbelönta frisörsalong.", en: "Stockholm's most awarded hair salon." } as Bi,
+  // Client feedback round 3 (2026-08-27) rewrote all three hero lines. The kicker
+  // no longer names Schwarzkopf — the client's own brand list now leads with Keune,
+  // so the flagship line was pulled rather than left standing unverified.
+  kicker: { sv: "Stockholms vassaste frisörteam", en: "Stockholm's sharpest hair team" } as Bi,
+  // "En av Sveriges mest prisbelönta" replaced "Stockholms mest prisbelönta": a
+  // relative claim the competition record on /tavlingar actually supports, where the
+  // old absolute one rested on nothing a visitor could check.
+  heading: {
+    sv: "En av Sveriges mest prisbelönta frisörsalonger",
+    en: "One of Sweden's most awarded hair salons",
+  } as Bi,
   sub: {
-    sv: "17 stylister i hjärtat av Vasastan. Klippning, färg och styling på tävlingsnivå — tre gånger vinnare av Årets Kollektion.",
-    en: "17 stylists in the heart of Vasastan. Cut, colour and styling at competition level — three-time winners of Collection of the Year.",
+    sv: "Vi har skapat vår drömsalong där inget lämnas åt slumpen.",
+    en: "We built our dream salon, where nothing is left to chance.",
   } as Bi,
   galleryLabel: { sv: "Utvalda hårbilder", en: "Selected hair looks" } as Bi,
   // {category} is the competition class, a Swedish proper noun in both locales —
@@ -35,10 +44,6 @@ export const home = {
     en: "{category}, Swedish Hairdressing Awards 2026",
   } as Bi,
   teamHeading: { sv: "Vårt fantastiska team.", en: "Our wonderful team." } as Bi,
-  // The label under the ×3 stat. It lives here rather than in `ui.*.json`
-  // because `home` is already a page-copy namespace and the two dictionary
-  // sources must stay disjoint — a second `home` object would shadow this one.
-  statCollection: { sv: "Årets Kollektion", en: "Collection of the Year" } as Bi,
 };
 
 // Closing champagne band above the footer (recognition layer — see DESIGN-SYSTEM §128).
@@ -75,6 +80,23 @@ export const work = {
       "Are you a genuinely happy person? Do you love giving clients first-class service with a twinkle in your eye? Are you hungry to learn and grow as a hairdresser? And most importantly — are you a team player?",
       "Then you might thrive with us. We offer chair rental in a fully renovated space with room for up to 16 hairdressers. With a spa room with massage chairs, a real espresso machine and our own photo studio, we want to attract those who look for something extra from their workplace.",
       "Email info@salongnovo.se and we'll set up a meeting! — Chriss & Jannie",
+    ],
+  } as Para,
+  // Added client round 3. Its own <h2> below the body: a second audience
+  // (students looking for APL/trainee placements), reached after the founders
+  // have signed off to the first one.
+  aplHeading: {
+    sv: "Är du elev under färdigutbildning och söker APL eller traineeplats?",
+    en: "Are you a student in training looking for a placement or traineeship?",
+  } as Bi,
+  apl: {
+    sv: [
+      "Vi har väldigt många som söker praktik hos oss på NOVO, vilket vi är jätteglada för. För oss är kvalitén i utbildningen jätteviktig, och vi har under åren hjälpt många blivande frisörer att ta sitt gesällbrev och bli utbildade frisörer.",
+      "Sök till oss om du gillar fart och fläkt, trivs med att vara delaktig, självständig och noggrann. Vi väljer bara ut elever som är 100 % motiverade till att det är frisör du vill bli.",
+    ],
+    en: [
+      "A great many people apply to train with us at NOVO, which we are delighted about. The quality of that training matters enormously to us, and over the years we have helped many aspiring hairdressers earn their journeyman's certificate and qualify.",
+      "Apply if you like a fast pace, and if you enjoy being involved, independent and meticulous. We only take on students who are 100 % certain that hairdressing is what they want to do.",
     ],
   } as Para,
 };
@@ -119,30 +141,68 @@ export const competitions = {
   } as Bi,
 };
 
-// "Bokning & priser" (client IA 2026-06-01) — prices reversed back in; menu pending client content.
+// "Behandlingar & priser" — renamed from "Bokning & priser" on the client's own
+// suggestion (round 3, 2026-08-27); the route slug stays /priser so no link breaks.
+// The three paragraphs are the salon's actual price policy, which replaced the
+// coming-soon note. Prisinformationslagen (2004:347): frånpriser are declared as
+// frånpriser in the first line, and the out-of-hours surcharge is stated before
+// booking rather than discovered on the invoice.
 export const pricingPage = {
-  heading: { sv: "Bokning & priser.", en: "Booking & prices." } as Bi,
-  note: {
-    sv: "Vår fullständiga pris- och bokningsöversikt publiceras inom kort. Under tiden bokar du din tid direkt via Voady så hjälper vi dig till rätt behandling och pris.",
-    en: "Our full price and booking overview is coming soon. In the meantime, book your appointment directly via Voady and we'll guide you to the right treatment and price.",
-  } as Bi,
+  heading: { sv: "Behandlingar & priser.", en: "Treatments & prices." } as Bi,
+  body: {
+    sv: [
+      "Alla våra priser är frånpriser och baseras på både tidsåtgång och material. Med vårat smarta bokningssystem Voady gör du en enklare konsultation där du guidas till vilken behandling du bör välja utifrån din hårmängd samt hårlängd. Du får en prisuppskattning innan du bokar, samt info om våra bokningsvillkor.",
+      "Våra klippriser varierar beroende på utförare och tidsåtgång, men generellt timpris för klippning är 930 kr/h. De flesta av våra klipp- och färgbehandlingar brukar landa mellan 2 500 och 3 700 kr.",
+      "Observera att vi har ett tillägg på 10 % på tider som utförs före 08.00 och efter 17.00 på vardagar, samt under hela lördag och söndag.",
+    ],
+    en: [
+      "All our prices are starting prices, based on both the time taken and the materials used. Our booking system Voady walks you through a short consultation that guides you to the right treatment for your hair's length and thickness. You get a price estimate before you book, along with our booking terms.",
+      "Cutting prices vary with the stylist and the time required, but the general hourly rate for cutting is SEK 930/h. Most of our cut-and-colour treatments land between SEK 2,500 and 3,700.",
+      "Please note that a 10 % surcharge applies to appointments before 08:00 and after 17:00 on weekdays, and all day Saturday and Sunday.",
+    ],
+  } as Para,
 };
 
-// "Utbildning & kurser" (client IA 2026-06-01) — content mailed per tab; ships a coming-soon state.
+// "Utbildning & kurser" — the client's own copy, round 3 (2026-08-27). Two typos in
+// the source were corrected on the way in: "inspirerade" → "inspirerande", and the
+// address "info@salognovo.se" → "info@salongnovo.se" (a live mailto: that bounces is
+// worse than a rewrite). Paragraph 2 promises a programme "här nedan", which is why
+// the page now renders the `courses` collection under the prose — and why
+// `coursesEmpty` exists for the state the salon is actually in today.
 export const education = {
   heading: { sv: "Utbildning & kurser.", en: "Education & courses." } as Bi,
-  note: {
-    sv: "Vi delar med oss av vårt hantverk genom utbildningar och kurser för frisörer. Programmet uppdateras inom kort — hör av dig till info@salongnovo.se för intresseanmälan.",
-    en: "We share our craft through education and courses for hairdressers. The programme is being finalised — email info@salongnovo.se to register your interest.",
+  body: {
+    sv: [
+      "Vi älskar utbildning och har lång erfarenhet av att utbilda nya och erfarna frisörer, både genom leverantör och i egen regi.",
+      "Vårt aktuella kursprogram hittar du här nedan. Är du verksam frisör och vill boka en skräddarsydd utbildning med oss? Maila din förfrågan till info@salongnovo.se.",
+      "Vi håller även inspirerande event i våra underbara lokaler för privatpersoner — kundkvällar, stylingkurser eller skräddarsydda event för både mindre och större sällskap. Håll utkik på vår Instagram eller här på vår blogg, där vi uppdaterar löpande om kommande event på NOVO.",
+    ],
+    en: [
+      "We love teaching, and we have long experience of training both new and experienced hairdressers — through our suppliers and under our own roof.",
+      "Our current course programme is below. If you work as a hairdresser and would like to book a tailored course with us, email your enquiry to info@salongnovo.se.",
+      "We also host events in our premises for private guests — client evenings, styling classes, and tailored events for smaller and larger parties. Keep an eye on our Instagram, or here on the blog, where we post about what is coming up at NOVO.",
+    ],
+  } as Para,
+  coursesHeading: { sv: "Kursprogram", en: "Course programme" } as Bi,
+  // The honest state of an empty programme. The list above it is a collection, so
+  // this line disappears the moment the salon adds its first course in the admin.
+  coursesEmpty: {
+    sv: "Kursprogrammet uppdateras löpande. Maila info@salongnovo.se så berättar vi vad som är på gång.",
+    en: "The programme is updated as courses are scheduled. Email info@salongnovo.se and we'll tell you what's coming up.",
   } as Bi,
 };
 
-// "Våra brands" (client IA 2026-06-01) — Schwarzkopf flagship + carried lines; content pending.
+// "Våra brands" — the coming-soon note is gone: the page now renders the `brands`
+// collection (client round 3, 2026-08-27, which named the five lines it carries).
+// The Schwarzkopf-flaggskepp sentence went with it. That claim is not the client's
+// to make on this page any more — the list they sent leads with Keune, a competing
+// colour house — and an unverified flagship claim is exactly the kind MFL 2008:486
+// §10 catches. Confirm the relationship before any version of it goes back up.
 export const brands = {
   heading: { sv: "Våra brands.", en: "Our brands." } as Bi,
-  note: {
-    sv: "Som Schwarzkopf-flaggskepp arbetar vi med marknadens främsta produkter och färgsystem. En komplett översikt över våra varumärken publiceras inom kort.",
-    en: "As a Schwarzkopf flagship we work with the industry's leading products and colour systems. A full overview of the brands we carry is coming soon.",
+  intro: {
+    sv: "Vi arbetar med produkter och verktyg vi själva står bakom — i salongen, och att ta med hem. Här är märkena du hittar hos oss.",
+    en: "We work with products and tools we stand behind ourselves — in the salon, and to take home. These are the brands you'll find with us.",
   } as Bi,
 };
 

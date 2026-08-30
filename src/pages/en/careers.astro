@@ -6,7 +6,21 @@ import { useT } from "../../i18n";
 import { paraKeys } from "../../lib/pagecopy";
 const locale = "en" as const;
 const t = useT(locale, (await Astro.locals.getCms()).kv);
+// The APL/traineeplats block addresses students, not hyrstol renters, so it is a
+// `sections` entry under its own heading rather than a fourth body paragraph
+// trailing the founders' sign-off (client round 3, 2026-08-27).
+const apl = {
+  heading: t("work.aplHeading"),
+  paragraphs: paraKeys("work", "apl").map((key) => t(key)),
+};
 ---
 <Base locale={locale} pageKey="work" title={`${t("nav.work")} — Salong NOVO`} description={t("work.body1")}>
-  <ArticlePage locale={locale} no="07" kicker={t("nav.work")} heading={t("work.heading")} paragraphs={paraKeys("work", "body").map((key) => t(key))} />
+  <ArticlePage
+    locale={locale}
+    no="07"
+    kicker={t("nav.work")}
+    heading={t("work.heading")}
+    paragraphs={paraKeys("work", "body").map((key) => t(key))}
+    sections={[apl]}
+  />
 </Base>

@@ -2,7 +2,7 @@
   "nav": {
     "home": "Hem",
     "staff": "Team",
-    "pricing": "Bokning & priser",
+    "pricing": "Behandlingar",
     "competitions": "Utmärkelser",
     "education": "Utbildning & kurser",
     "brands": "Våra brands",
@@ -26,7 +26,7 @@
     "language": "Språk",
     "phone": "Telefon",
     "email": "E-post",
-    "address": "Adress",
+    "address": "Kontakt",
     "hours": "Öppettider",
     "findUs": "Hitta hit",
     "readingTime": "{n} min läsning",
@@ -44,13 +44,13 @@
     "imageAlt": "{category} {year} — {people}, bild {n} av {total}"
   },
   "blog": {
-    "title": "Journalen",
-    "intro": "Trender, tekniker och liv på salongen — skrivet av våra stylister.",
+    "title": "NOVO Blogg",
+    "intro": "Ta del av vår frisörvardag genom vår lins! Här uppdaterar vi löpande om vad som händer på NOVO och våra frisörers spännande projekt och tankar.",
     "empty": "Inga inlägg ännu.",
-    "back": "Tillbaka till journalen"
+    "back": "Tillbaka till bloggen"
   },
   "footer": {
-    "openingNote": "Vi har även öppet på kvällar och helger",
+    "openingNote": "Våra öppettider varierar från frisör till frisör. Vi har stor flexibilitet, både tidigt och sent på dagen samt på helger. Våra lediga tider hittar du i vårat bokningssystem, eller maila oss din bokningsförfrågan.",
     "privacy": "Integritetspolicy",
     "cookies": "Cookies"
   }

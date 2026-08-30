@@ -1,0 +1,96 @@
+---
+/**
+ * The course programme on `/utbildning-och-kurser` (`/en/education`).
+ *
+ * SHIPS EMPTY ON PURPOSE. The client's own education copy says the programme is
+ * "här nedan"; the salon has not published one. Rather than fabricate a course
+ * to fill the slot, the list renders `education.coursesEmpty` — an honest line
+ * with the enquiry address in it — and becomes a real programme the moment the
+ * first row is saved under "Kurser & utbildningar" in the admin.
+ *
+ * `resolveCollection` returns the JSON defaults when D1 holds no rows, and this
+ * collection's defaults are `[]` — so both "nobody has touched it" and "the
+ * client emptied it" land on the same, correct, empty state.
+ */
+import { type Locale, useT } from "../i18n";
+import { asCourse, assetUrl, courseDesc, courseTitle } from "../lib/content";
+import { resolveCollection } from "../lib/collections";
+import { bindings } from "../lib/cms/bindings";
+import { COURSES } from "../cms.config";
+const { locale } = Astro.props as { locale: Locale };
+const t = useT(locale, (await Astro.locals.getCms()).kv);
+const courses = (await resolveCollection(Astro.locals.db, COURSES)).items.map(asCourse);
+const imageBase = (await bindings()).PUBLIC_IMAGE_BASE ?? "";
+---
+<section class="courses" aria-labelledby="courses-head">
+  <h2 id="courses-head">{t("education.coursesHeading")}</h2>
+  {courses.length === 0 ? (
+    <p class="empty">{t("education.coursesEmpty")}</p>
+  ) : (
+    <ul class="course-list" role="list">
+      {courses.map((course) => {
+        const image = assetUrl(course.image, imageBase);
+        const desc = courseDesc(course, locale);
+        return (
+          <li class="course">
+            {image && (
+              <span class="thumb" aria-hidden="true">
+                <img src={image} alt="" loading="lazy" decoding="async" />
+              </span>
+            )}
+            <div class="detail">
+              {course.when && <p class="when">{course.when}</p>}
+              <h3>{courseTitle(course, locale)}</h3>
+              {desc && <p class="body">{desc}</p>}
+              <p class="foot">
+                {course.price && <span class="price">{course.price}</span>}
+                {course.link && (
+                  <a class="sign" href={course.link} target="_blank" rel="noopener">
+                    {t("cta.book")} <span class="arr">→</span>
+                  </a>
+                )}
+              </p>
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  )}
+</section>
+
+<style>
+  /* `padding-bottom: 0` is load-bearing: this is a <section>, and the global
+     `section` rule in tokens.css sets padding on BOTH axes — so the shorthand's
+     bottom half survived the padding-top override and left ~170px of dead space
+     between the list and the booking button. */
+  .courses {
+    margin-top: clamp(38px, 5vw, 64px);
+    padding-top: clamp(30px, 4vw, 48px); padding-bottom: 0;
+    border-top: 1px solid var(--hairline);
+  }
+  .courses h2 { font-weight: 400; font-size: clamp(22px, 2.6vw, 32px); margin-bottom: clamp(20px, 2.4vw, 30px); }
+  .empty { color: var(--on-variant); font-size: clamp(16px, 1.5vw, 18px); line-height: 1.65; max-width: 56ch; }
+  /* Hairline-separated rows rather than cards: a course is a line in a
+     programme, and the blog index next door already sets that pattern. */
+  .course-list { list-style: none; display: grid; gap: 0; border-top: 1px solid var(--hairline); }
+  .course {
+    display: grid; grid-template-columns: minmax(0, 200px) 1fr; gap: clamp(20px, 3vw, 36px);
+    padding: clamp(24px, 3vw, 36px) 0; border-bottom: 1px solid var(--hairline);
+  }
+  .course:not(:has(.thumb)) { grid-template-columns: 1fr; }
+  .thumb { display: block; aspect-ratio: 4/3; background: var(--clay); overflow: hidden; }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .when { font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--bronze-muted); }
+  .course h3 { font-size: clamp(21px, 2.4vw, 29px); font-weight: 400; margin: 10px 0 12px; }
+  .course .body { color: var(--on-variant); line-height: 1.65; max-width: 62ch; }
+  .foot { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 22px; margin-top: 16px; }
+  .price { font-family: var(--font-serif); font-size: 19px; color: var(--ink); }
+  .sign {
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--bronze-dark);
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .sign .arr { transition: transform 0.35s; }
+  .sign:hover .arr { transform: translateX(5px); }
+  @media (max-width: 680px) { .course { grid-template-columns: 1fr; } }
+  @media (prefers-reduced-motion: reduce) { .sign .arr { transition: none; } }
+</style>

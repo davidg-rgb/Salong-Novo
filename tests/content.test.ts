@@ -5,10 +5,15 @@ import {
   getServices,
   showServicePrices,
   getAwards,
-  getStats,
+  getBrands,
+  getCourses,
   getSite,
   bookingUrl,
   serviceName,
+  brandDesc,
+  courseTitle,
+  asBrand,
+  asCourse,
   stylistPhotoUrl,
 } from "../src/lib/content";
 
@@ -76,11 +81,65 @@ describe("services", () => {
   });
 });
 
-describe("awards + site", () => {
-  it("reports three Collection-of-the-Year wins and 17 stylists", () => {
-    expect(getStats().arets_kollektion_wins).toBe(3);
-    expect(getStats().stylists).toBe(17);
+describe("brands", () => {
+  const brands = getBrands();
+  it("carries the five lines the client named, under each brand's OWN mark", () => {
+    // The client's list read "Ghd", "DC Hair extensions", "RichyHair extensions".
+    // Verified against the brands' own wordmarks (2026-08-27): ghd is lowercase
+    // always, Richy Hair is two words, and DC's mark is "DC Hair" (the company is
+    // DC Hair Solutions). The product category lives in `desc_*`, not the name.
+    expect(brands.map((b) => b.name)).toEqual([
+      "Keune",
+      "ghd",
+      "DC Hair",
+      "Richy Hair",
+      "Signaturdoftljus",
+    ]);
   });
+  it("every brand has a unique slug and a description in both locales", () => {
+    const slugs = brands.map((b) => b.slug);
+    expect(new Set(slugs).size).toBe(slugs.length);
+    for (const brand of brands) {
+      expect(brandDesc(brand, "sv")).not.toBe("");
+      expect(brandDesc(brand, "en")).not.toBe("");
+    }
+  });
+  it("ships with NO logo or product image — the grid has to render without them", () => {
+    // The whole point of the wordmark fallback. If a default ever gains a logo,
+    // this test is the reminder to check the empty case still looks finished.
+    expect(brands.every((b) => !b.logo && !b.product)).toBe(true);
+  });
+  it("reads a stored row back defensively", () => {
+    const row = asBrand({ name: "Keune", desc_sv: "Text", logo: "", url: 42 });
+    expect(row).toEqual({
+      slug: "",
+      name: "Keune",
+      desc_sv: "Text",
+      desc_en: "",
+      url: "",
+      logo: undefined,
+      product: undefined,
+    });
+  });
+});
+
+describe("courses", () => {
+  it("ships EMPTY on purpose — the salon has no published programme", () => {
+    // Not an oversight: a fabricated course on a live client site is worse than
+    // an empty programme that says so. See content/courses.json.
+    expect(getCourses()).toEqual([]);
+  });
+  it("reads a stored row back defensively", () => {
+    const row = asCourse({ title_sv: "Balayage", when: "14 oktober", price: null });
+    expect(courseTitle(row, "sv")).toBe("Balayage");
+    expect(courseTitle(row, "en")).toBe("");
+    expect(row.when).toBe("14 oktober");
+    expect(row.price).toBe("");
+    expect(row.image).toBeUndefined();
+  });
+});
+
+describe("awards + site", () => {
   it("has award years", () => {
     expect(getAwards().some((a) => a.year === 2026)).toBe(true);
   });

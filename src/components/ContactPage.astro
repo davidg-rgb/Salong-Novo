@@ -43,6 +43,15 @@ const mapQuery = encodeURIComponent(`${site.address.street}, ${site.address.post
   .dir { color: var(--on-variant); margin-bottom: 1.8rem; max-width: 48ch; line-height: 1.65; }
   .reach { list-style: none; margin-bottom: 1.8rem; line-height: 2; }
   .reach a { color: var(--ink); transition: color 0.3s; }
+  /* Phone, email and Instagram are the whole point of this page on a phone, and
+     they were the smallest targets on it (21px tall). `inline-block` is what
+     makes the height real — vertical padding on an inline <a> does not grow its
+     hit box. The list keeps its rhythm because line-height carried the same 44px
+     of space already; only the ANCHOR grows into it. */
+  @media (max-width: 820px) {
+    .reach a { display: inline-block; min-height: 44px; line-height: 44px; }
+    .reach { line-height: 1; }
+  }
   .reach a:hover { color: var(--bronze-dark); }
   .cancel { font-size: 13px; margin-top: 1.6rem; max-width: 50ch; line-height: 1.6; }
   .muted { color: var(--on-variant); }

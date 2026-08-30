@@ -1,6 +1,6 @@
 ---
 import { type Locale, useT, localizePath } from "../i18n";
-import { asStylist, getStats, stylistBio, stylistPhotoUrl } from "../lib/content";
+import { asStylist, stylistBio, stylistPhotoUrl } from "../lib/content";
 import { resolveCollection } from "../lib/collections";
 import { bindings } from "../lib/cms/bindings";
 import { STAFF } from "../cms.config";
@@ -9,7 +9,6 @@ import Logo from "./Logo.astro";
 const { locale } = Astro.props as { locale: Locale };
 const { kv } = await Astro.locals.getCms();
 const t = useT(locale, kv);
-const stats = getStats(kv);
 // The roster is a collection: the JSON defaults render until the client edits
 // the list, and from her first stylist onward the list in D1 is the roster.
 const staff = (await resolveCollection(Astro.locals.db, STAFF)).items.map(asStylist);
@@ -85,11 +84,6 @@ const gallery = [
       <h2>{t("about.heading")}</h2>
       <p>{t("about.body1")}</p>
       <a class="story-more" href={localizePath("about", locale)}>{t("cta.readStory")} <span class="arr">→</span></a>
-      <ul class="story-stats" role="list">
-        <li><b><span class="u">×</span>{stats.arets_kollektion_wins}</b><span>{t("home.statCollection")}</span></li>
-        <li><b>{stats.stylists}</b><span>{staffLabel}</span></li>
-        <li><b>{stats.founded}</b><span>Est.</span></li>
-      </ul>
     </div>
   </div>
 </section>
@@ -106,13 +100,16 @@ const gallery = [
       <a class="team-all" href={localizePath("staff", locale)}>{t("cta.allTeam")} <span class="arr">→</span></a>
     </div>
     <ul class="team-grid" role="list">
+      {/* No role/specialty line since client round 3 (2026-08-27): "Ta bort
+          nyckelord typ 'blondt' 'herr' i nuläget. Behåll bara namn + instagram."
+          The a11y label lost the same word — announcing a keyword the page no
+          longer shows is the accessible tree telling a different story. */}
       {staff.map((s, i) => {
         const bio = stylistBio(s, locale);
-        const role = s.specialty !== "TODO" ? s.specialty : s.role;
         const photo = stylistPhotoUrl(s.photo, imageBase);
         return (
           <li>
-            <a class="team-card" href={localizePath("staff", locale)} aria-label={`${s.name} — ${role}`}>
+            <a class="team-card" href={localizePath("staff", locale)} aria-label={s.name}>
               {/* First row eager (see StaffGrid for the reasoning); rows 2+ lazy. */}
               <span class="frame" aria-hidden="true">
                 {photo
@@ -131,7 +128,6 @@ const gallery = [
                 {bio && <span class="bio"><span class="bio-inner">{bio}</span></span>}
               </span>
               <b>{s.name}</b>
-              <span class="role">{role}</span>
             </a>
           </li>
         );
@@ -223,10 +219,21 @@ const gallery = [
      caption needs one to sit above the wash. */
   .tile .cap {
     position: absolute; left: 0; right: 0; bottom: 0; z-index: 1;
-    padding: 26px 16px 14px;
+    padding: 38px 16px 14px;
     font-size: 10.5px; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase;
     color: var(--cream);
-    background: linear-gradient(to top, rgba(10, 14, 17, 0.85), transparent);
+    /* The old two-stop ramp (0.85 -> transparent) only reached full strength at
+       the very bottom EDGE, below the text, so on the light tiles — the
+       white-seamless studio shots, Avantgarde worst — the caption was white type
+       on near-white fabric. Three stops hold the scrim at 0.7 across the whole
+       line of type and deepen underneath it, and the taller top padding gives the
+       fade somewhere to happen. Legible on white seamless and on black. */
+    background: linear-gradient(
+      to top,
+      rgba(10, 14, 17, 0.92) 0%,
+      rgba(10, 14, 17, 0.78) 55%,
+      transparent 100%
+    );
   }
 
   /* ── 3. Founders story — media + copy, hairline-gridded stat trio. */
@@ -250,10 +257,6 @@ const gallery = [
   .story-more { display: inline-flex; align-items: center; gap: 8px; color: var(--bronze-dark); font-weight: 500; }
   .story-more .arr { transition: transform 0.35s; }
   .story-more:hover .arr { transform: translateX(5px); }
-  .story-stats { list-style: none; display: flex; gap: clamp(24px, 4vw, 56px); margin-top: clamp(30px, 4vw, 48px); }
-  .story-stats b { font-family: var(--font-serif); font-size: clamp(32px, 4vw, 48px); line-height: 1; display: block; color: var(--ink); }
-  .story-stats b .u { font-size: 0.42em; color: var(--bronze); vertical-align: super; margin-right: 2px; }
-  .story-stats span { display: block; margin-top: 10px; font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--on-variant); }
 
   /* ── 4. Team — editorial cards with hover/focus/tap bio reveal. */
   .team { padding: 0 0 var(--section); }
@@ -272,13 +275,14 @@ const gallery = [
   .team-card .frame:has(.portrait) { background: var(--clay); }
   .team-card .frame:has(.portrait) .duo { opacity: 0; }
   .team-card .mono { font-family: var(--font-serif); font-size: clamp(40px, 5vw, 72px); color: rgba(255,255,255,0.92); }
-  /* Portrait under .duo and under .bio: black-and-white at rest, true colour on
-     reveal — matches the team page (client re-theme 2026-08-25). :focus-within
-     is listed alongside :focus-visible so the portrait un-greys on exactly the
-     same trigger that reveals .bio below. */
-  .team-card .portrait { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: grayscale(1); transition: filter 0.55s ease; }
+  /* REVERSED in client round 3 (2026-08-27): "vi önskar dock att det är reverse,
+     dvs i färg direkt och blir svartvit när man för pekaren över." Colour at rest,
+     desaturating into the bio overlay on the same trigger that reveals it —
+     :focus-within alongside :focus-visible so keyboard and mouse behave alike.
+     .duo (the charcoal wash) is already dead paint on a photo card, see below. */
+  .team-card .portrait { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: grayscale(0); transition: filter 0.55s ease; }
   .team-card .duo { position: absolute; inset: 0; background: var(--charcoal); mix-blend-mode: color; opacity: 0.32; transition: opacity 0.55s ease; }
-  .team-card:hover .portrait, .team-card:focus-within .portrait, .team-card:focus-visible .portrait, .team-card.is-revealed .portrait { filter: grayscale(0); }
+  .team-card:hover .portrait, .team-card:focus-within .portrait, .team-card:focus-visible .portrait, .team-card.is-revealed .portrait { filter: grayscale(1); }
   .team-card:hover .duo, .team-card:focus-within .duo, .team-card:focus-visible .duo { opacity: 0; }
   /* Bio overlay — always in the DOM; revealed on hover, keyboard focus, and tap (.is-revealed). */
   .team-card .bio {
@@ -294,14 +298,23 @@ const gallery = [
   .team-card.is-revealed .duo { opacity: 0; }
   .bio-inner { color: #f3ede3; font-size: 12.5px; line-height: 1.5; }
   .team-card b { font-family: var(--font-serif); font-weight: 500; font-size: 18px; margin-top: 15px; color: var(--ink); }
-  .team-card .role { font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--on-variant); margin-top: 5px; }
+  /* WCAG 2.5.8: both of these are standalone links, not inline in a sentence, so
+     they carry a real target on touch. 26px measured before this. */
+  @media (max-width: 820px) {
+    .story-more, .team-all { min-height: 44px; align-items: center; }
+  }
 
   @media (max-width: 1000px) { .team-grid { grid-template-columns: repeat(3, 1fr); } }
   @media (max-width: 820px) {
     .story-grid { grid-template-columns: 1fr; }
     .story-media { max-width: 420px; }
   }
-  @media (max-width: 620px) { .team-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 620px) {
+    .team-grid { grid-template-columns: repeat(2, 1fr); }
+    /* See the script below: it tests computed display, so hiding the bio here is
+       also what makes the first tap navigate instead of being swallowed. */
+    .team-card .bio { display: none; }
+  }
 
   @media (prefers-reduced-motion: reduce) {
     .tile::after, .team-card .duo, .team-card .bio, .story-more .arr, .team-all .arr { transition: none; }
@@ -317,7 +330,11 @@ const gallery = [
     const cards = Array.from(document.querySelectorAll(".team-card"));
     cards.forEach((card) => {
       card.addEventListener("click", (e) => {
-        const hasBio = card.querySelector(".bio");
+        const bio = card.querySelector(".bio");
+        // VISIBLE, not merely present: the 2-up phone grid hides .bio in CSS
+        // (see the 620px block), and a card with nothing to reveal must navigate
+        // on the first tap rather than eat it.
+        const hasBio = bio && getComputedStyle(bio).display !== "none";
         if (hasBio && !card.classList.contains("is-revealed")) {
           e.preventDefault();
           cards.forEach((c) => { if (c !== card) c.classList.remove("is-revealed"); });
