@@ -19,8 +19,11 @@ interface Props {
   heading: string;
   paragraphs: string[];
   sections?: { heading: string; paragraphs: string[] }[];
+  /** The closing booking CTA. Off on pages whose last address is not a booking
+   *  audience — careers ends on the APL block asking students to EMAIL. */
+  booking?: boolean;
 }
-const { locale, kicker, no, heading, paragraphs, sections = [] } = Astro.props;
+const { locale, kicker, no, heading, paragraphs, sections = [], booking = true } = Astro.props;
 ---
 <section class="article wrap">
   {kicker && <p class="kicker">{no ? `N° ${no} — ${kicker}` : kicker}</p>}
@@ -35,7 +38,7 @@ const { locale, kicker, no, heading, paragraphs, sections = [] } = Astro.props;
     </div>
   ))}
   <slot />
-  <BookingButton locale={locale} />
+  {booking && <BookingButton locale={locale} />}
 </section>
 
 <style>

@@ -93,10 +93,12 @@ export const work = {
     sv: [
       "Vi har väldigt många som söker praktik hos oss på NOVO, vilket vi är jätteglada för. För oss är kvalitén i utbildningen jätteviktig, och vi har under åren hjälpt många blivande frisörer att ta sitt gesällbrev och bli utbildade frisörer.",
       "Sök till oss om du gillar fart och fläkt, trivs med att vara delaktig, självständig och noggrann. Vi väljer bara ut elever som är 100 % motiverade till att det är frisör du vill bli.",
+      "Skicka ett mail till info@salongnovo.se så tar vi det därifrån.",
     ],
     en: [
       "A great many people apply to train with us at NOVO, which we are delighted about. The quality of that training matters enormously to us, and over the years we have helped many aspiring hairdressers earn their journeyman's certificate and qualify.",
       "Apply if you like a fast pace, and if you enjoy being involved, independent and meticulous. We only take on students who are 100 % certain that hairdressing is what they want to do.",
+      "Send an email to info@salongnovo.se and we'll take it from there.",
     ],
   } as Para,
 };

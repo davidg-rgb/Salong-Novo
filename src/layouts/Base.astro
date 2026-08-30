@@ -93,9 +93,14 @@ const noindex = siteNoindex();
          fixing it — so the spill is silent. Belt and braces: let a long word
          break, and drop the h1 floor on the narrowest phones, where 40px was
          wider than the measure. Measured at 320px: "Integritetspolicy" set 283px
-         into a 272px column, "NOVO-familjen." 277px. */
-      h1, h2, h3 { overflow-wrap: break-word; }
+         into a 272px column, "NOVO-familjen." 277px.
+         SCOPED to the narrow phones that need it: applied globally, Chromium's
+         `text-wrap: balance` treats break-word's anywhere-breaks as candidates
+         and split "Behandlingar & priser" MID-WORD on desktop ("Behandlinga /
+         r & priser") to equalise the lines (client round 4, 2026-08-30). No
+         heading word approaches its column width above 360px. */
       @media (max-width: 360px) {
+        h1, h2, h3 { overflow-wrap: break-word; }
         h1 { font-size: clamp(32px, 10vw, 40px); }
       }
       em { font-style: italic; }

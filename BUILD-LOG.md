@@ -671,3 +671,46 @@ sweeps re-run from scratch: **0 layout findings (22 routes × 6 widths), 0 acces
 to say. Both this lane and the brand-logo lane delivered only on the third ask, and in both cases the
 content was materially better than what I had without it. Ask again before concluding silence — and
 never write "they never reported" into a memory entry a future session will trust.
+
+### 2026-08-30 — Client round 4: careers booking CTA removed, mail line added, desktop mid-word H1 break fixed; full desktop+mobile review 0 defects
+Three client notes, all shipped, then a page-by-page review (ui-ux-pro-max lens) in both form factors.
+
+- **"Jobba hos oss": the BOKA TID button on white below the APL block is GONE.** A student the page
+  just told to email should not meet a booking CTA as the next element. `ArticlePage` grew a
+  `booking?: boolean` prop (default true — the other five article pages keep their button; the probe
+  asserts both directions) and the two careers pages pass `booking={false}`. The champagne closing
+  band keeps its site-wide BOKA TID; the client flagged only the white-background one.
+- **The mail line** — "Skicka ett mail till info@salongnovo.se så tar vi det därifrån." — is the
+  APL section's third paragraph (`work.apl3`), so it renders, folds into the dictionary, and
+  self-registers in the admin copy list ("APL — stycke 3") with zero config. Plain text, the same
+  treatment as `education.coursesEmpty`'s enquiry address. EN: "Send an email to … and we'll take
+  it from there."
+- **"Behandlingar" broke MID-WORD on desktop** ("Behandlinga / r & priser"). Mechanism: the mobile
+  pass had put `overflow-wrap: break-word` on all h1/h2/h3 globally, and Chromium's `text-wrap:
+  balance` treats break-word's anywhere-breaks as legitimate candidates when balancing — so it
+  split inside the word to equalise the two lines. Fix: the break-word rule is now scoped to the
+  `≤360px` media query that actually needed it (320px "Integritetspolicy" overflow), where it
+  joins the existing h1 floor. Every `text-wrap: balance` heading site-wide was exposed to the same
+  bug; the fix covers the class.
+
+**Verification, measured:** new `probe.js` (session scratchpad `audit/`) — 22 routes × 10 widths
+(320/360/375/390/430/768/1024/1181/1280/1440): **0 defects**. It adds the check the earlier sweeps
+COULD NOT catch (a balanced mid-word break is not overflow): per-word Range rects on every visible
+h1/h2/h3, flagging any word whose rects span two lines (hyphen breaks allowed). Priser H1 now renders
+"Behandlingar / & priser." at every width (one line at 768). Both round-3 harnesses re-run against a
+fresh server: layout sweep 0 findings (22×6), a11y 0 findings. Gate: 606/606, tsc clean, `astro
+check` 0 errors, build green. Eyeball pass over fresh full-page shots at 1440+390, both locales.
+
+**Brand logos (David asked again): files exist for all four, verdicts UNCHANGED, nothing wired.**
+The round-3 addendum's files were re-secured to the current session scratchpad (`brand-logos/`) and
+— new this round — ALL rendered and eyeballed via a contact sheet (`logo-sheet.png`): Keune, ghd,
+DC Hair (both), Richy Hair (all three) are the correct marks. One demotion: **`ghd-black-cdn.svg`
+renders BLANK — never use it; `ghd-black.svg` is the one.** Licences still: Keune RED, ghd RED
+(both explicit written-permission terms), DC Hair + Richy Hair SILENT. The salon holds the reseller
+relationships; the permission ask is theirs (Swedish routes in the round-3 addendum). When cleared:
+admin → Våra brands → Logotyp, or `public/images/brands/<slug>.svg` + the row's `logo` field.
+
+**Capture traps re-confirmed:** lazy images need a genuine `img.complete` wait after scroll-stepping
+or team grids screenshot as empty clay tiles (a REAL fetch wait, not `loading` flips); `astro dev`
+(v7) daemonizes — a stale daemon registration answers "failed to start within 30s" while the port
+sits free; `astro dev --port <new>` sidesteps it, `astro dev stop` cleans up.
