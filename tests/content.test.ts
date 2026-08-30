@@ -1,4 +1,9 @@
 import { describe, it, expect } from "vitest";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const PUBLIC_DIR = join(fileURLToPath(new URL("..", import.meta.url)), "public");
 import {
   getStaff,
   getStylist,
@@ -104,10 +109,28 @@ describe("brands", () => {
       expect(brandDesc(brand, "en")).not.toBe("");
     }
   });
-  it("ships with NO logo or product image — the grid has to render without them", () => {
-    // The whole point of the wordmark fallback. If a default ever gains a logo,
-    // this test is the reminder to check the empty case still looks finished.
-    expect(brands.every((b) => !b.logo && !b.product)).toBe(true);
+  it("every default asset is a rooted path to a file that EXISTS on disk", () => {
+    // Round 4 (2026-08-30, David's pre-production call): the third-party logos
+    // and generated category shots ship as defaults. A default that references
+    // a missing file renders a broken card on a clean deploy, so the reference
+    // and the file are pinned together here.
+    for (const brand of brands) {
+      for (const asset of [brand.logo, brand.product]) {
+        if (!asset) continue;
+        expect(asset.startsWith("/images/brands/")).toBe(true);
+        expect(existsSync(join(PUBLIC_DIR, asset))).toBe(true);
+      }
+    }
+  });
+  it("the wordmark fallback stays exercised by a real default (Signaturdoftljus has no logo)", () => {
+    // NOVO's own line keeps the typeset wordmark deliberately — and as long as
+    // one default renders logo-less, the empty case cannot rot unnoticed. It is
+    // also the removal path if a brand denies permission (blank `logo`, done).
+    const own = brands.find((b) => b.slug === "signaturdoftljus");
+    expect(own).toBeDefined();
+    // Falsy is what the renderer tests (`logo ? <img> : wordmark`) — the
+    // defaults path carries "" where a stored row carries undefined.
+    expect(own!.logo).toBeFalsy();
   });
   it("reads a stored row back defensively", () => {
     const row = asBrand({ name: "Keune", desc_sv: "Text", logo: "", url: 42 });

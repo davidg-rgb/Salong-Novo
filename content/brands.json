@@ -1,6 +1,8 @@
 {
-  "_note": "The product brands NOVO carries, client-supplied 2026-08-27 (feedback round 3). ORDER IS THE CLIENT'S. `logo` and `product` are empty until the assets land — the grid renders a typeset wordmark in the logo's place, so the page is complete without them and upgrades the moment one is uploaded in the admin. Descriptions are deliberately CATEGORY-level: NOVO does not speak for a third-party brand, and an invented product claim is the salon's liability under MFL 2008:486 §10, not the manufacturer's.",
+  "_note": "The product brands NOVO carries, client-supplied 2026-08-27 (feedback round 3). ORDER IS THE CLIENT'S. Descriptions are deliberately CATEGORY-level: NOVO does not speak for a third-party brand, and an invented product claim is the salon's liability under MFL 2008:486 §10, not the manufacturer's.",
+  "_licence": "Logos wired 2026-08-30 on David's pre-production call: permissions are ASSUMED GRANTED BY GO-LIVE and any brand that has not granted by then gets its `logo` blanked (the card falls back to the typeset wordmark by design). Keune and ghd terms explicitly require written permission; DC Hair and Richy Hair publish no terms. The salon owns the reseller relationships and makes the asks — contact routes in BUILD-LOG round-3 addendum. Files are the brands' own marks, normalized onto a shared 3:1 transparent canvas (540x180) with per-mark optical sizing; sources + provenance in BUILD-LOG. Signaturdoftljus is NOVO's own line and keeps the typeset wordmark deliberately.",
   "_pending": "Names now use each brand's OWN mark, not the client's informal list: 'RichyHair extensions' -> 'Richy Hair' (two words, verified against their own wordmark) and 'DC Hair extensions' -> 'DC Hair' (company is DC Hair Solutions); the category sits in desc_* where it belongs. ghd is lowercase always. 'Signaturdoftljus' arrived from the client with a question mark - confirm it belongs on this page at all.",
+  "_shots": "The `product` images are GENERATED (Gemini, 2026-08-30, same pipeline as the round-2 textures): category-evocative editorial still lifes in the site palette, deliberately free of trade dress, labels, text and faces — decorative (alt='' aria-hidden in BrandGrid), so they carry no product claim under MFL. Replace freely with client-supplied photography via the admin.",
   "brands": [
     {
       "slug": "keune",
@@ -8,8 +10,8 @@
       "desc_sv": "Hårvård, färg och styling från Nederländerna.",
       "desc_en": "Haircare, colour and styling from the Netherlands.",
       "url": "https://www.keune.com",
-      "logo": "",
-      "product": ""
+      "logo": "/images/brands/keune.png",
+      "product": "/images/brands/keune-shot.jpg"
     },
     {
       "slug": "ghd",
@@ -17,8 +19,8 @@
       "desc_sv": "Värmeverktyg för styling — plattänger, föner och rundborstar.",
       "desc_en": "Heat styling tools — straighteners, dryers and hot brushes.",
       "url": "https://www.ghdhair.com",
-      "logo": "",
-      "product": ""
+      "logo": "/images/brands/ghd.png",
+      "product": "/images/brands/ghd-shot.jpg"
     },
     {
       "slug": "dc-hair",
@@ -26,8 +28,8 @@
       "desc_sv": "Hårförlängning och löshår.",
       "desc_en": "Hair extensions.",
       "url": "https://dc-hair.com",
-      "logo": "",
-      "product": ""
+      "logo": "/images/brands/dc-hair.png",
+      "product": "/images/brands/dc-hair-shot.jpg"
     },
     {
       "slug": "richy-hair",
@@ -35,8 +37,8 @@
       "desc_sv": "Hårförlängning och löshår.",
       "desc_en": "Hair extensions.",
       "url": "https://richyhair.se",
-      "logo": "",
-      "product": ""
+      "logo": "/images/brands/richy-hair.png",
+      "product": "/images/brands/richy-hair-shot.jpg"
     },
     {
       "slug": "signaturdoftljus",
@@ -45,7 +47,7 @@
       "desc_en": "NOVO's own scented candles — for the salon, and to take home.",
       "url": "",
       "logo": "",
-      "product": ""
+      "product": "/images/brands/signaturdoftljus-shot.jpg"
     }
   ]
 }

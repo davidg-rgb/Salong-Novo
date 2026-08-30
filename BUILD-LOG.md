@@ -714,3 +714,36 @@ admin → Våra brands → Logotyp, or `public/images/brands/<slug>.svg` + the r
 or team grids screenshot as empty clay tiles (a REAL fetch wait, not `loading` flips); `astro dev`
 (v7) daemonizes — a stale daemon registration answers "failed to start within 30s" while the port
 sits free; `astro dev --port <new>` sidesteps it, `astro dev stop` cleans up.
+
+### 2026-08-30 (cont.) — Brand logos WIRED on David's pre-production call + generated category shots; Våra brands is now a real editorial grid
+David's decision, verbatim intent: add the logos now, develop the page visual around them, assume
+permissions are granted by go-live, and blank any brand that has not granted by then. This OVERRIDES
+the round-3 "nothing wired" position **as a pre-production staging call, not a licence finding** —
+the licence facts are unchanged (Keune RED, ghd RED, DC + Richy SILENT) and the go-live gate is now:
+**no permission on file ⇒ blank that row's `logo` before the domain flips.** The wordmark fallback
+IS the removal path, one field per brand. Caveat logged: the marks are now also in the PUBLIC GitHub
+mirror; a later removal leaves them in mirror history unless it is rewritten.
+
+**Logos — normalized, not raw.** The four files ship pre-composited onto a shared 3:1 transparent
+canvas (540×180, mark left-aligned) with per-mark optical sizing — DC Hair's square stacked lockup
+takes 100% canvas height while Richy's thin wide wordmark takes 62% — so BrandGrid's single
+`height: 45px` row (was 34px) yields equal visual weight with no JS and no layout shift. Raw sources
++ provenance: round-3 addendum; normalizer: session scratchpad `normalize-logos.js`. Signaturdoftljus
+(NOVO's own line) deliberately keeps the typeset wordmark — which also keeps the fallback rendering
+exercised by a real default.
+
+**Generated category shots (Gemini `gemini-2.5-flash-image`, same pipeline + key as the round-2
+textures — key lives in workspace `.env.local`, NOT `~/.webforge-secrets/`).** Five 4:3 editorial
+still lifes in the site palette, one per card: amber bottles on travertine (Keune), matte styler +
+curl on charcoal silk (ghd), brunette wave on champagne satin (DC), hanging blonde wefts (Richy),
+lit cream candles in a blurred salon (Signaturdoftljus). Deliberately free of trade dress, labels,
+text and faces: decorative (`alt=""`, aria-hidden), so they carry no product claim under MFL §10 and
+no third-party IP. 900×675 JPEG q80, 38–93KB each, ~295KB page total, lazy-loaded. Raws + prompts in
+session scratchpad `gen-brand-shots.mjs` / `brand-shots-raw/`.
+
+**Tests:** the round-3 sentinel ("ships with NO logo or product image") fired exactly as designed and
+was RETIRED for two stronger invariants: every default asset is a rooted `/images/brands/` path to a
+file that EXISTS on disk (a typo'd default now fails CI instead of rendering a broken card), and the
+wordmark fallback stays exercised (Signaturdoftljus asserted logo-less). 607/607, tsc clean,
+`astro check` 0 errors, build green. Verified: no document overflow on either brands route at
+320/390/768/1181/1440; desktop + mobile eyeball pass on both locales.
