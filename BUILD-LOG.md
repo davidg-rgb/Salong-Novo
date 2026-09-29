@@ -747,3 +747,25 @@ file that EXISTS on disk (a typo'd default now fails CI instead of rendering a b
 wordmark fallback stays exercised (Signaturdoftljus asserted logo-less). 607/607, tsc clean,
 `astro check` 0 errors, build green. Verified: no document overflow on either brands route at
 320/390/768/1181/1440; desktop + mobile eyeball pass on both locales.
+
+### 2026-09-29 — Brand logos: DC Hair + ghd APPROVED by the brands (client-supplied 2026-09-28)
+The client forwarded the brands' own approved logo files (`Desktop/Novo info/Brand logos`, four
+files). Two of the four third-party marks are now cleared of the go-live gate; two remain under it.
+
+- **DC Hair — APPROVED, re-rendered from the brand's vector.** Supplied: `DCH_Logo.pdf` (wide
+  lockup), `DCH_Logo2.pdf` (stacked lockup, the one the page uses) and a transparent white PNG for
+  dark backgrounds (unused — every card is white). `public/images/brands/dc-hair.png` is now rendered
+  from `DCH_Logo2.pdf` at 600 dpi onto the same 540×180 3:1 canvas, mark 130 px tall, left-aligned,
+  in the brand's own ink (#231F20). The previous file was the correct mark from a web source; this
+  one is the brand's, sharper, and sized to match ghd's optical height instead of the old 102 px,
+  which read light next to the others.
+- **ghd — APPROVED, file unchanged.** Supplied as a 171×112 JPEG of the dotted `ghd` + "good hair
+  day" lockup. Compared side by side with the on-disk `ghd.png` (vector-derived, 2026-08-30): the
+  same mark. The vector-derived file stays because the JPEG is below the 90 px retina render height.
+- **Keune and Richy Hair — STILL PENDING.** No files, no word. The go-live gate is unchanged for
+  these two: no permission on file by the domain flip ⇒ blank the row's `logo` (wordmark fallback).
+- Originals archived in `Design input/Brand logos/` (JPEG renamed `ghd-good-hair-day.jpg`; the
+  client's `image001.jpg` name said nothing). `content/brands.json` `_licence` carries the status.
+
+Tests: `tests/content.test.ts` 20/20 (exists-on-disk + fallback-exercised invariants) against the
+2026-08-30 full-gate baseline 607/607. No TS or component change.
