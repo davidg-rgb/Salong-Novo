@@ -19,11 +19,14 @@
     "readMore": "Läs mer",
     "readStory": "Läs vår historia",
     "allTeam": "Hela teamet",
+    "allAwards": "Alla utmärkelser",
     "shopAtKeune": "Handla hos Keune",
     "shopAll": "Se hela sortimentet hos Keune"
   },
   "labels": {
     "menu": "Meny",
+    "scroll": "Scrolla",
+    "coOwner": "Delägare",
     "close": "Stäng",
     "openProfile": "Visa & boka",
     "language": "Språk",

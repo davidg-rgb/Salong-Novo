@@ -37,7 +37,12 @@ Access (admin) · markdown-it (`html:false`) · Vitest. See `ARCHITECTURE.md`.
 - ✅ **Keune product wall (2026-09-29):** `/butik` + `/en/shop` — 24 curated Keune products
   (`content/products.json`, CMS collection `products`), every CTA a salon-attributed deep link built
   by `src/lib/keune.ts`; stylist `picks` wired but empty; `npm run keune:check` keeps slugs/prices
-  honest. 26 public page files, 723 tests / 30 files. Mechanism: `Planning/KEUNE-KICKBACK.md`.
+  honest. 26 public page files. Mechanism: `Planning/KEUNE-KICKBACK.md`.
+- ✅ **Home-page refresh (2026-09-30):** Desktop-Claude kit implemented natively (no override layer):
+  fixed transparent→frosted header on `/` only, 1340px hamburger, 100svh hero with letter intro +
+  scroll cue, awards strip head + numbered captions + marquee, owner cards from `owner`/`role`
+  data, bio slide-up, ink CTA button, Lenis. Motion is JS-gated (`html.nr-motion`); reduced-motion
+  and no-JS get the complete static page. 756 tests / 31 files + `npm run e2e` (Playwright, 34).
 - ⏳ **Remaining:** client content for Bokning & priser / Utbildning / Våra brands; RUNBOOK §5 on the
   client's Cloudflare account + domain (Access, DNS); the deferred WebP variant Worker; GA4/consent.
 - **Local dev:** `.dev.vars` (gitignored) sets `DEV_ADMIN_EMAIL` + `ADMIN_API_TOKEN`; run

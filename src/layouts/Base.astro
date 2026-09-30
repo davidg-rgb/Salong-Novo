@@ -1,5 +1,8 @@
 ---
 import "../styles/tokens.css";
+// JS-gated motion only (every rule needs a class refresh.ts adds). Static design lives
+// in the components, whose scoped styles load after this and own their elements.
+import "../styles/motion.css";
 import SiteHeader from "../components/SiteHeader.astro";
 import SiteFooter from "../components/SiteFooter.astro";
 import { type Locale, type PageKey, alternates } from "../i18n";
@@ -70,13 +73,19 @@ const noindex = siteNoindex();
         --mx: clamp(24px, 6vw, 80px);
         --section: clamp(88px, 13vw, 170px);
         --gutter: clamp(20px, 3vw, 36px);
+        /* The refresh's two curves (2026-09-30): a long ease-out for reveals and hovers,
+           a symmetric ease for loops. */
+        --ease: cubic-bezier(0.22, 1, 0.36, 1);
+        --ease-io: cubic-bezier(0.65, 0, 0.35, 1);
       }
       body {
         font-size: clamp(16px, 1.1vw, 18px);
         text-rendering: optimizeLegibility;
         overflow-x: hidden;
       }
-      ::selection { background: var(--bronze); color: #fff; }
+      /* Cream on the CTA bronze (2026-09-30): about 5.3:1, where white on the texture
+         bronze was about 3.2:1 (both computed from the tokens). */
+      ::selection { background: var(--terracotta); color: var(--cream); }
       /* Off-screen until focused, then a solid plate above the sticky header. */
       .skip-link {
         position: absolute; left: 8px; top: -100px; z-index: 200;
@@ -127,5 +136,10 @@ const noindex = siteNoindex();
       <slot />
     </main>
     <SiteFooter locale={locale} />
+    {/* The refresh's client layer — bundled and deferred by Astro, on every page. It is a
+        no-op wherever its targets (.hero, .strip, .team-grid) are missing. */}
+    <script>
+      import "../scripts/refresh";
+    </script>
   </body>
 </html>

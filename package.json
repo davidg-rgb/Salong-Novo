@@ -13,6 +13,7 @@
     "check": "astro check",
     "test": "vitest run",
     "test:watch": "vitest",
+    "e2e": "playwright test -c tests/e2e/playwright.config.ts",
     "db:migrate:local": "wrangler d1 migrations apply novo_db --local",
     "db:migrate:remote": "wrangler d1 migrations apply novo_db --remote",
     "bildbank:seed:local": "node scripts/bildbank-seed.mjs --local",
@@ -24,11 +25,13 @@
   "dependencies": {
     "@astrojs/cloudflare": "^14.1.7",
     "astro": "^7.1.6",
+    "lenis": "1.3.26",
     "markdown-it": "^14.1.0"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
     "@cloudflare/workers-types": "^5.20260730.1",
+    "@playwright/test": "1.63.0",
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^26.1.2",
     "typescript": "^5.7.0",

@@ -19,11 +19,14 @@
     "readMore": "Read more",
     "readStory": "Read our story",
     "allTeam": "The full team",
+    "allAwards": "All awards",
     "shopAtKeune": "Shop at Keune",
     "shopAll": "See the full range at Keune"
   },
   "labels": {
     "menu": "Menu",
+    "scroll": "Scroll",
+    "coOwner": "Co-owner",
     "close": "Close",
     "openProfile": "View & book",
     "language": "Language",

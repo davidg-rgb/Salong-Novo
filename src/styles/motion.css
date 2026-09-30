@@ -1,0 +1,131 @@
+/*
+ * Salong NOVO v2 — the refresh's motion layer (2026-09-30).
+ *
+ * ONLY what src/scripts/refresh.ts gates. Every rule below needs a class the
+ * script adds — html.nr, html.nr-motion, html.lenis, or an .nr-* state/reveal
+ * class — so a visitor without JS matches none of it, and html.nr-motion is
+ * withheld under prefers-reduced-motion. Both get the complete static page the
+ * components render.
+ *
+ * Load order: Base.astro imports this BEFORE the components' scoped styles, so a
+ * rule here cannot win a specificity tie against `.x[data-astro-cid-…]`. It does
+ * not need to: it only sets what the components leave alone — transform,
+ * opacity, clip-path, animation, and the reveal transitions. Where a component
+ * element is also a reveal and has its own transition list, the component
+ * restates the list under html.nr-motion (Home.astro, SiteFooter.astro).
+ *
+ * Static design (layout, colour, type) belongs in the component that owns the
+ * element, never here. No !important: tokens.css's reduced-motion kill-switch
+ * already covers everything below.
+ */
+
+/* ── Lenis ─────────────────────────────────────────────────────────────── */
+/* Lenis's own base rule: the page must not be height-locked while it drives the
+   scroll position. */
+html.lenis,
+html.lenis body { height: auto; }
+/* tokens.css sets `html { scroll-behavior: smooth }`. While Lenis animates, each
+   frame is a window.scrollTo(), which that rule would animate AGAIN. This beats it
+   on specificity alone. */
+html.lenis.lenis-smooth { scroll-behavior: auto; }
+
+/* ── Word masks (splitWords) ───────────────────────────────────────────── */
+/* Each word is a clipped inline-block, so it can rise from below its own baseline.
+   The .12em pad keeps descenders inside the clip. Applies with or without motion:
+   the split runs either way, and the words simply sit still without it. */
+html.nr .nr-w {
+  display: inline-block; overflow: hidden; vertical-align: top;
+  padding-bottom: 0.12em; margin-bottom: -0.12em;
+}
+html.nr .nr-w > span { display: inline-block; }
+html.nr-motion .nr-split .nr-w > span {
+  transition: transform 1.25s var(--ease);
+  transition-delay: calc(var(--i, 0) * 70ms);
+}
+html.nr-motion .nr-split:not(.nr-in) .nr-w > span { transform: translate3d(0, 108%, 0); }
+/* The booking band's last word, in italic (SiteFooter.astro's heading). */
+html.nr .fc-head .nr-em { font-style: italic; }
+
+/* ── Scroll reveals ────────────────────────────────────────────────────── */
+/* --d is the stagger refresh.ts writes per element. Nothing is hidden for good:
+   an element that never intersects is still in the DOM and in the a11y tree. */
+html.nr-motion .nr-r {
+  opacity: 0; transform: translate3d(0, 28px, 0);
+  transition: opacity 1.1s var(--ease), transform 1.3s var(--ease);
+  transition-delay: var(--d, 0ms);
+}
+html.nr-motion .nr-r.nr-in { opacity: 1; transform: none; }
+html.nr-motion .nr-img {
+  clip-path: inset(12% 0 0 0);
+  transition: clip-path 1.5s var(--ease);
+  transition-delay: var(--d, 0ms);
+}
+html.nr-motion .nr-img.nr-in { clip-path: inset(0 0 0 0); }
+
+/* ── Hero intro ────────────────────────────────────────────────────────── */
+/* Held until refresh.ts adds .nr-go (after the fonts, or 900ms at the latest), then
+   the copy rises in sequence while the wordmark's four letters come up through the
+   SVG's own overflow clip. */
+html.nr-motion .hero:not(.nr-go) .kicker,
+html.nr-motion .hero:not(.nr-go) .hero-tagline,
+html.nr-motion .hero:not(.nr-go) .sub,
+html.nr-motion .hero:not(.nr-go) .cta,
+html.nr-motion .hero:not(.nr-go) .scroll-cue { opacity: 0; transform: translate3d(0, 22px, 0); }
+html.nr-motion .hero .kicker,
+html.nr-motion .hero .hero-tagline,
+html.nr-motion .hero .sub,
+html.nr-motion .hero .cta { transition: opacity 1.2s var(--ease), transform 1.4s var(--ease); }
+html.nr-motion .hero .scroll-cue { transition: opacity 1.2s var(--ease) 1.5s, transform 1.4s var(--ease) 1.5s; }
+html.nr-motion .hero .kicker { transition-delay: 0.1s; }
+html.nr-motion .hero .hero-tagline { transition-delay: 0.85s; }
+html.nr-motion .hero .sub { transition-delay: 1s; }
+html.nr-motion .hero .cta { transition-delay: 1.12s; }
+html.nr-motion .hero .nr-letter {
+  transform-box: fill-box;
+  transition: transform 1.5s var(--ease);
+  transition-delay: calc(0.18s + var(--l, 0) * 95ms);
+}
+html.nr-motion .hero:not(.nr-go) .nr-letter { transform: translate3d(0, 112%, 0); }
+/* The copy block is parallaxed by refresh.ts (inline transform + opacity). */
+html.nr-motion .hero-inner { will-change: transform, opacity; }
+
+/* ── Hero plate: fade-in, slow drift ───────────────────────────────────── */
+/* The 6% bleed that gives the drift room is Home.astro's (it is layout). The
+   scroll parallax uses the separate `translate` property, so it composes with
+   this transform instead of fighting it. */
+html.nr-motion .hero-soft {
+  transform: scale(1.06); will-change: transform;
+  transition: opacity 2.2s var(--ease);
+  animation: nr-drift 28s ease-in-out infinite alternate;
+}
+html.nr-motion .hero:not(.nr-go) .hero-soft { opacity: 0; }
+@keyframes nr-drift {
+  0% { transform: scale(1.06) translate3d(0, 0, 0); }
+  100% { transform: scale(1.12) translate3d(-1.5%, 1%, 0); }
+}
+
+/* ── Scroll cue: a champagne drip down the hairline ────────────────────── */
+html.nr-motion .scroll-cue i::after {
+  content: ""; position: absolute; inset: 0;
+  background: var(--champagne); transform: translateY(-100%);
+  animation: nr-drip 2.6s var(--ease-io) infinite;
+}
+@keyframes nr-drip {
+  0% { transform: translateY(-100%); }
+  55% { transform: translateY(0); }
+  100% { transform: translateY(100%); }
+}
+
+/* ── Awards marquee ────────────────────────────────────────────────────── */
+/* The track holds the five tiles twice (the copies are refresh.ts's clones), so
+   -50% lands exactly on the start of the second set. --nr-dur is 11s per tile.
+   Hovering the band pauses it, so a frame can be looked at. */
+html.nr-motion .strip-track.nr-marquee { animation: nr-marquee var(--nr-dur, 60s) linear infinite; }
+html.nr-motion .strip:hover .strip-track.nr-marquee { animation-play-state: paused; }
+@keyframes nr-marquee {
+  to { transform: translate3d(-50%, 0, 0); }
+}
+
+/* ── Story plate parallax ──────────────────────────────────────────────── */
+/* refresh.ts moves the monogram against the scroll (inline `translate`). */
+html.nr-motion .story-frame > * { will-change: transform; }

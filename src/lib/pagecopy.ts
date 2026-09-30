@@ -44,6 +44,11 @@ export const home = {
     en: "{category}, Swedish Hairdressing Awards 2026",
   } as Bi,
   teamHeading: { sv: "Vårt fantastiska team.", en: "Our wonderful team." } as Bi,
+  // The awards strip's heading (home refresh, 2026-09-30). EN follows the
+  // competitions intro below ("Hairdresser of the Year"), NOT `galleryAlt` above,
+  // which says "Swedish Hairdressing Awards" — the two English names disagree
+  // and the client has not said which is official.
+  galleryHeading: { sv: "Årets Frisör 2026", en: "Hairdresser of the Year 2026" } as Bi,
 };
 
 // Closing champagne band above the footer (recognition layer — see DESIGN-SYSTEM §128).

@@ -43,6 +43,12 @@ export interface Stylist {
    * the product list does not carry is dropped at render (`resolvePicks`).
    */
   picks: string[];
+  /**
+   * A co-owner of the salon: the homepage team grid gives them a wide feature
+   * card and a "Delägare" tag. Derived in `asStylist` — see `isOwnerRow` for
+   * why the role text counts as well as the explicit flag.
+   */
+  owner: boolean;
 }
 
 export interface Service {
@@ -245,7 +251,23 @@ export function asStylist(row: Record<string, unknown>): Stylist {
           .map((pick) => pick.trim())
           .filter((pick) => pick !== "")
       : [],
+    owner: isOwnerRow(row),
   };
+}
+
+/**
+ * Whether a stored staff row is a co-owner (2026-09-30).
+ *
+ * The explicit `owner` toggle wins, and only a real boolean `true` counts — a
+ * stored "true" string is a row the admin did not write. The role text is the
+ * second source ON PURPOSE: D1 rosters on staging were seeded from
+ * `content/staff.json` before the flag existed, and both owners already carry
+ * `role: "Delägare"`, so the role is what keeps them owners on a roster that
+ * predates the toggle. Never inferred from position in the list.
+ */
+export function isOwnerRow(row: Record<string, unknown>): boolean {
+  const role = typeof row.role === "string" ? row.role : "";
+  return row.owner === true || /del[äa]gare|co-?owner|owner/i.test(role);
 }
 
 /** How many of a stylist's picks the team modal lists. */

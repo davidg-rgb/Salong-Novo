@@ -13,9 +13,9 @@ on **Cloudflare**, with a staff-writable blog.
 
 | Layer | State |
 |-------|-------|
-| Core logic (i18n, slug, markdown, images, posts, db, seo, redirects, content, keune) | ✅ Built + **723 tests passing** (30 files, 2026-09-30) |
+| Core logic (i18n, slug, markdown, images, posts, db, seo, redirects, content, keune) | ✅ Built + **756 tests passing** (31 files, 2026-09-30) |
 | App (Astro + Cloudflare): layout, components, all pages (SV+EN), blog, admin API, SEO | ✅ Builds green, `tsc` clean |
-| Visual design | ⏳ **Gated on direction pick** (A–F or Stitch) — neutral placeholder tokens in `src/styles/tokens.css` |
+| Visual design | ✅ "Haute Editorial" applied (§11, 2026-06-01); home-page refresh 2026-09-30 (fixed transparent header, 100svh hero, awards marquee, owner cards, Lenis + motion layer in `src/styles/motion.css` / `src/scripts/refresh.ts`) |
 | Cloudflare resources (D1, R2, Access) | ⏳ Create at deploy (see below) |
 
 The design is the only thing waiting. Everything in `src/` is design-independent scaffolding;
@@ -25,7 +25,8 @@ choosing a direction means **restyling** (tokens + component CSS), not rebuildin
 
 ```bash
 npm install
-npm test            # 723 unit tests (vitest, incl. Astro Container render tests)
+npm test            # 756 unit tests (vitest, incl. Astro Container render tests)
+npm run e2e         # Playwright: builds, serves the Worker on :4321, runs the home-refresh suite
 npm run typecheck   # tsc --noEmit
 npm run dev         # Astro dev server (static pages; blog/admin need wrangler)
 npm run build       # production build -> dist/
@@ -49,8 +50,9 @@ npm run db:migrate:remote            # ...and to the remote D1
 | `npm run dev` | Astro dev server |
 | `npm run build` | Build to `dist/` (Workers output: `dist/client` + `dist/server`) |
 | `npm test` / `test:watch` | Vitest unit suite |
+| `npm run e2e` | Playwright suite `tests/e2e/home-refresh.spec.ts` in Chromium (the kit's 15 checks + project checks); builds + serves via `npm run preview -- --port 4321` unless a server already answers there; screenshots to `tests/e2e/__shots__/` (gitignored) |
 | `npm run typecheck` | `tsc --noEmit` |
-| `npm run preview` | `wrangler dev --config dist/server/wrangler.json` (full runtime incl. D1/R2) |
+| `npm run preview` | `astro build && wrangler dev --config dist/server/wrangler.json` (full runtime incl. D1/R2; port 8787 unless `-- --port N`) |
 | `npm run db:migrate:local` / `:remote` | Apply D1 migrations |
 | `npm run bildbank:seed:local` / `:remote` | Seed the admin media library with the shipped photographs (`scripts/bildbank-seed.mjs`) |
 | `npm run keune:check` | Check every curated product in `content/products.json` against Keune's SE sitemap + Shopify feed; exit 1 if a slug left the sitemap |

@@ -90,7 +90,8 @@ const otherLocale = LOCALES.find((l) => l !== locale)!;
 <script>
   // Accessible mobile menu toggle (vanilla, ~20 lines). Hamburger ↔ panel with
   // aria-expanded, label swap (Meny/Stäng), Esc-to-close, close-on-link, and a
-  // body scroll-lock while open. Desktop (≥820px) ignores all of this.
+  // body scroll-lock while open. Desktop (≥1341px) ignores all of this.
+  // refresh.ts watches aria-expanded to pause smooth scrolling while it is open.
   const toggle = document.querySelector<HTMLButtonElement>("[data-nav-toggle]");
   const panel = document.querySelector<HTMLElement>("[data-mobile-nav]");
   if (toggle && panel) {
@@ -116,8 +117,9 @@ const otherLocale = LOCALES.find((l) => l !== locale)!;
         toggle.focus();
       }
     });
-    // If resized up to desktop while open, reset to a clean state.
-    const mq = window.matchMedia("(min-width: 1181px)");
+    // If resized up to desktop while open, reset to a clean state. Must match the
+    // 1340px hamburger breakpoint in the styles below.
+    const mq = window.matchMedia("(min-width: 1341px)");
     mq.addEventListener("change", (e) => {
       if (e.matches) setOpen(false);
     });
@@ -125,7 +127,8 @@ const otherLocale = LOCALES.find((l) => l !== locale)!;
 </script>
 
 <style>
-  /* Sticky glass header — high-opacity white blur, hairline base (DESIGN-SYSTEM §6 Nav). */
+  /* Sticky glass header — high-opacity white blur, hairline base (DESIGN-SYSTEM §6 Nav).
+     Every page but the home page; see the html.nr-home block further down for that one. */
   .site-header {
     position: sticky; top: 0; z-index: 60;
     /* 0.82 let high-contrast content read straight through the bar. Worst at the
@@ -139,34 +142,35 @@ const otherLocale = LOCALES.find((l) => l !== locale)!;
     backdrop-filter: blur(14px) saturate(1.3);
     -webkit-backdrop-filter: blur(14px) saturate(1.3);
     border-bottom: 1px solid var(--hairline);
+    transition: background-color 0.6s var(--ease), color 0.6s var(--ease), transform 0.7s var(--ease), border-color 0.6s var(--ease);
   }
-  .header-inner { display: flex; align-items: center; justify-content: space-between; height: 74px; gap: 1.5rem; }
+  /* Full-width bar (2026-09-30): the logo and BOKA sit at the viewport's edges rather than
+     the 1200px column's, which is what gives nine one-line tabs room between them. */
+  .header-inner {
+    display: flex; align-items: center; justify-content: space-between; height: 74px; gap: 1.5rem;
+    max-width: none; padding-inline: clamp(20px, 3.2vw, 56px);
+  }
   .logo { display: inline-flex; align-items: center; min-height: 44px; }
-  /* The gap was clamp(18px, 2.4vw, 40px) for seven tabs, which left ~68px of slack at
-     the 1152px max inner width. BLOGG plus the longer "Utmärkelser" need ~110px more
-     than that, so the gap tightens rather than the nav overflowing into the CTA.
-     BUTIK (2026-09-29) is a ninth tab: with the old 28px ceiling, "Jobba hos oss" broke
-     onto a THIRD line from ~1360px (the logo's clamp keeps growing while the inner width
-     is already capped). A 22px ceiling holds every label at two lines up to 1920px in
-     both locales, and nothing changes below ~1222px, where 1.8vw is under the cap. */
-  .nav-desktop ul { display: flex; align-items: center; gap: clamp(14px, 1.8vw, 22px); list-style: none; }
-  /* Block-level anchor so a wrapped two-line label (e.g. "BOKNING &" / "PRISER")
-     stays one box: the ::after underline spans the FULL item, not just the last
-     line. Stays text-wrappable (block, not inline-flex) so the 9 li flex-items
-     still shrink toward min-content and the nav fits without overflowing. */
+  /* One line per tab since 2026-09-30 (`nowrap`), replacing the two-line balanced labels
+     of the BUTIK round: with the full-width bar and the hamburger taking over at 1340px,
+     every label fits on one line in both locales. The gap scales with the viewport. */
+  .nav-desktop ul { display: flex; align-items: center; gap: clamp(14px, 1.45vw, 26px); list-style: none; }
   .nav-desktop a {
-    position: relative; display: block; padding: 6px 0;
-    text-align: center; text-wrap: balance; line-height: 1.45;
+    position: relative; display: block; white-space: nowrap; line-height: 1.3;
     font-size: 12px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase;
-    color: var(--on-variant); transition: color 0.3s;
+    color: var(--on-variant); transition: color 0.4s var(--ease);
   }
+  /* The underline draws in from the left and retracts to the right, in the link's own
+     colour, so it reads over the transparent home header as well as the glass one. */
   .nav-desktop a::after {
-    content: ""; position: absolute; left: 0; bottom: 0; height: 1px; width: 0;
-    background: var(--bronze); transition: width 0.35s ease;
+    content: ""; position: absolute; left: 0; right: 0; bottom: -6px; height: 1px;
+    background: currentColor; transform: scaleX(0); transform-origin: right;
+    transition: transform 0.55s var(--ease);
   }
   .nav-desktop a:hover, .nav-desktop a[aria-current="page"] { color: var(--ink); }
-  .nav-desktop a:hover::after, .nav-desktop a[aria-current="page"]::after { width: 100%; }
-  .header-right { display: flex; align-items: center; gap: 22px; }
+  .nav-desktop a:hover::after, .nav-desktop a[aria-current="page"]::after { transform: scaleX(1); transform-origin: left; }
+  .header-right { display: flex; align-items: center; gap: clamp(14px, 1.4vw, 24px); }
+  .header-right > :global(.btn) { height: 42px; padding: 0 22px; align-self: center; white-space: nowrap; }
   .lang {
     display: inline-flex; align-items: center; gap: 7px;
     font-size: 11px; font-weight: 600; letter-spacing: 0.1em; color: var(--on-variant);
@@ -176,6 +180,36 @@ const otherLocale = LOCALES.find((l) => l !== locale)!;
   .lang-sep { color: var(--hairline); font-weight: 400; }
   .lang-other { color: var(--on-variant); transition: color 0.3s; }
   .lang:hover .lang-other { color: var(--ink); }
+
+  /* ── Home page only (2026-09-30) — REVERSES the sticky glass header on this one page.
+     refresh.ts adds html.nr-home when the page has a .hero, so without JS the home page
+     keeps the sticky glass bar above. The header is fixed over the hero plate: transparent
+     with cream type and an inverted logo, then glass once the hero has scrolled past
+     (.nr-solid), tucked away while reading down (.nr-hide), and solid cream while the
+     menu is open (.nr-open). The glass state is the same 0.94 bar as every other page —
+     the kit's 0.82 is the doubled-logo failure documented above. */
+  :global(html.nr-home) .site-header {
+    position: fixed; inset: 0 0 auto 0;
+    background-color: transparent; border-bottom-color: transparent;
+    backdrop-filter: none; -webkit-backdrop-filter: none;
+  }
+  :global(html.nr-home) .site-header:not(.nr-solid) { color: var(--cream); }
+  :global(html.nr-home) .site-header:not(.nr-solid) .nav-desktop a,
+  :global(html.nr-home) .site-header:not(.nr-solid) .lang,
+  :global(html.nr-home) .site-header:not(.nr-solid) .lang-other { color: rgba(248, 248, 248, 0.78); }
+  :global(html.nr-home) .site-header:not(.nr-solid) .nav-desktop a:hover,
+  :global(html.nr-home) .site-header:not(.nr-solid) .lang-current,
+  :global(html.nr-home) .site-header:not(.nr-solid) .lang:hover .lang-other,
+  :global(html.nr-home) .site-header:not(.nr-solid) .nav-toggle { color: #fff; }
+  :global(html.nr-home) .site-header:not(.nr-solid) .logo :global(svg) { filter: invert(1); }
+  :global(html.nr-home) .site-header.nr-solid {
+    background-color: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(14px) saturate(1.3);
+    -webkit-backdrop-filter: blur(14px) saturate(1.3);
+    border-bottom-color: var(--hairline);
+  }
+  :global(html.nr-home) .site-header.nr-hide { transform: translateY(-102%); }
+  :global(html.nr-home) .site-header.nr-open { transform: none; background-color: var(--cream); }
 
   /* ── Mobile menu (hamburger + slide-down panel) ─────────────────── */
   .nav-toggle {
@@ -214,16 +248,16 @@ const otherLocale = LOCALES.find((l) => l !== locale)!;
     padding: 18px var(--gutter, 1.5rem) 24px; border-top: 1px solid var(--hairline);
   }
 
-  /* Nine tabs with longer SV labels (Bokning & priser, Utbildning & kurser) need more room,
-     so the hamburger takes over below 1180px instead of 820px. */
-  @media (max-width: 1180px) {
+  /* Nine one-line tabs need the full bar, so the hamburger takes over at 1340px and below
+     (was 1180px, 2026-09-30, when the tabs still wrapped onto two lines; 820px before that). */
+  @media (max-width: 1340px) {
     .nav-desktop { display: none; }
     .nav-toggle { display: inline-flex; }
     /* Top bar on mobile = logo · BOKA (primary CTA stays, per §11) · hamburger.
        The language toggle moves into the panel to keep the bar uncluttered. */
     .header-right > .lang { display: none; }
   }
-  @media (min-width: 1181px) {
+  @media (min-width: 1341px) {
     .nav-mobile { display: none; }
   }
 </style>

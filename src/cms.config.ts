@@ -96,6 +96,13 @@ export const STAFF: CollectionDef = {
      * recommendation under a real name.
      */
     { name: "picks", kind: "list", label: "Keune-favoriter (produktnyckel, max 3)", maxItems: 3, maxLen: 120 },
+    /**
+     * Co-owner (2026-09-30): a wide feature card and a "Delägare" tag in the
+     * homepage team grid. A role containing "Delägare" counts too (`isOwnerRow`
+     * in src/lib/content.ts), so rows seeded before this toggle existed keep
+     * their owners without anyone re-saving them.
+     */
+    { name: "owner", kind: "toggle", label: "Delägare (stort kort på startsidan)" },
   ],
 };
 
@@ -355,6 +362,7 @@ export const CMS: CmsConfig = {
         { key: "home.kicker", label: "Hero — överrubrik" },
         { key: "home.heading", label: "Hero — rubrik" },
         { key: "home.sub", label: "Hero — ingress" },
+        { key: "home.galleryHeading", label: "Hårbilder — rubrik" },
         { key: "home.teamHeading", label: "Teamet — rubrik" },
         { key: "home.metaTitle", label: "Sidtitel (webbläsarflik & Google)" },
       ],

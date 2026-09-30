@@ -118,6 +118,11 @@ The home page is a sequence of full-width sections. Each maps to a component slo
 3. **Hair-gallery strip.** A horizontal **scroll-snap row** of editorial hair photos ("rulla lite fina
    hårbilder i en rad"). *Pending:* real photos — ship durable placeholders. Respect
    `prefers-reduced-motion` (no auto-advance); keyboard/scroll accessible; lazy-loaded.
+   *Refresh 2026-09-30:* the strip opens with its own heading (`home.galleryHeading`, "Årets Frisör
+   2026") and an "Alla utmärkelser" link to `/tavlingar`; captions sit under the frames, numbered
+   01–05; frames are grayscale until hovered. With motion allowed `src/scripts/refresh.ts` clones the
+   five tiles into a seamless marquee (paused on hover). Without JS or under reduced motion it stays
+   the scroll-snap row, scrolling on the track so the heading stays put.
 4. **Founders story.** Photo of the owners ("mig och Chriss") + a short story about them and the salon
    ("en story om oss och salongen"). Condensed from the `about` content; ends with an optional
    "Läs hela historien" → `/om-oss`. *Pending:* owners' photo + final story copy.
@@ -125,6 +130,10 @@ The home page is a sequence of full-width sections. Each maps to a component slo
    ("när man drar pilen över varje bild … en kort text om just den frisören"). *Pending:* the client is
    **mailing each stylist's text**; until then bios fall back to name + role from `staff.json`.
    Links through to the full **Team** page (`/personal`, grid→modal + per-person Voady link, unchanged).
+   *Refresh 2026-09-30:* co-owners (`Stylist.owner`: the STAFF `owner` toggle, or a role containing
+   "Delägare") get 5:4 feature cards tagged "Delägare" on a 10-column grid (owners span 5, stylists
+   2 → rows of 2 + 5 + 5 + 5; 6 columns ≤1099px, pairs ≤699px). The bio slides up from the frame's
+   foot on hover, focus and first tap; it hides only at ≤699px.
 
 **Accessibility contract for the home interactions (mandatory, tested where logic exists):**
 - The team hover-bio **must** have a keyboard + touch equivalent: reveal on `:focus-within` and on
@@ -1124,6 +1133,8 @@ the shared types/validation everything imports. 4c is the editor core (needs 4b'
 
 No new runtime dependencies: JWT verify uses native Web Crypto (no `jose`); preview reuses `markdown-it`; the editor is vanilla
 TS in `.astro` `<script>`s. Playwright (stretch) is the only possible devDependency, only if 4f's optional e2e is taken.
+*(2026-09-30, outside §10: the home refresh added `lenis` as a runtime dependency and `@playwright/test` as a
+devDependency for its own suite, `tests/e2e/home-refresh.spec.ts` — `npm run e2e`.)*
 
 ### 10.12 Open decisions & risks
 
@@ -1230,7 +1241,9 @@ eyebrow/label-caps 11px / 600 / 0.15–0.22em tracking, **uppercase**. Headlines
 - **Grid:** 12-col, side margins `clamp(24px, 6vw, 80px)`, section gaps `clamp(88px, 13vw, 170px)`.
   Intentional asymmetry — align text to one side, let imagery bleed, stagger cards vertically.
 - **Rhythm:** 8px base.
-- **Glass:** only the sticky header (high-opacity white blur), never decoratively.
+- **Glass:** only the header (high-opacity white blur), never decoratively. Sticky on every page but
+  the home page, where (since 2026-09-30, with JS) it is fixed over the hero — transparent with
+  cream type there, glass once the hero has scrolled past, hidden while reading down.
 
 ### 11.6 Component build contract
 
@@ -1243,7 +1256,9 @@ Maps the directives onto the components already named in §2 / §4 — **restyle
 - **`.btn--ghost`** — secondary, **non-booking only** (Directions, etc.): transparent, 1px `--ink`
   border, hover inverts to ink fill. **Never terracotta.**
 - **`SiteHeader`** — sticky glass header, NOVO wordmark (Playfair, wide tracking), uppercase grotesk
-  links with bronze underline-on-hover, **SV/EN toggle**, terracotta BOKA.
+  links with an underline-on-hover in the link's own colour, **SV/EN toggle**, terracotta BOKA.
+  *2026-09-30:* full-width bar, one line per tab, hamburger at ≤1340px; on the home page only, the
+  fixed/transparent → glass behaviour described under Glass above (`html.nr-home`).
 - **`SiteFooter` = recognition bar** — `--black` base + **4px `--champagne` top band** + champagne
   section headings + **white NOVO wordmark** + **terracotta BOKA** + hairline `rgba(255,255,255,.12)`
   + socials hover `--champagne`. A deliberate near-replica of the live black-bar / champagne / coral

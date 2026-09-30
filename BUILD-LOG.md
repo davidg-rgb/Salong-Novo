@@ -873,3 +873,61 @@ was a regenerated 1024×1024 PNG with a fake checkerboard baked into the alpha (
 `keune.test.ts`) · `tsc` clean · `astro check` 0 errors / 0 warnings / 6 hints (pre-existing) · `astro build`
 Complete · `keune-sync --check` → `KEUNE-CHECK: 24/24 in sitemap · 24/24 in feed · 0 price drift` ·
 `--images --dry-run` → `KEUNE-IMAGES: 0 downloaded · 24 skipped · 0 failed · 24 gallery · 0 og · 0 MISSING (dry run)`.
+
+### 2026-09-30 — Home refresh: the Desktop-Claude kit implemented natively (hero, strip, story, team, header, CTA band)
+The approved kit (`novo-refresh/`: an `html.nr` override stylesheet with `!important`, plus a script that injected
+missing markup) is merged into the components that own each element instead. There is no override layer, no
+`!important` and no JS-rendered content. Motion is JS-gated, so a visitor without JS or with reduced motion gets
+the complete static page.
+
+- **Hero** (`Home.astro`): `100svh` (after a `100vh` fallback line; was `clamp(520px, 82vh, 860px)`). The copy is
+  centred as one left-aligned block, with a vignette `::before` and an inline-SVG grain `::after`. Tagline 25ch +
+  balance. The ghost button is cream with a 34% outline. The component renders the scroll cue with
+  `labels.scroll`.
+- **Strip**: the component renders the head: kicker `nav.competitions`, h2 `home.galleryHeading` (new,
+  client-editable, allowlisted in `copy-home`), link `cta.allAwards` → `localizePath("competitions")`. Captions
+  sit below the frames with `data-n` 01–05. Frames are grayscale until hovered, and the `.tile::after` wash and
+  the caption scrim are deleted. With motion, the script clones the 5 tiles (`aria-hidden`, `alt=""`,
+  `tabindex=-1`) and the track runs `translate3d(-50%)`, paused on hover. Static, it is the scroll-snap row,
+  scrolling on the TRACK so the heading stays put.
+- **Story**: display-size h2, an italic champagne screened N (reverses the grey watermark), a bronze offset
+  frame, and a clip-path reveal. The story kicker is bronze-dark again (`.story-copy p` had set it in ink).
+- **Team**: a 10-col grid with owners spanning 5 (5:4) and stylists 2 → rows `[2,5,5,5]`. It is 6-col at ≤1099px
+  and pairs at ≤699px, where the odd last card goes full-width. The `.role-tag` comes from `labels.coOwner` and
+  joins the card's aria-label. The bio is now a line-clamped panel that slides up on hover, focus-within,
+  focus-visible and `.is-revealed`. The tap-to-reveal script is kept. Bios hide only at ≤699px: the kit's
+  `(hover:none)` hide was rejected. Client round 3's colour-at-rest rule is kept.
+- **Owners from data**: `Stylist.owner` via `isOwnerRow` (`src/lib/content.ts`) = `row.owner === true` or a role
+  matching `/del[äa]gare|co-?owner|owner/i`. This keeps D1 rosters seeded before the flag. A new STAFF field
+  `owner` uses the existing `toggle` kind, and `owner: true` is set on Chriss + Jannie in `content/staff.json`.
+- **Header** (`SiteHeader.astro`): full-width bar, nowrap tabs, and the hamburger at ≤1340px (was 1180; both media
+  queries plus the `matchMedia` reset). Underlines use `currentColor`. On the home page only (`html.nr-home`) the
+  header is fixed and transparent over the hero, turns glass past it (`.nr-solid`, the same 0.94 bar, not the
+  kit's 0.82 doubled-logo value), hides on scroll down (`.nr-hide`) and goes cream while the menu is open
+  (`.nr-open`). Focus entering the header un-hides it. Inner pages keep the sticky glass bar unchanged.
+- **CTA band + footer** (`SiteFooter.astro`): taller band, a 52–112px heading whose last word the script sets
+  in italic (`.nr-em`), and an ink button (terracotta sat at about 2.4:1 against champagne). The hair-band
+  texture is back at 10% grayscale multiply, which partly reverses the 2026-08-25 removal. Footer links draw an
+  underline on hover.
+- **New files**: `src/styles/motion.css` (7192 B) holds JS-gated rules only. `src/scripts/refresh.ts` (12167 B)
+  holds the kit script as a module, with its injection paths removed. It skips the white logo's two
+  `display="none"` O alternates when bucketing the 4 letters. Lenis runs only in motion mode: anchors route
+  through it (except `.skip-link` and missing targets), and it stops while the menu is open. Base.astro also
+  adds `--ease`/`--ease-io`, `::selection` as cream on terracotta, and `html.lenis.lenis-smooth
+  { scroll-behavior: auto }`.
+- **Deps**: `lenis` 1.3.26 and `@playwright/test` 1.63.0 (dev), both exact. `npm run e2e` was added, and
+  `tests/e2e/__shots__/` is gitignored.
+- **Tests**: `tests/home-render.test.ts` (33, Container API, sv + en) covers the new strings' presence, the cue, strip head + localized
+  link, captions 01–05 aria-hidden, exactly 2 owners with i18n tags, rosters with no owners, flag-only,
+  role-only, three owners, a malformed row and an empty roster, a kv override, a blank-EN fall-through, the
+  unchanged fc-head text, and `isOwnerRow`/`asStylist` cases. `tests/e2e/home-refresh.spec.ts` has 34 checks:
+  the kit's 15 with selectors renamed, plus reduced-motion track scroll, `/en`, 3 inner pages, the 1340/1341
+  boundary in sv + en, no-JS, header hide/show/focus, the skip link, anchor with/without target, menu + wheel,
+  hover-less tablet tap, phone tap, and 13 screenshots. Mutation check: dropping the skip-link exclusion or the
+  menu `lenis.stop()` fails its test.
+- **Not added**: the `!important` build gate. The tree is not clean: `tokens.css:133` carries 2 occurrences on 1
+  line (its reduced-motion kill-switch).
+
+**Gates** (baseline 723/723 from the entry above): `npm test` → 756 passed / 31 files (+33, all in
+`home-render.test.ts`) · `tsc` clean · `astro check` 0 errors / 0 warnings / 6 hints (pre-existing) · `astro build`
+Complete · `npm run e2e` → 34 passed (Chromium, `wrangler dev` via `npm run preview -- --port 4321`).

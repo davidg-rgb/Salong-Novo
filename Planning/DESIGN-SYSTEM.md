@@ -105,7 +105,9 @@ eyebrow/label-caps 11px / 600 / 0.15–0.22em tracking, uppercase. Headlines tra
   `clamp(88px, 13vw, 170px)`. Intentional asymmetry — align text blocks to one side, let
   imagery bleed; stagger editorial cards vertically.
 - **Spacing rhythm:** 8px base.
-- **Glass:** only the sticky header (high-opacity white blur), never decoratively.
+- **Glass:** only the header (high-opacity white blur), never decoratively. Sticky on every
+  page but the home page, where (since 2026-09-30, with JS) it floats over the hero: transparent
+  with cream type there, glass once the hero has scrolled past, hidden while reading down.
 
 ---
 
@@ -137,7 +139,9 @@ eyebrow/label-caps 11px / 600 / 0.15–0.22em tracking, uppercase. Headlines tra
 
 ### Nav
 - Sticky glass header, NOVO wordmark (Playfair, wide tracking), uppercase grotesk links with
-  bronze underline-on-hover, SV/EN toggle, terracotta BOKA.
+  an underline-on-hover in the link's own colour, SV/EN toggle, terracotta BOKA.
+- 2026-09-30: full-width bar, every tab on one line, hamburger at ≤1340px. Home page only: fixed
+  over the hero (transparent → glass → hidden on scroll down), see Glass above.
 
 ---
 

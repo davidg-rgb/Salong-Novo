@@ -19,6 +19,8 @@ Thumbs.db
 
 # test
 coverage/
+# Playwright screenshots from `npm run e2e` (review artefacts, regenerated each run)
+tests/e2e/__shots__/
 
 # local D1 / wrangler state
 .mf/
