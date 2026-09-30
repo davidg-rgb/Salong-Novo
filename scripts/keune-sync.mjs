@@ -2,9 +2,10 @@
 /**
  * Keep the curated Keune product wall (`content/products.json`, `/butik`) honest
  * against Keune's own public sources: the SE sitemap (is every slug still a live
- * product URL?) and the Shopify feed (has the price moved? what is the image?).
- * The join, parsing and reporting live in `scripts/keune-sync.lib.mjs`, which is
- * unit-tested offline; this file only wires in `fetch` and the filesystem.
+ * product URL?), the Shopify feed (has the price moved?) and each product's page
+ * on keune.com (what is the image?). The feed's images are never used — see
+ * `scripts/keune-sync.lib.mjs`. The join, parsing and reporting live in that lib,
+ * which is unit-tested offline; this file only wires in `fetch` and the filesystem.
  *
  * NEVER run from `astro build` — a build must not depend on Keune being up. Run
  * it by hand (or on a schedule) and commit what it changes.
@@ -16,34 +17,42 @@
  *   node scripts/keune-sync.mjs --check              # report sitemap/feed/price per row; exit 1 if a slug left the sitemap
  *   node scripts/keune-sync.mjs --update [--dry-run] # rewrite matched rows' `price` + `_synced` (blurbs, images, order untouched)
  *   node scripts/keune-sync.mjs --images [--dry-run] [--force]
- *                                                    # download each matched product's first image into public/images/keune/
- *                                                    # (existing files are skipped unless --force; a slug that is
- *                                                    # not ^[a-z0-9-]+$ is refused before any path is built)
+ *                                                    # per row: fetch keune.com/se/p/<slug>/, take the gallery's hero
+ *                                                    # render (else og:image) off Contentful as a 1200px WebP, and save
+ *                                                    # it as public/images/keune/<slug>.webp; prints gallery|og|MISSING
+ *                                                    # per slug (existing files are skipped unless --force; a slug that
+ *                                                    # is not ^[a-z0-9-]+$ is refused before any URL or path is built;
+ *                                                    # a download that is not a WebP is never written)
  *
  * Environment (tests only — both default to the real project paths):
  *   KEUNE_PRODUCTS_JSON  the products document to read (and, for --update, write)
  *   KEUNE_IMAGE_DIR      the folder --images writes into
  * The test suite points both at a temp dir, so no test can touch content/ or public/.
  *
- * Exit codes: 0 ok · 1 check failed, a fetch failed, a download failed or a slug was refused · 2 usage.
+ * Exit codes: 0 ok · 1 check failed, a fetch failed, a download failed, a page had no image
+ * (MISSING) or a slug was refused · 2 usage.
  */
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  BROWSER_UA,
   FEED_PAGE_SIZE,
   FEED_URL,
   SITEMAP_URL,
   applyPriceUpdates,
   checkRows,
   collectFeed,
+  contentfulWebp,
+  extractProductImage,
   formatReport,
-  imageFileName,
   isSafeSlug,
   parseArgs,
   parseSitemapSlugs,
+  productPageUrl,
   summarize,
   todayIso,
+  webpSize,
 } from "./keune-sync.lib.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -54,6 +63,7 @@ const IMAGE_DIR = process.env.KEUNE_IMAGE_DIR
   ? path.resolve(process.env.KEUNE_IMAGE_DIR)
   : path.join(ROOT, "public", "images", "keune");
 const HEADERS = { "User-Agent": "salongnovo.se keune-sync (+https://salongnovo.se)" };
+const PAGE_HEADERS = { "User-Agent": BROWSER_UA, Accept: "text/html,*/*" };
 
 const args = parseArgs(process.argv.slice(2));
 if ("error" in args) {
@@ -62,8 +72,8 @@ if ("error" in args) {
   process.exit(2);
 }
 
-async function fetchOk(url) {
-  const res = await fetch(url, { headers: HEADERS });
+async function fetchOk(url, headers = HEADERS) {
+  const res = await fetch(url, { headers });
   if (!res.ok) throw new Error(`${url} -> HTTP ${res.status}`);
   return res;
 }
@@ -76,51 +86,69 @@ async function main() {
   const rows = doc.products;
 
   if (args.mode === "images") {
-    const feed = await fetchFeed();
-    const entries = checkRows(rows, new Set(), feed);
+    // The product page, not the Shopify feed: the feed's images are regenerated
+    // junk (see the lib's header). The page is fetched even for a file that
+    // exists, so every run — a dry run included — reports each slug's source.
     mkdirSync(IMAGE_DIR, { recursive: true });
-    let downloaded = 0;
-    let skipped = 0;
-    let failed = 0;
-    for (const entry of entries) {
-      // Refused before a path exists: the slug becomes the file name, and a
+    const count = { downloaded: 0, skipped: 0, failed: 0, gallery: 0, og: 0, missing: 0 };
+    for (const row of rows) {
+      const slug = String(row?.slug ?? "");
+      // Refused before a URL or a path exists: the slug becomes both, and a
       // hand-edited row must never be able to write outside IMAGE_DIR.
-      if (!isSafeSlug(entry.slug)) {
-        console.error(`${JSON.stringify(entry.slug)}  unsafe slug (not ^[a-z0-9-]+$) — refused`);
-        failed++;
+      if (!isSafeSlug(slug)) {
+        console.error(`${JSON.stringify(slug)}  unsafe slug (not ^[a-z0-9-]+$) — refused`);
+        count.failed++;
         continue;
       }
-      if (!entry.image) {
-        console.log(`${entry.slug}  no feed image — skipped`);
-        skipped++;
+      const page = productPageUrl(slug);
+      let found;
+      try {
+        found = extractProductImage(await (await fetchOk(page, PAGE_HEADERS)).text());
+      } catch (error) {
+        console.error(`${slug}  page FAILED: ${error.message}`);
+        count.failed++;
         continue;
       }
-      const file = imageFileName(entry.slug, entry.image);
+      if (!found) {
+        console.error(`${slug}  MISSING — no gallery image or og:image on ${page}`);
+        count.missing++;
+        count.failed++;
+        continue;
+      }
+      count[found.source]++;
+      const src = contentfulWebp(found.url);
+      const file = `${slug}.webp`;
       const target = path.join(IMAGE_DIR, file);
       const rel = `/images/keune/${file}`;
-      const row = rows.find((r) => r.slug === entry.slug);
-      const note = row && row.image && row.image !== rel ? ` (row references ${row.image})` : "";
+      const note = row.image && row.image !== rel ? ` (row references ${row.image})` : "";
       if (existsSync(target) && !args.force) {
-        console.log(`${entry.slug}  exists — skipped${note}`);
-        skipped++;
+        console.log(`${slug}  ${found.source}  exists — skipped${note}`);
+        count.skipped++;
         continue;
       }
       if (args.dryRun) {
-        console.log(`${entry.slug}  would download ${entry.image} -> ${rel}${note}`);
+        console.log(`${slug}  ${found.source}  would download ${src} -> ${rel}${note}`);
         continue;
       }
       try {
-        const bytes = Buffer.from(await (await fetchOk(entry.image)).arrayBuffer());
+        const bytes = Buffer.from(await (await fetchOk(src, PAGE_HEADERS)).arrayBuffer());
+        // Checked before the write: an error page or a format Contentful chose
+        // not to convert must never land under a .webp name.
+        const size = webpSize(bytes);
+        if (!size) throw new Error(`not a WebP (${bytes.length} bytes)`);
         writeFileSync(target, bytes);
-        console.log(`${entry.slug}  downloaded ${bytes.length} bytes -> ${rel}${note}`);
-        downloaded++;
+        console.log(`${slug}  ${found.source}  downloaded ${bytes.length} bytes, ${size.width}×${size.height} -> ${rel}${note}`);
+        count.downloaded++;
       } catch (error) {
-        console.error(`${entry.slug}  download FAILED: ${error.message}`);
-        failed++;
+        console.error(`${slug}  ${found.source}  download FAILED: ${error.message}`);
+        count.failed++;
       }
     }
-    console.log(`KEUNE-IMAGES: ${downloaded} downloaded · ${skipped} skipped · ${failed} failed${args.dryRun ? " (dry run)" : ""}`);
-    return failed > 0 ? 1 : 0;
+    console.log(
+      `KEUNE-IMAGES: ${count.downloaded} downloaded · ${count.skipped} skipped · ${count.failed} failed · ` +
+        `${count.gallery} gallery · ${count.og} og · ${count.missing} MISSING${args.dryRun ? " (dry run)" : ""}`,
+    );
+    return count.failed > 0 ? 1 : 0;
   }
 
   const [sitemapXml, feed] = await Promise.all([

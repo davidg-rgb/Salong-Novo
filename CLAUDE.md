@@ -37,7 +37,7 @@ Access (admin) · markdown-it (`html:false`) · Vitest. See `ARCHITECTURE.md`.
 - ✅ **Keune product wall (2026-09-29):** `/butik` + `/en/shop` — 24 curated Keune products
   (`content/products.json`, CMS collection `products`), every CTA a salon-attributed deep link built
   by `src/lib/keune.ts`; stylist `picks` wired but empty; `npm run keune:check` keeps slugs/prices
-  honest. 26 public page files, 702 tests / 30 files. Mechanism: `Planning/KEUNE-KICKBACK.md`.
+  honest. 26 public page files, 723 tests / 30 files. Mechanism: `Planning/KEUNE-KICKBACK.md`.
 - ⏳ **Remaining:** client content for Bokning & priser / Utbildning / Våra brands; RUNBOOK §5 on the
   client's Cloudflare account + domain (Access, DNS); the deferred WebP variant Worker; GA4/consent.
 - **Local dev:** `.dev.vars` (gitignored) sets `DEV_ADMIN_EMAIL` + `ADMIN_API_TOKEN`; run

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from "vitest";
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -37,17 +37,19 @@ import {
   applyPriceUpdates,
   checkRows,
   collectFeed,
-  feedImage,
+  contentfulWebp,
+  extractProductImage,
   feedPrice,
   formatReport,
-  imageFileName,
   isSafeSlug,
   matchProduct,
   parseArgs,
   parseSitemapSlugs,
+  productPageUrl,
   stripNumericSuffix,
   summarize,
   todayIso,
+  webpSize,
 } from "../scripts/keune-sync.lib.mjs";
 
 const ROOT = fileURLToPath(new URL("..", import.meta.url));
@@ -57,6 +59,39 @@ const NBSP = String.fromCharCode(0xa0);
 /** The decoded query of a built link, in order. */
 const params = (href: string) => [...new URL(href).searchParams.entries()];
 const pageSlug = (href: string) => new URL(href).searchParams.get("pageSlug");
+
+/**
+ * A minimal but valid WebP header (30 bytes) declaring `width`×`height` in one
+ * of the three formats — what `webpSize` reads, and what the script's stubbed
+ * Contentful answers with.
+ */
+function webpHeader(kind: "VP8X" | "VP8 " | "VP8L", width: number, height: number): Uint8Array {
+  const b = new Uint8Array(30);
+  const le = (value: number, at: number, bytes: number) => {
+    for (let i = 0; i < bytes; i++) b[at + i] = (value >>> (8 * i)) & 0xff;
+  };
+  b.set(latin("RIFF"), 0);
+  le(22, 4, 4);
+  b.set(latin("WEBP"), 8);
+  b.set(latin(kind), 12);
+  if (kind === "VP8X") {
+    le(width - 1, 24, 3);
+    le(height - 1, 27, 3);
+  } else if (kind === "VP8 ") {
+    b.set([0x9d, 0x01, 0x2a], 23);
+    le(width, 26, 2);
+    le(height, 28, 2);
+  } else {
+    b[20] = 0x2f;
+    le((((height - 1) << 14) | (width - 1)) >>> 0, 21, 4);
+  }
+  return b;
+}
+
+/** One byte per character — for the four-letter RIFF/WebP tags. */
+function latin(text: string): Uint8Array {
+  return Uint8Array.from(text, (c) => c.charCodeAt(0));
+}
 
 describe("keuneLink — the salon-attributed deep link", () => {
   it("is NOVO's salon route", () => {
@@ -224,12 +259,30 @@ describe("content/products.json — the curated wall", () => {
     }
   });
 
-  it("every image is a bundled /images/keune/ asset that EXISTS on disk", () => {
+  it("every image is a bundled /images/keune/<slug>.webp that EXISTS on disk", () => {
     for (const product of products) {
-      expect(product.image, product.slug).toBeDefined();
-      expect(product.image!.startsWith("/images/keune/"), product.slug).toBe(true);
+      expect(product.image, product.slug).toBe(`/images/keune/${product.slug}.webp`);
       expect(existsSync(join(PUBLIC_DIR, product.image!)), product.image).toBe(true);
     }
+  });
+
+  it("every image is a real WebP, square, at least 1000 px, and under 200 KB", () => {
+    // The sanity bar for Keune's Contentful renders (keune-sync --images): the
+    // Shopify feed's files these replaced were up to 1.5 MB, one with a fake
+    // checkerboard baked in. A 16:9 banner picked by mistake fails "square".
+    for (const product of products) {
+      const file = join(PUBLIC_DIR, product.image!);
+      expect(statSync(file).size, product.image).toBeLessThan(200_000);
+      const size = webpSize(readFileSync(file));
+      expect(size, `${product.image} is not a WebP`).not.toBeNull();
+      const { width, height } = size!;
+      expect(Math.max(width, height), product.image).toBeGreaterThanOrEqual(1000);
+      expect(Math.abs(width - height), `${product.image} ${width}×${height}`).toBeLessThanOrEqual(Math.max(width, height) * 0.02);
+    }
+  });
+
+  it("no retired feed PNG is left beside the WebPs", () => {
+    expect(readdirSync(join(PUBLIC_DIR, "images", "keune")).filter((f) => !f.endsWith(".webp"))).toEqual([]);
   });
 
   it("_synced is an ISO date", () => {
@@ -510,13 +563,15 @@ describe("keune-sync lib — sitemap, join, feed", () => {
     expect(matchProduct({ slug: "style-air-flow" }, [])).toBeNull();
   });
 
-  it("price and image are null when the feed has none", () => {
+  it("price is null when the feed has none", () => {
     expect(feedPrice(FEED[0])).toBe("349.00");
     expect(feedPrice({})).toBeNull();
     expect(feedPrice({ variants: [{ price: "  " }] })).toBeNull();
-    expect(feedImage(FEED[0])).toBe("https://cdn.shopify.com/a.png?v=1");
-    expect(feedImage(FEED[1])).toBeNull();
-    expect(feedImage({ images: [{ src: 42 }] })).toBeNull();
+  });
+
+  it("the report carries no feed image — images come from the product page only", () => {
+    const [entry] = checkRows([{ slug: "style-air-flow", title: "Air Flow", price: "349.00" }], new Set(), FEED);
+    expect(entry).not.toHaveProperty("image");
   });
 
   it("paginates until a page comes back empty", async () => {
@@ -555,7 +610,7 @@ describe("keune-sync lib — report and update", () => {
     { handle: "1922-by-j-m-keune-premium-clay-1", title: "Premium Clay", variants: [{ price: "279.00" }] },
   ];
   const rows = [
-    { slug: "style-air-flow", title: "Air Flow", price: "349.00", blurb_sv: "Behåll", image: "/images/keune/style-air-flow.png" },
+    { slug: "style-air-flow", title: "Air Flow", price: "349.00", blurb_sv: "Behåll", image: "/images/keune/style-air-flow.webp" },
     { slug: "1922-by-j-m-keune-premium-clay", title: "Premium Clay", price: "269.00", blurb_sv: "Behåll" },
     { slug: "gone-product", title: "Gone", price: "199.00", blurb_sv: "Behåll" },
   ];
@@ -599,7 +654,7 @@ describe("keune-sync lib — report and update", () => {
     // Blurbs, images and order are never touched.
     expect(next.products.map((p: Record<string, unknown>) => p.slug)).toEqual(rows.map((r) => r.slug));
     expect(next.products.every((p: Record<string, unknown>) => p.blurb_sv === "Behåll")).toBe(true);
-    expect(next.products[0]?.image).toBe("/images/keune/style-air-flow.png");
+    expect(next.products[0]?.image).toBe("/images/keune/style-air-flow.webp");
   });
 
   it("--update leaves a row alone when the report does not line up with it", () => {
@@ -610,17 +665,176 @@ describe("keune-sync lib — report and update", () => {
     expect(changed).toEqual([]);
   });
 
-  it("names a downloaded image after the slug, in the format the CDN serves", () => {
-    expect(imageFileName("style-air-flow", "https://cdn.shopify.com/s/files/Air-Flow.png?v=1788264976")).toBe("style-air-flow.png");
-    expect(imageFileName("x", "https://cdn.shopify.com/x.JPEG")).toBe("x.jpg");
-    expect(imageFileName("x", "https://cdn.shopify.com/x.webp")).toBe("x.webp");
-    expect(imageFileName("x", "https://cdn.shopify.com/x")).toBe("x.png");
-    expect(imageFileName("x", "not a url")).toBe("x.png");
-  });
-
   it("today is Stockholm's date, not UTC's", () => {
     expect(todayIso(new Date("2026-09-29T10:00:00Z"))).toBe("2026-09-29");
     expect(todayIso(new Date("2026-09-29T22:30:00Z"))).toBe("2026-09-30");
+  });
+});
+
+describe("keune-sync lib — the product page image", () => {
+  const CF = "https://images.ctfassets.net/9kjqrnn60hxu";
+  const HERO = `${CF}/01AOcJwDa42LpSDECUWPKO/038160d170dae65abaf80a3327ec6291/3000x3000__1_.png`;
+  const BANNER = `${CF}/7p7DwqljxSTzyHYSYdgrHc/bd3763b8d779c61b9107688e5a581cb8/Banner_2400x1350_-_Sea_Foam.jpg`;
+  const OG = `${CF}/5O4UV91B17g83TE6Sbuyzs/b247be0825a9bc92367fe4cdb73bf8fd/60000002-Keune-Style-Sea-Foam-200-online.jpg`;
+  const OG_META = `<meta property="og:image" content="${OG}?w=1200&amp;h=600&amp;fit=fill"/>`;
+  const asset = (baseUrl: string, title: string, width: number, height: number) => ({
+    baseUrl,
+    contentType: baseUrl.endsWith(".png") ? "image/png" : "image/jpeg",
+    title,
+    description: "",
+    width,
+    height,
+    externalLink: null,
+  });
+  /**
+   * The real `__NEXT_DATA__` of keune.com/se/p/style-sea-foam/ (fetched
+   * 2026-09-30), trimmed to the keys the extractor walks past: a square hero,
+   * then a 16:9 banner, a `thumbnailImage`, and the SEO og image.
+   */
+  const SEA_FOAM = {
+    props: {
+      pageProps: {
+        page: {
+          title: "Sea Foam",
+          slug: "style-sea-foam",
+          name: "Style Sea Foam",
+          productMedia: [
+            {
+              id: "26GWYKdSfAYOGdRaPSbWZc",
+              type: "Image",
+              image: {
+                mobile: asset(HERO, "Asset - Style Sea Foam 200ml", 3000, 3000),
+                desktop: asset(HERO, "Asset - Style Sea Foam 200ml", 3000, 3000),
+                description: "",
+              },
+            },
+            {
+              id: "1zVOh5R8smUK4ISTQcYzYo",
+              type: "Image",
+              image: {
+                mobile: asset(BANNER, "Image Sea Foam Content", 2400, 1350),
+                desktop: asset(BANNER, "Image Sea Foam Content", 2400, 1350),
+                description: "",
+              },
+            },
+          ],
+          thumbnailImage: { url: HERO, width: 3000, height: 3000, title: "Asset - Style Sea Foam 200ml" },
+          seo: { ogImage: `${OG}?w=1200&h=600&fit=fill` },
+        },
+        locale: "se",
+      },
+    },
+    page: "/[locale]/p/[slug]",
+  };
+  /** A storefront page: optional head markup, then `__NEXT_DATA__` (object, raw string, or absent). */
+  const html = (nextData: unknown, head = "") =>
+    `<!DOCTYPE html><html lang="sv"><head><meta charSet="utf-8"/>${head}</head><body><div id="__next"></div>` +
+    (nextData === undefined
+      ? ""
+      : `<script id="__NEXT_DATA__" type="application/json">${typeof nextData === "string" ? nextData : JSON.stringify(nextData)}</script>`) +
+    "</body></html>";
+  const withMedia = (productMedia: unknown) => ({ props: { pageProps: { page: { slug: "x", productMedia } } } });
+
+  it("gallery: the first productMedia render — not the banner after it, not the og image", () => {
+    expect(extractProductImage(html(SEA_FOAM, OG_META))).toEqual({ url: HERO, source: "gallery" });
+  });
+
+  it("gallery: a Video entry first is passed over — its thumbnail is a video frame", () => {
+    const video = {
+      id: "v",
+      type: "Video",
+      video: { url: "https://videos.ctfassets.net/9kjqrnn60hxu/a/b/how-to.mp4", contentType: "video/mp4" },
+      thumbnail: { desktop: asset(`${CF}/f/f/frame.jpg`, "Video thumbnail", 1920, 1080) },
+    };
+    const page = withMedia([video, SEA_FOAM.props.pageProps.page.productMedia[0]]);
+    expect(extractProductImage(html(page))).toEqual({ url: HERO, source: "gallery" });
+  });
+
+  it("gallery: the mobile asset stands in when the desktop one is absent", () => {
+    const page = withMedia([{ type: "Image", image: { mobile: asset(HERO, "m", 3000, 3000) } }]);
+    expect(extractProductImage(html(page))).toEqual({ url: HERO, source: "gallery" });
+  });
+
+  it("gallery: a baseUrl off Contentful (or not https) is not a gallery image", () => {
+    const shopify = withMedia([
+      { type: "Image", image: { desktop: asset("https://cdn.shopify.com/s/files/sea-foam.png", "s", 1024, 1024) } },
+      { type: "Image", image: { desktop: asset("http://images.ctfassets.net/x/y/z.png", "h", 3000, 3000) } },
+      { type: "Image", image: { desktop: { baseUrl: 42 } } },
+      { type: "Image", image: { desktop: { baseUrl: "not a url" } } },
+    ]);
+    expect(extractProductImage(html(shopify, OG_META))).toEqual({ url: `${OG}?w=1200&h=600&fit=fill`, source: "og" });
+    expect(extractProductImage(html(shopify))).toBeNull();
+  });
+
+  it("og: the page's og:image when there is no __NEXT_DATA__, &amp; decoded, attribute order free", () => {
+    expect(extractProductImage(html(undefined, OG_META))).toEqual({ url: `${OG}?w=1200&h=600&fit=fill`, source: "og" });
+    const reversed = `<meta content='${OG}' property='og:image'>`;
+    expect(extractProductImage(html(undefined, reversed))).toEqual({ url: OG, source: "og" });
+  });
+
+  it("og: also when __NEXT_DATA__ parses but its gallery is empty, or not a list", () => {
+    expect(extractProductImage(html(withMedia([]), OG_META))?.source).toBe("og");
+    expect(extractProductImage(html(withMedia({ 0: "nope" }), OG_META))?.source).toBe("og");
+    expect(extractProductImage(html({ props: {} }, OG_META))?.source).toBe("og");
+  });
+
+  it("og: og:image:width and friends are not og:image; an og:image off Contentful is refused", () => {
+    const decoys = `<meta property="og:image:width" content="${OG}"/><meta property="og:image" content="https://cdn.shopify.com/og.jpg"/>`;
+    expect(extractProductImage(html(undefined, decoys))).toBeNull();
+    expect(extractProductImage(html(undefined, `<meta property="og:image"/>`))).toBeNull();
+  });
+
+  it("neither: a page with no gallery image and no og:image is null — MISSING, never guessed", () => {
+    expect(extractProductImage(html(withMedia([])))).toBeNull();
+    expect(extractProductImage("<html><body>502 Bad Gateway</body></html>")).toBeNull();
+  });
+
+  it("malformed: __NEXT_DATA__ that does not parse is null, and falls back to og:image when there is one", () => {
+    const broken = '{"props":{"pageProps":{"page":{"productMedia":[{"image":';
+    expect(extractProductImage(html(broken))).toBeNull();
+    expect(extractProductImage(html(broken, OG_META))).toEqual({ url: `${OG}?w=1200&h=600&fit=fill`, source: "og" });
+  });
+
+  it("empty or absent input is null, not a throw", () => {
+    for (const input of ["", undefined, null, 42, {}]) expect(extractProductImage(input), String(input)).toBeNull();
+  });
+
+  it("contentfulWebp REPLACES any existing query and keeps the asset path", () => {
+    expect(contentfulWebp(`${OG}?w=1200&h=600&fit=fill`)).toBe(`${OG}?fm=webp&w=1200&q=80`);
+    expect(contentfulWebp(HERO)).toBe(`${HERO}?fm=webp&w=1200&q=80`);
+    expect(contentfulWebp(`${HERO}?fm=png&q=5#frag`, { w: 800, q: 70 })).toBe(`${HERO}?fm=webp&w=800&q=70`);
+    expect(new URL(contentfulWebp(HERO)).pathname).toBe(new URL(HERO).pathname);
+  });
+
+  it("contentfulWebp throws on a string that is not a URL", () => {
+    expect(() => contentfulWebp("not a url")).toThrow();
+  });
+
+  it("the product page is keune.com/se/p/<slug>/", () => {
+    expect(productPageUrl("style-sea-foam")).toBe("https://www.keune.com/se/p/style-sea-foam/");
+  });
+
+  it("webpSize reads all three WebP headers", () => {
+    expect(webpSize(webpHeader("VP8X", 1200, 1200))).toEqual({ width: 1200, height: 1200 });
+    expect(webpSize(webpHeader("VP8 ", 1200, 900))).toEqual({ width: 1200, height: 900 });
+    expect(webpSize(webpHeader("VP8L", 1024, 1000))).toEqual({ width: 1024, height: 1000 });
+    expect(webpSize(Buffer.from(webpHeader("VP8X", 3000, 3000)))).toEqual({ width: 3000, height: 3000 });
+  });
+
+  it("webpSize is null for anything that is not a WebP", () => {
+    const riffWave = webpHeader("VP8X", 10, 10);
+    riffWave.set(latin("WAVE"), 8);
+    const otherChunk = webpHeader("VP8X", 10, 10);
+    otherChunk.set(latin("ALPH"), 12);
+    const badStartCode = webpHeader("VP8 ", 10, 10);
+    badStartCode[23] = 0;
+    const badSignature = webpHeader("VP8L", 10, 10);
+    badSignature[20] = 0;
+    const errorPage = new TextEncoder().encode("<html><body>Access denied</body></html>");
+    for (const bytes of [riffWave, otherChunk, badStartCode, badSignature, errorPage, webpHeader("VP8X", 10, 10).subarray(0, 29), new Uint8Array(0)]) {
+      expect(webpSize(bytes)).toBeNull();
+    }
+    for (const notBytes of [undefined, null, "RIFF0000WEBPVP8X", 42, {}]) expect(webpSize(notBytes)).toBeNull();
   });
 });
 
@@ -628,9 +842,10 @@ describe("keune-sync lib — report and update", () => {
  * The script's own exits, driven offline AND SANDBOXED.
  *
  * Offline: a `--import` preload replaces the global `fetch` with a stub
- * configured through `KEUNE_STUB`, so the sitemap, the feed, image bytes and a
- * failing network are all fixtures. The stub answers 404 to anything it was not
- * told about.
+ * configured through `KEUNE_STUB`, so the sitemap, the feed, the product pages,
+ * image bytes and a failing network are all fixtures. The stub answers 404 to
+ * anything it was not told about, and logs every URL it is asked for, so a test
+ * can prove a request was — or was never — made.
  *
  * Sandboxed: every run gets its own temp dir through `KEUNE_PRODUCTS_JSON` and
  * `KEUNE_IMAGE_DIR`, holding a HAND-BUILT products document — never the shipped
@@ -647,7 +862,7 @@ describe("keune-sync script — exits (sandboxed)", () => {
     line: "care",
     title,
     price,
-    image: `/images/keune/${slug}.png`,
+    image: `/images/keune/${slug}.webp`,
     blurb_sv: `Text om ${title}`,
     blurb_en: `Text about ${title}`,
   });
@@ -655,12 +870,21 @@ describe("keune-sync script — exits (sandboxed)", () => {
   const sitemapFor = (rows: Row[]) =>
     `<urlset>${rows.map((r) => `<url><loc>https://www.keune.com/se/p/${r.slug}/</loc></url>`).join("")}</urlset>`;
   const feedFor = (rows: Row[]) =>
-    rows.map((r) => ({
-      handle: r.slug,
-      title: r.title,
-      variants: [{ price: r.price }],
-      images: [{ src: `https://cdn.example/${encodeURIComponent(r.slug)}.png` }],
-    }));
+    rows.map((r) => ({ handle: r.slug, title: r.title, variants: [{ price: r.price }] }));
+  /** Product pages as keune.com serves them: the hero in `__NEXT_DATA__`, only an og:image, or neither. */
+  const heroOf = (slug: string) => `https://images.ctfassets.net/fixture/${slug}/hero.png`;
+  const ogOf = (slug: string) => `https://images.ctfassets.net/fixture/${slug}/og.jpg`;
+  const galleryPage = (slug: string) =>
+    `<html><head></head><body><script id="__NEXT_DATA__" type="application/json">${JSON.stringify({
+      props: { pageProps: { page: { slug, productMedia: [{ type: "Image", image: { desktop: { baseUrl: heroOf(slug) } } }] } } },
+    })}</script></body></html>`;
+  const ogPage = (slug: string) =>
+    `<html><head><meta property="og:image" content="${ogOf(slug)}?w=1200&amp;h=600&amp;fit=fill"/></head><body></body></html>`;
+  const barePage = "<html><head><title>Keune</title></head><body>no media</body></html>";
+  const WEBP = webpHeader("VP8X", 1200, 1200);
+  const WEBP64 = btoa(String.fromCharCode(...WEBP));
+  /** The URLs a run requested, in order (the stub appends one per fetch). */
+  const requested = (box: Box) => (existsSync(box.log) ? readFileSync(box.log, "utf8").split("\n").filter(Boolean) : []);
 
   /** A temp dir with `products.json` and an empty `images/` — all the script ever sees. */
   function sandbox(products: Row[] = FIXTURE) {
@@ -670,7 +894,10 @@ describe("keune-sync script — exits (sandboxed)", () => {
     const imageDir = join(dir, "images");
     mkdirSync(imageDir);
     writeFileSync(productsJson, `${JSON.stringify({ _note: "fixture", _synced: "2026-01-01", products }, null, 2)}\n`);
-    return { dir, productsJson, imageDir };
+    // The request log sits beside the sandbox, not in it, so "nothing but
+    // images/ and products.json in the sandbox" stays checkable.
+    const log = `${dir}.requests.log`;
+    return { dir, productsJson, imageDir, log };
   }
   type Box = ReturnType<typeof sandbox>;
 
@@ -680,13 +907,23 @@ describe("keune-sync script — exits (sandboxed)", () => {
     writeFileSync(
       stub,
       [
+        "import { appendFileSync } from 'node:fs';",
         "const cfg = JSON.parse(process.env.KEUNE_STUB || '{}');",
+        "const PAGE = 'https://www.keune.com/se/p/';",
         "globalThis.fetch = async (input) => {",
         "  const url = String(input);",
+        "  if (cfg.log) appendFileSync(cfg.log, url + String.fromCharCode(10));",
         "  if (cfg.offline) throw new Error('offline (stub)');",
         "  const reply = (status, body) => new Response(typeof body === 'string' ? body : JSON.stringify(body), { status });",
         "  if (url.includes('pages_sitemap.xml')) return reply(cfg.sitemapStatus ?? 200, cfg.sitemap ?? '');",
-        "  if (cfg.imageBody && url.startsWith('https://cdn.example/')) return reply(200, cfg.imageBody);",
+        "  if (url.startsWith(PAGE)) {",
+        "    const html = (cfg.pages ?? {})[decodeURIComponent(url.slice(PAGE.length).replace(/[/]$/, ''))];",
+        "    return html === undefined ? reply(404, '') : reply(200, html);",
+        "  }",
+        "  if (url.startsWith('https://images.ctfassets.net/')) {",
+        "    if (cfg.imageBase64) return new Response(Buffer.from(cfg.imageBase64, 'base64'), { status: 200 });",
+        "    if (cfg.imageText) return reply(200, cfg.imageText);",
+        "  }",
         "  if (url.includes('products.json')) {",
         "    const page = Number(new URL(url).searchParams.get('page'));",
         "    return reply(200, { products: (cfg.feedPages ?? [])[page - 1] ?? [] });",
@@ -704,7 +941,7 @@ describe("keune-sync script — exits (sandboxed)", () => {
       encoding: "utf8",
       env: {
         ...process.env,
-        KEUNE_STUB: JSON.stringify(stub),
+        KEUNE_STUB: JSON.stringify({ log: box.log, ...stub }),
         KEUNE_PRODUCTS_JSON: box.productsJson,
         KEUNE_IMAGE_DIR: box.imageDir,
       },
@@ -768,54 +1005,129 @@ describe("keune-sync script — exits (sandboxed)", () => {
     expect(text).toBe(`${JSON.stringify(doc, null, 2)}\n`);
   });
 
-  it("--images skips files that exist and a product the feed has no image for", () => {
-    const box = sandbox();
-    writeFileSync(join(box.imageDir, "fixture-two.png"), "existing");
-    const noImage = feedFor(FIXTURE).map((p, i) => (i === 0 ? { ...p, images: [] } : p));
-    const result = run(box, ["--images", "--dry-run"], { feedPages: [noImage] });
-    expect(result.status, result.stderr).toBe(0);
-    expect(result.stdout).toContain("fixture-one  no feed image — skipped");
-    expect(result.stdout).toContain("fixture-two  exists — skipped");
-    expect(result.stdout).toContain("KEUNE-IMAGES: 0 downloaded · 2 skipped · 0 failed (dry run)");
+  it("--images sources each slug from its product page: gallery, og fallback, MISSING ⇒ exit 1", () => {
+    // fixture-one still references the retired .png: the run says so beside the
+    // download. fixture-three's page has no image at all: nothing is written.
+    const stale = { ...FIXTURE[0]!, image: "/images/keune/fixture-one.png" };
+    const box = sandbox([stale, FIXTURE[1]!, row("fixture-three", "Fixture Three", "300.00")]);
+    const result = run(box, ["--images"], {
+      pages: { "fixture-one": galleryPage("fixture-one"), "fixture-two": ogPage("fixture-two"), "fixture-three": barePage },
+      imageBase64: WEBP64,
+    });
+    expect(result.status).toBe(1);
+    expect(result.stdout).toContain(
+      "fixture-one  gallery  downloaded 30 bytes, 1200×1200 -> /images/keune/fixture-one.webp (row references /images/keune/fixture-one.png)",
+    );
+    expect(result.stdout).toContain("fixture-two  og  downloaded 30 bytes, 1200×1200 -> /images/keune/fixture-two.webp");
+    expect(result.stderr).toContain("fixture-three  MISSING — no gallery image or og:image on https://www.keune.com/se/p/fixture-three/");
+    expect(result.stdout).toContain("KEUNE-IMAGES: 2 downloaded · 0 skipped · 1 failed · 1 gallery · 1 og · 1 MISSING");
+    expect(readdirSync(box.imageDir).sort()).toEqual(["fixture-one.webp", "fixture-two.webp"]);
+    // Contentful was asked for a WebP, with the og image's own query REPLACED —
+    // and the Shopify feed was never asked for anything.
+    const urls = requested(box);
+    expect(urls).toContain(`${heroOf("fixture-one")}?fm=webp&w=1200&q=80`);
+    expect(urls).toContain(`${ogOf("fixture-two")}?fm=webp&w=1200&q=80`);
+    expect(urls.some((u) => u.includes("products.json") || u.includes("cdn.shopify.com"))).toBe(false);
   });
 
-  it("--images downloads into the image dir and nowhere else", () => {
-    const box = sandbox();
-    const result = run(box, ["--images"], { feedPages: [feedFor(FIXTURE)], imageBody: "PNGDATA" });
+  it("--images downloads into the image dir and nowhere else, exit 0", () => {
+    // fixture-two has a blank image (the removal path): it still downloads, with no note.
+    const box = sandbox([FIXTURE[0]!, { ...FIXTURE[1]!, image: "" }]);
+    const result = run(box, ["--images"], {
+      pages: { "fixture-one": galleryPage("fixture-one"), "fixture-two": galleryPage("fixture-two") },
+      imageBase64: WEBP64,
+    });
     expect(result.status, result.stderr).toBe(0);
-    expect(readdirSync(box.imageDir).sort()).toEqual(["fixture-one.png", "fixture-two.png"]);
-    expect(readFileSync(join(box.imageDir, "fixture-one.png"), "utf8")).toBe("PNGDATA");
-    expect(result.stdout).toContain("KEUNE-IMAGES: 2 downloaded · 0 skipped · 0 failed");
+    expect(readdirSync(box.imageDir).sort()).toEqual(["fixture-one.webp", "fixture-two.webp"]);
+    expect([...readFileSync(join(box.imageDir, "fixture-one.webp"))]).toEqual([...WEBP]);
+    expect(readdirSync(box.dir).sort()).toEqual(["images", "products.json"]);
+    // Rows already pointing at the .webp, or blank, get no "row references" note.
+    expect(result.stdout).not.toContain("row references");
+    expect(result.stdout).toContain("KEUNE-IMAGES: 2 downloaded · 0 skipped · 0 failed · 2 gallery · 0 og · 0 MISSING");
   });
 
-  it("--images refuses an unsafe slug before building a path: warned, skipped, counted as failed", () => {
+  it("--images --dry-run still reads every page, skips an existing file, and downloads nothing", () => {
+    const box = sandbox();
+    writeFileSync(join(box.imageDir, "fixture-two.webp"), "existing");
+    const result = run(box, ["--images", "--dry-run"], {
+      pages: { "fixture-one": galleryPage("fixture-one"), "fixture-two": ogPage("fixture-two") },
+      imageBase64: WEBP64,
+    });
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout).toContain(
+      `fixture-one  gallery  would download ${heroOf("fixture-one")}?fm=webp&w=1200&q=80 -> /images/keune/fixture-one.webp`,
+    );
+    expect(result.stdout).toContain("fixture-two  og  exists — skipped");
+    expect(result.stdout).toContain("KEUNE-IMAGES: 0 downloaded · 1 skipped · 0 failed · 1 gallery · 1 og · 0 MISSING (dry run)");
+    expect(readdirSync(box.imageDir)).toEqual(["fixture-two.webp"]);
+    expect(readFileSync(join(box.imageDir, "fixture-two.webp"), "utf8")).toBe("existing");
+    expect(requested(box).some((u) => u.startsWith("https://images.ctfassets.net/"))).toBe(false);
+  });
+
+  it("--images refuses an unsafe slug before building a URL or a path: warned, never fetched, counted as failed", () => {
     // Hand-built rows the admin could never produce but a hand-edited JSON could:
     // a traversal, a space + capitals, an empty slug. Only the safe row may land,
-    // and nothing may appear outside the image dir.
+    // nothing may appear outside the image dir, and no page is requested for
+    // the refused rows even though the stub would serve them.
     const box = sandbox([row("../escape", "Escape", "1.00"), row("Bad Slug", "Bad", "1.00"), row("", "Blank Title", "1.00"), FIXTURE[0]!]);
     const result = run(box, ["--images"], {
-      feedPages: [feedFor([row("../escape", "Escape", "1.00"), row("Bad Slug", "Bad", "1.00"), row("blank-title", "Blank Title", "1.00"), FIXTURE[0]!])],
-      imageBody: "PNGDATA",
+      pages: { "../escape": galleryPage("escape"), "Bad Slug": galleryPage("bad"), "": galleryPage("blank"), "fixture-one": galleryPage("fixture-one") },
+      imageBase64: WEBP64,
     });
     expect(result.status).toBe(1);
     expect(result.stderr).toContain('"../escape"  unsafe slug');
     expect(result.stderr).toContain('"Bad Slug"  unsafe slug');
     expect(result.stderr).toContain('""  unsafe slug');
-    expect(result.stdout).toContain("KEUNE-IMAGES: 1 downloaded · 0 skipped · 3 failed");
-    expect(readdirSync(box.imageDir)).toEqual(["fixture-one.png"]);
-    expect(existsSync(join(box.dir, "escape.png"))).toBe(false);
+    expect(result.stdout).toContain("KEUNE-IMAGES: 1 downloaded · 0 skipped · 3 failed · 1 gallery · 0 og · 0 MISSING");
+    expect(readdirSync(box.imageDir)).toEqual(["fixture-one.webp"]);
+    expect(existsSync(join(box.dir, "escape.webp"))).toBe(false);
     expect(readdirSync(box.dir).sort()).toEqual(["images", "products.json"]);
+    expect(requested(box)).toEqual([
+      "https://www.keune.com/se/p/fixture-one/",
+      `${heroOf("fixture-one")}?fm=webp&w=1200&q=80`,
+    ]);
+  });
+
+  it("--images: a product page that fails to load exits 1, and the other rows still run", () => {
+    const box = sandbox();
+    const result = run(box, ["--images"], { pages: { "fixture-two": galleryPage("fixture-two") }, imageBase64: WEBP64 });
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("fixture-one  page FAILED: https://www.keune.com/se/p/fixture-one/ -> HTTP 404");
+    expect(result.stdout).toContain("KEUNE-IMAGES: 1 downloaded · 0 skipped · 1 failed · 1 gallery · 0 og · 0 MISSING");
+    expect(readdirSync(box.imageDir)).toEqual(["fixture-two.webp"]);
+  });
+
+  it("--images: a network failure on the page is a page failure, exit 1, nothing written", () => {
+    const box = sandbox([FIXTURE[0]!]);
+    const result = run(box, ["--images"], { offline: true });
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("fixture-one  page FAILED: offline (stub)");
+    expect(readdirSync(box.imageDir)).toEqual([]);
   });
 
   it("--images --force exits 1 when a download fails, and writes nothing for it", () => {
-    // No imageBody: the stub answers 404 to the image URL, so the failure path
-    // runs before any write and the existing file keeps its bytes.
+    // No image in the stub: Contentful answers 404, so the failure path runs
+    // before any write and the existing file keeps its bytes.
     const box = sandbox([FIXTURE[0]!]);
-    const target = join(box.imageDir, "fixture-one.png");
+    const target = join(box.imageDir, "fixture-one.webp");
     writeFileSync(target, "ORIGINAL");
-    const result = run(box, ["--images", "--force"], { feedPages: [feedFor([FIXTURE[0]!])] });
+    const result = run(box, ["--images", "--force"], { pages: { "fixture-one": galleryPage("fixture-one") } });
     expect(result.status).toBe(1);
-    expect(result.stderr).toContain("download FAILED");
+    expect(result.stderr).toContain("fixture-one  gallery  download FAILED:");
+    expect(result.stderr).toContain("HTTP 404");
+    expect(readFileSync(target, "utf8")).toBe("ORIGINAL");
+  });
+
+  it("--images --force refuses a download that is not a WebP, and writes nothing for it", () => {
+    const box = sandbox([FIXTURE[0]!]);
+    const target = join(box.imageDir, "fixture-one.webp");
+    writeFileSync(target, "ORIGINAL");
+    const result = run(box, ["--images", "--force"], {
+      pages: { "fixture-one": galleryPage("fixture-one") },
+      imageText: "<html><body>Access denied</body></html>",
+    });
+    expect(result.status).toBe(1);
+    expect(result.stderr).toContain("fixture-one  gallery  download FAILED: not a WebP (39 bytes)");
     expect(readFileSync(target, "utf8")).toBe("ORIGINAL");
   });
 

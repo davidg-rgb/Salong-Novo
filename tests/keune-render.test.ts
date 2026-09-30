@@ -145,12 +145,12 @@ describe("ProductGrid — rendered", () => {
 
   it("(a) a blank image renders the typeset frame — and no <img> — for that card only", async () => {
     state.rows.products = [
-      product({ slug: "fx-imaged", title: "Fixture Imaged", image: "/images/keune/style-air-flow.png" }),
+      product({ slug: "fx-imaged", title: "Fixture Imaged", image: "/images/keune/style-air-flow.webp" }),
       product({ slug: "fx-blank", title: "Fixture Blank", image: "" }),
     ];
     const html = await render(ProductGrid);
     const [imaged, blank] = cards(html);
-    expect(images(imaged!)).toEqual([expect.objectContaining({ src: "/images/keune/style-air-flow.png", alt: "" })]);
+    expect(images(imaged!)).toEqual([expect.objectContaining({ src: "/images/keune/style-air-flow.webp", alt: "" })]);
     expect(imaged).not.toContain("shot--type");
     expect(images(blank!)).toEqual([]);
     expect(blank).toMatch(/class="shot shot--type"[^>]*aria-hidden="true"[^>]*>\s*<span[^>]*>Fixture Blank<\/span>/);

@@ -838,3 +838,38 @@ every project, so this NOVO-specific line lives here and in `Planning/KEUNE-KICK
 **Gates** (baseline 681/681 from the entry above): `npm run test` → 702 passed / 30 files (+6
 `keune.test.ts`, +15 `keune-render.test.ts`) · `tsc` clean · `astro check` 0 errors / 0 warnings / 6 hints
 (pre-existing) · `astro build` Complete.
+
+### 2026-09-30 — /butik images re-sourced: Keune's real Contentful renders as WebP (the feed's PNGs were junk)
+The Shopify feed's `images[].src` files shipped in the entry above are NOT Keune's renders: `style-sea-foam`'s
+was a regenerated 1024×1024 PNG with a fake checkerboard baked into the alpha (987 KB). Found by David.
+
+- **Source**: each product page `keune.com/se/p/<slug>/` (browser-like UA). Hero = the first
+  `props.pageProps.page.productMedia[i]` with `image.desktop.baseUrl` (else `.mobile`) on
+  `images.ctfassets.net`; `og:image` (Contentful only) is the fallback. Read off all 24 pages: entry 0 is the
+  square packshot everywhere (3000×3000, Claytime 4454×4454); `Video` entries are passed over; `thumbnailImage`
+  is never read (Vital Nutrition Shampoo's is the conditioner). All 24 resolved via `gallery`, 0 `og`.
+- **Transform**: Contentful Images API `?fm=webp&w=1200&q=80`, replacing any existing query. The script checks
+  the RIFF/WEBP header before writing (`webpSize`), so an error page never lands under a `.webp` name.
+- **Lib** `scripts/keune-sync.lib.mjs`: `extractProductImage`, `contentfulWebp`, `webpSize`, `productPageUrl`,
+  `BROWSER_UA`; `feedImage` + `imageFileName` retired and `checkRows` no longer carries a feed image — the feed is
+  prices/handles only.
+- **`--images`** no longer fetches the feed. Per row: unsafe-slug guard (before any URL or path) → page →
+  `gallery|og|MISSING` → `<slug>.webp` (skip existing unless `--force`; `--dry-run` still reads every page).
+  Exit 1 on any refused slug, page failure, MISSING or failed/non-WebP download.
+- **Files**: 24 `public/images/keune/<slug>.webp`, 1200×1200 each, 12–30 KB, 491 KB total (was 24 PNGs, 4.9 MB,
+  largest 1.5 MB — `git rm`'d). `content/products.json`: `image` → `.webp` on all 24 rows, `_source` rewritten,
+  `_licence` kept (source clause corrected; the go-live gate is unchanged). `ProductGrid.astro` unchanged: the
+  `<img>` sits in a fixed 1:1 box (`object-fit: contain`), so it needs no `width`/`height`.
+- **Tests** (`tests/keune.test.ts`): shipped images are `<slug>.webp`, real WebP, square, ≥ 1000 px, < 200 KB, and
+  no non-WebP file remains; extractor on a trimmed real Sea Foam `__NEXT_DATA__` (gallery beats banner and og),
+  Video-first, mobile-only, off-Contentful, og-only (`&amp;`, attribute order), decoy `og:image:width`,
+  neither, malformed JSON (⇒ null; ⇒ og when present), empty/absent input; `contentfulWebp` query replace +
+  path kept + throws on a non-URL; `webpSize` VP8X/VP8/VP8L + seven non-WebP byte inputs and five non-byte values. Spawned `--images`:
+  gallery/og/MISSING ⇒ exit 1 (and the request log proves Contentful was asked for `fm=webp` and the feed was
+  never asked), clean run ⇒ exit 0, dry run, unsafe slug never fetched, page 404, offline, image 404, non-WebP
+  body. `tests/keune-render.test.ts` fixture path → `.webp`.
+
+**Gates** (baseline 702/702 from the entry above): `npm run test` → 723 passed / 30 files (+21, all in
+`keune.test.ts`) · `tsc` clean · `astro check` 0 errors / 0 warnings / 6 hints (pre-existing) · `astro build`
+Complete · `keune-sync --check` → `KEUNE-CHECK: 24/24 in sitemap · 24/24 in feed · 0 price drift` ·
+`--images --dry-run` → `KEUNE-IMAGES: 0 downloaded · 24 skipped · 0 failed · 24 gallery · 0 og · 0 MISSING (dry run)`.

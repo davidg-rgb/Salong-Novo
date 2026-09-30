@@ -64,14 +64,31 @@ bar shows either way, and attribution is set either way.
 
 - **Product URLs (canonical):** `https://www.keune.com/se/pages_sitemap.xml` — 197 `/se/p/<slug>/` URLs
   on 2026-09-29. This slug is what `pageSlug` needs.
-- **Prices, images, availability:** Shopify's public feed `https://checkout-se.keune.com/products.json`
-  (190 products, 250/page, all `available: true` at research time, images on `cdn.shopify.com`).
+- **Prices, handles, availability:** Shopify's public feed `https://checkout-se.keune.com/products.json`
+  (190 products, 250/page, all `available: true` at research time).
   155 of the 197 sitemap slugs equal the Shopify `handle`; the rest differ by a `-1` suffix or similar,
   so join on `handle` with the numeric suffix stripped, then on title. Tags worth using: `care new`,
   `new`, `travelsize`, `bundel`, `featured`, `out-of-stock`.
-- **Images:** Keune's product renders are on Shopify's CDN. Hot-linking works technically but is not
-  ours to rely on; ask Keune for product-shot usage in the same mail as the logo approval (the Keune
-  logo is still under the go-live gate), or generate our own editorial shots as done for categories.
+- **Images — NOT from the feed** (corrected 2026-09-30). The feed's `images[].src` files on
+  `cdn.shopify.com` are unusable: regenerated copies, not Keune's renders — `style-sea-foam`'s is a
+  1024×1024 PNG with a fake checkerboard baked into the alpha (987 KB). The first cut of `/butik`
+  shipped those (24 PNGs, 4.9 MB, largest 1.5 MB); they are gone.
+- **Images — the source:** each product page `https://www.keune.com/se/p/<slug>/` (fetched with a
+  browser-like User-Agent). Its `<script id="__NEXT_DATA__">` carries the gallery keune.com renders;
+  the hero is **`props.pageProps.page.productMedia[0].image.desktop.baseUrl`** (`.mobile.baseUrl` is
+  the same asset), hosted on Contentful (`images.ctfassets.net`). On all 24 curated pages (2026-09-30)
+  entry 0 is the square packshot, 3000×3000 (Claytime 4454×4454); later entries are 16:9 banners or
+  `type: "Video"` entries (their `thumbnail` is a video frame). Two traps: `page.thumbnailImage` is
+  wrong on at least one page (Vital Nutrition Shampoo's is the conditioner), and `og:image` is a
+  different packshot JPEG requested as a 1200×600 fill — usable only as the fallback, with its query
+  replaced.
+- **The WebP transform:** Contentful's Images API re-encodes on request — append
+  `?fm=webp&w=1200&q=80` (replacing any existing query). Sea Foam's 3000×3000 PNG comes back as a
+  1200×1200 WebP of 21 KB. `npm run keune:images` does exactly this into
+  `public/images/keune/<slug>.webp` (all 24: 1200×1200, 12–30 KB each, 491 KB in total).
+- **Permission:** hot-linking would work technically but is not ours to rely on, so the files are
+  bundled; product-shot usage is asked for in the same mail as the logo approval (the Keune logo is
+  still under the go-live gate). Without it by go-live, the rows' `image` is blanked (typeset cards).
 
 ## Options for the NOVO site
 
@@ -130,12 +147,14 @@ Option B is live in the codebase (not yet deployed):
 - `src/lib/keune.ts` — the builder above as `keuneLink` / `keuneGenericLink` (constant renamed
   `KEUNE_SALON_NO`), plus slug/campaign normalisation. Every Keune link on the site goes through it.
 - `content/products.json` — 24 curated products (care 12, style 6, 1922 4, so-pure 2) with NOVO's own
-  blurbs; images in `public/images/keune/`. Client-editable as the "Butiken (Keune)" list in the admin.
+  blurbs; images `public/images/keune/<slug>.webp` (Contentful renders, see Data sources). Client-editable
+  as the "Butiken (Keune)" list in the admin.
 - `/butik` + `/en/shop` — the product wall; `utm_campaign` per placement: `butik-<line>`, `butik-all`,
   `varumarken` (the Keune card on Våra brands), `personal-<stylist-slug>` (picks).
 - Stylist picks — a `picks` list on every stylist, rendered in the team modal (max 3); all empty.
 - `scripts/keune-sync.mjs` — `npm run keune:check` (fails if a slug leaves the sitemap),
-  `keune:update` (prices + `_synced`), `keune:images`. JSON defaults only; D1 rows are the client's.
+  `keune:update` (prices + `_synced`), `keune:images` (product page → Contentful WebP; exit 1 on any
+  MISSING image or failed download). JSON defaults only; D1 rows are the client's.
 
 Open client inputs:
 

@@ -13,7 +13,7 @@ on **Cloudflare**, with a staff-writable blog.
 
 | Layer | State |
 |-------|-------|
-| Core logic (i18n, slug, markdown, images, posts, db, seo, redirects, content, keune) | ✅ Built + **702 tests passing** (30 files, 2026-09-29) |
+| Core logic (i18n, slug, markdown, images, posts, db, seo, redirects, content, keune) | ✅ Built + **723 tests passing** (30 files, 2026-09-30) |
 | App (Astro + Cloudflare): layout, components, all pages (SV+EN), blog, admin API, SEO | ✅ Builds green, `tsc` clean |
 | Visual design | ⏳ **Gated on direction pick** (A–F or Stitch) — neutral placeholder tokens in `src/styles/tokens.css` |
 | Cloudflare resources (D1, R2, Access) | ⏳ Create at deploy (see below) |
@@ -25,7 +25,7 @@ choosing a direction means **restyling** (tokens + component CSS), not rebuildin
 
 ```bash
 npm install
-npm test            # 702 unit tests (vitest, incl. Astro Container render tests)
+npm test            # 723 unit tests (vitest, incl. Astro Container render tests)
 npm run typecheck   # tsc --noEmit
 npm run dev         # Astro dev server (static pages; blog/admin need wrangler)
 npm run build       # production build -> dist/
@@ -55,7 +55,7 @@ npm run db:migrate:remote            # ...and to the remote D1
 | `npm run bildbank:seed:local` / `:remote` | Seed the admin media library with the shipped photographs (`scripts/bildbank-seed.mjs`) |
 | `npm run keune:check` | Check every curated product in `content/products.json` against Keune's SE sitemap + Shopify feed; exit 1 if a slug left the sitemap |
 | `npm run keune:update` | Rewrite matched rows' `price` + `_synced` from the feed (`-- --dry-run` to preview) |
-| `npm run keune:images` | Download each matched product's first image into `public/images/keune/` (skips existing; `-- --force`, `-- --dry-run`) |
+| `npm run keune:images` | Fetch each product's keune.com page and save its gallery render (og:image as fallback) from Contentful as `public/images/keune/<slug>.webp` (1200 px); reports `gallery`/`og`/`MISSING` per slug, exit 1 on any MISSING or failed download (skips existing; `-- --force`, `-- --dry-run`) |
 
 ## Key facts (verified from live site, 2026-05-31)
 
