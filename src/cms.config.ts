@@ -19,14 +19,22 @@
  *
  * WHERE THE DEFAULTS LIVE, and why nothing is seeded into D1: site facts in
  * `content/site.json`, page copy in `src/lib/pagecopy.ts` (folded into the i18n
- * dictionary by `pageCopyDict()`), lists in `content/{staff,services,awards}.json`.
+ * dictionary by `pageCopyDict()`), lists in
+ * `content/{staff,services,awards,brands,courses,products}.json`.
  * Row existence is provenance — no row means the developer default renders, and
  * the admin shows it as a grey ghost with a placeholder badge. Seeding would
  * make every field look client-approved on day one, which is the one thing the
  * model exists to prevent.
  */
 import type { CmsConfig, CollectionDef } from "./lib/cms/config-types";
-import { flatAwards, getBrands, getCourses, getServices, getStaff } from "./lib/content";
+import {
+  flatAwards,
+  getBrands,
+  getCourses,
+  getProducts,
+  getServices,
+  getStaff,
+} from "./lib/content";
 import { paraKeys } from "./lib/pagecopy";
 
 /**
@@ -80,6 +88,14 @@ export const STAFF: CollectionDef = {
     { name: "bio", kind: "textarea", label: "Presentation", bilingual: true, maxLen: 1200 },
     { name: "awards", kind: "list", label: "Utmärkelser", maxItems: 12, maxLen: 140 },
     { name: "photo", kind: "image", label: "Porträtt" },
+    /**
+     * The stylist's own Keune favourites, shown in their team-page card as up to
+     * three links. One product NYCKEL per line — the `slug` of a row in the
+     * Butiken list; anything else is dropped at render, not linked. Ships empty
+     * for everyone: nobody has chosen yet, and a pick is a personal
+     * recommendation under a real name.
+     */
+    { name: "picks", kind: "list", label: "Keune-favoriter (produktnyckel, max 3)", maxItems: 3, maxLen: 120 },
   ],
 };
 
@@ -198,6 +214,38 @@ export const COURSES: CollectionDef = {
     { name: "price", kind: "text", label: "Pris", maxLen: 60 },
     { name: "link", kind: "url", label: "Anmälningslänk" },
     { name: "image", kind: "image", label: "Bild" },
+  ],
+};
+
+/**
+ * The curated Keune product wall on `/butik` (2026-09-29, `Planning/KEUNE-KICKBACK.md`).
+ *
+ * `slug` is Keune's own `/se/p/<slug>/` path segment and the ONLY link input:
+ * the "Handla hos Keune" CTA is built from it by `keuneLink()` at render, so a
+ * row can never carry a raw keune.com URL that skips the salon attribution.
+ * It stays editable, unlike the roster slugs — it is a pointer into someone
+ * else's site, and when Keune renames a product the client has to be able to
+ * follow it. `line` is free text because the admin has no select kind; the
+ * label names the four values the page groups by.
+ *
+ * `price` is Keune's price as text ("299.00"). The page formats it as "299 kr"
+ * and prints the `_synced` date beside it, because the price that binds is the
+ * one at Keune's checkout. `npm run keune:update` refreshes the JSON defaults;
+ * it does not touch D1, so once the client has edited this list, keeping the
+ * prices current is the client's job in the admin.
+ */
+export const PRODUCTS: CollectionDef = {
+  name: "products",
+  label: "Butiken (Keune)",
+  orderable: true,
+  jsonFallback: () => withoutNotes(getProducts() as unknown as Record<string, unknown>[]),
+  fields: [
+    { name: "slug", kind: "text", label: "Keune-nyckel (keune.com/se/p/…/)", required: true, maxLen: 120 },
+    { name: "line", kind: "text", label: "Serie: care, style, 1922 eller so-pure", required: true, maxLen: 20 },
+    { name: "title", kind: "text", label: "Produktnamn", required: true, maxLen: 120 },
+    { name: "price", kind: "text", label: "Pris hos Keune (t.ex. 299.00)", maxLen: 20 },
+    { name: "image", kind: "image", label: "Produktbild" },
+    { name: "blurb", kind: "textarea", label: "En mening om produkten", bilingual: true, maxLen: 240 },
   ],
 };
 
@@ -333,6 +381,11 @@ export const CMS: CmsConfig = {
       keys: [
         { key: "staff.intro", label: "Ingress" },
         { key: "staff.metaDescription", label: "Beskrivning i Google" },
+        {
+          key: "labels.picksBy",
+          label: "Rubrik över stylistens Keune-favoriter",
+          hint: "{name} byts automatiskt mot stylistens förnamn i genitiv (Annas, Chriss). Låt den stå kvar.",
+        },
       ],
     },
     {
@@ -384,6 +437,31 @@ export const CMS: CmsConfig = {
       ],
     },
     {
+      /**
+       * The shop page. `shop.howItWorks` is the page's disclosure — that NOVO
+       * earns a share when a visitor buys through these links — so it is
+       * editable like any other paragraph but must keep saying that.
+       */
+      page: "copy-shop",
+      label: "Butiken (Keune)",
+      keys: [
+        { key: "shop.heading", label: "Rubrik" },
+        { key: "shop.intro", label: "Ingress" },
+        {
+          key: "shop.howItWorks",
+          label: "Så fungerar det",
+          hint: "Berättar att en del av köpet går till salongen. Den upplysningen ska finnas kvar.",
+        },
+        { key: "cta.shopAtKeune", label: "Knapp på varje produkt" },
+        { key: "cta.shopAll", label: "Knapp under produkterna" },
+        { key: "labels.priceAt", label: "Pristext (skrivs före datumet)" },
+        { key: "labels.line.care", label: "Rubrik — Care" },
+        { key: "labels.line.style", label: "Rubrik — Style" },
+        { key: "labels.line.1922", label: "Rubrik — 1922" },
+        { key: "labels.line.so-pure", label: "Rubrik — So Pure" },
+      ],
+    },
+    {
       page: "copy-work",
       label: "Jobba hos oss",
       keys: [
@@ -425,6 +503,7 @@ export const CMS: CmsConfig = {
         { key: "nav.competitions", label: "Utmärkelser" },
         { key: "nav.education", label: "Utbildning & kurser" },
         { key: "nav.brands", label: "Våra brands" },
+        { key: "nav.shop", label: "Butik" },
         { key: "nav.work", label: "Jobba hos oss" },
         { key: "nav.contact", label: "Kontakta oss" },
         { key: "nav.about", label: "Om oss (sidfoten)" },
@@ -473,7 +552,7 @@ export const CMS: CmsConfig = {
     },
   ],
 
-  collections: [STAFF, SERVICES, AWARDS, BRANDS, COURSES],
+  collections: [STAFF, SERVICES, AWARDS, BRANDS, COURSES, PRODUCTS],
 
   /**
    * The R2 key prefix for uploads. `blog/` is the prefix this project has

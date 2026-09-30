@@ -1,14 +1,29 @@
 ---
 import { type Locale, useT } from "../i18n";
-import { asStylist, stylistBio, stylistPhotoUrl, bookingUrl } from "../lib/content";
+import {
+  asProduct,
+  asStylist,
+  bookingUrl,
+  possessiveFirstName,
+  stylistBio,
+  stylistPhotoUrl,
+  stylistPicks,
+} from "../lib/content";
 import { resolveCollection } from "../lib/collections";
 import { bindings } from "../lib/cms/bindings";
-import { STAFF } from "../cms.config";
+import { PRODUCTS, STAFF } from "../cms.config";
 const { locale } = Astro.props as { locale: Locale };
 const { kv } = await Astro.locals.getCms();
 const t = useT(locale, kv);
 const staff = (await resolveCollection(Astro.locals.db, STAFF)).items.map(asStylist);
 const booking = bookingUrl(kv);
+// Stylist picks (2026-09-29): up to three of the stylist's own Keune favourites,
+// resolved against the product list so an unknown slug never becomes a link. The
+// product list is only read when somebody has picked something — every roster
+// ships with empty picks, and the team page should not pay a query for nothing.
+const products = staff.some((s) => s.picks.length > 0)
+  ? (await resolveCollection(Astro.locals.db, PRODUCTS)).items.map(asProduct)
+  : [];
 // Portraits resolve through the same field whether they are the shipped defaults
 // or a picture the client uploaded later (§10.7 / `stylistPhotoUrl`).
 const imageBase = (await bindings()).PUBLIC_IMAGE_BASE ?? "";
@@ -16,6 +31,7 @@ const imageBase = (await bindings()).PUBLIC_IMAGE_BASE ?? "";
 <ul class="staff-grid" role="list">
   {staff.map((s, i) => {
     const photo = stylistPhotoUrl(s.photo, imageBase);
+    const picks = products.length ? stylistPicks(s, products) : [];
     return (
     <li>
       <button
@@ -26,6 +42,8 @@ const imageBase = (await bindings()).PUBLIC_IMAGE_BASE ?? "";
         data-bio={stylistBio(s, locale)}
         data-book={booking}
         data-photo={photo ?? ""}
+        data-picks={picks.length ? JSON.stringify(picks) : undefined}
+        data-picks-heading={picks.length ? t("labels.picksBy", { name: possessiveFirstName(s.name, locale) }) : undefined}
         aria-haspopup="dialog"
       >
         {/* The frame stays aria-hidden: the portrait carries the stylist's name,
@@ -67,6 +85,12 @@ const imageBase = (await bindings()).PUBLIC_IMAGE_BASE ?? "";
         handle and the booking button are what a card carries now. */}
     <h3 id="sm-name"></h3>
     <p id="sm-bio"></p>
+    {/* The stylist's Keune favourites. Stays hidden — the card exactly as it was —
+        for every stylist who has not picked anything, which today is all of them. */}
+    <div class="sm-picks" id="sm-picks" hidden>
+      <h4 id="sm-picks-heading"></h4>
+      <ul id="sm-picks-list" role="list"></ul>
+    </div>
     {/* One wrapping row: the handle can be long, so it wraps above the button
         rather than colliding with it. */}
     <div class="sm-foot">
@@ -88,6 +112,24 @@ const imageBase = (await bindings()).PUBLIC_IMAGE_BASE ?? "";
     if (d.photo) { photo.src = d.photo; photo.alt = d.name; photo.hidden = false; }
     else { photo.removeAttribute("src"); photo.alt = ""; photo.hidden = true; }
     set("sm-bio", d.bio || "");
+    // Picks arrive as JSON the server built (title + salon-attributed href); no
+    // attribute at all means no picks, and the block stays hidden.
+    const picksBox = document.getElementById("sm-picks");
+    const picksList = document.getElementById("sm-picks-list");
+    picksList.replaceChildren();
+    const picks = d.picks ? JSON.parse(d.picks).slice(0, 3) : [];
+    for (const pick of picks) {
+      const link = document.createElement("a");
+      link.href = pick.href;
+      link.textContent = pick.title;
+      link.target = "_blank";
+      link.rel = "noopener sponsored";
+      const item = document.createElement("li");
+      item.append(link);
+      picksList.append(item);
+    }
+    set("sm-picks-heading", picks.length ? d.picksHeading || "" : "");
+    picksBox.hidden = picks.length === 0;
     const ig = document.getElementById("sm-ig");
     if (d.ig) { ig.textContent = d.ig; ig.href = "https://instagram.com/" + d.ig.replace("@", ""); ig.style.display = ""; }
     else ig.style.display = "none";
@@ -196,6 +238,19 @@ const imageBase = (await bindings()).PUBLIC_IMAGE_BASE ?? "";
      gone, so it loses the 0.3rem that used to separate the two. */
   .sm-card h3 { font-size: clamp(28px, 4vw, 40px); margin: 0 0 1rem; color: var(--ink); }
   .sm-card p { color: var(--on-variant); margin-bottom: 1.2rem; line-height: 1.7; }
+  /* Picks: a short list between the bio and the booking row, set like the
+     brand grid's text links so it reads as a recommendation, not a second CTA. */
+  .sm-picks { margin: 0 0 1.4rem; padding-top: 1rem; border-top: 1px solid var(--hairline); }
+  .sm-picks[hidden] { display: none; }
+  .sm-picks h4 {
+    font-family: var(--font-sans); font-size: 11px; font-weight: 600; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--bronze-dark); margin-bottom: 0.6rem;
+  }
+  .sm-picks ul { list-style: none; display: grid; gap: 0.35rem; }
+  /* :global — the <li>/<a> are created by the script below, so they never carry
+     this component's scoping attribute and a scoped selector would miss them. */
+  .sm-picks :global(a) { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; display: inline-block; padding: 0.3rem 0; }
+  .sm-picks :global(a:hover) { text-decoration-thickness: 2px; opacity: 0.7; }
   /* Handle + book button share a wrapping row so a long @handle never sits
      under the button. */
   .sm-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; }

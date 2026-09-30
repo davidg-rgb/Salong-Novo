@@ -15,6 +15,7 @@ export type PageKey =
   | "competitions"
   | "education"
   | "brands"
+  | "shop"
   | "work"
   | "contact"
   | "blog"
@@ -25,7 +26,8 @@ export type PageKey =
  * Localized slug for each page (empty string = locale root).
  * Primary nav order (client-confirmed 2026-06-01, ARCHITECTURE §2A): contact, staff,
  * pricing, competitions, education, brands, blog, work (blog promoted into the nav
- * on client request 2026-08-25). about/privacy are footer-only.
+ * on client request 2026-08-25), with shop (the Keune product wall, 2026-09-29) right
+ * after brands. about/privacy are footer-only.
  */
 export const ROUTES: Record<PageKey, Record<Locale, string>> = {
   home: { sv: "", en: "" },
@@ -34,6 +36,7 @@ export const ROUTES: Record<PageKey, Record<Locale, string>> = {
   competitions: { sv: "tavlingar", en: "competitions" },
   education: { sv: "utbildning-och-kurser", en: "education" },
   brands: { sv: "varumarken", en: "brands" },
+  shop: { sv: "butik", en: "shop" },
   work: { sv: "jobba-pa-novo", en: "careers" },
   contact: { sv: "kontakt", en: "contact" },
   blog: { sv: "blogg", en: "blog" },

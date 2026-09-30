@@ -15,6 +15,7 @@
  */
 import { type Locale, useT } from "../i18n";
 import { asBrand, assetUrl, brandDesc } from "../lib/content";
+import { isKickbackLink } from "../lib/keune";
 import { resolveCollection } from "../lib/collections";
 import { bindings } from "../lib/cms/bindings";
 import { BRANDS } from "../cms.config";
@@ -41,8 +42,11 @@ const imageBase = (await bindings()).PUBLIC_IMAGE_BASE ?? "";
             : null}
           <h2 class:list={["name", logo && "sr-only"]}>{brand.name}</h2>
           {desc && <p class="desc">{desc}</p>}
+          {/* A salon-attributed Keune link earns the salon a share of the sale,
+              so it is marked sponsored (2026-09-29); every other brand link is a
+              plain outbound link, as before. */}
           {brand.url && (
-            <a class="site" href={brand.url} target="_blank" rel="noopener">
+            <a class="site" href={brand.url} target="_blank" rel={isKickbackLink(brand.url) ? "noopener sponsored" : "noopener"}>
               {t("cta.readMore")} <span class="arr">→</span>
             </a>
           )}

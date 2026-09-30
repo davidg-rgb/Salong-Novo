@@ -3,9 +3,11 @@ import servicesData from "../../content/services.json";
 import awardsData from "../../content/awards.json";
 import brandsData from "../../content/brands.json";
 import coursesData from "../../content/courses.json";
+import productsData from "../../content/products.json";
 import type { Locale } from "../i18n/routes";
 import { getSite } from "./site";
 import { servedUrl } from "./media";
+import { keuneLink } from "./keune";
 import type { KvMap } from "./cms/content";
 
 /**
@@ -34,6 +36,13 @@ export interface Stylist {
   bio_en: string;
   /** A bundled asset path or an R2 media key — see `stylistPhotoUrl`. */
   photo?: string;
+  /**
+   * The stylist's own Keune favourites: product `slug`s from
+   * `content/products.json`. Ships EMPTY for every stylist — nobody has chosen
+   * yet, and an invented pick would put words in a named person's mouth. A slug
+   * the product list does not carry is dropped at render (`resolvePicks`).
+   */
+  picks: string[];
 }
 
 export interface Service {
@@ -85,6 +94,34 @@ export interface Course {
   image?: string;
 }
 
+/**
+ * The Keune product lines the shop page groups by, in render order. A row whose
+ * `line` is none of these is not rendered — the admin label lists the four
+ * values, and `groupProducts` is where the rule lives.
+ */
+export const PRODUCT_LINES = ["care", "style", "1922", "so-pure"] as const;
+export type ProductLine = (typeof PRODUCT_LINES)[number];
+
+/**
+ * One curated Keune product on `/butik` (`/en/shop`).
+ *
+ * `slug` is Keune's own `/se/p/<slug>/` segment and the only link input — the
+ * CTA is always built by `keuneLink()` in `src/lib/keune.ts`, never stored, so
+ * every click carries the salon attribution. `price` is Keune's SEK price as
+ * text (`"299.00"`) at the document's `_synced` date; `productPrice` formats it.
+ * A blank `image` renders a typeset card, which is also the removal path if
+ * Keune declines permission for its product renders.
+ */
+export interface Product {
+  slug: string;
+  line: string;
+  title: string;
+  price: string;
+  image?: string;
+  blurb_sv: string;
+  blurb_en: string;
+}
+
 /** One competition result, flattened out of the nested awards document. */
 export interface AwardRow {
   year: number;
@@ -125,6 +162,21 @@ export function getBrands(): Brand[] {
 
 export function getCourses(): Course[] {
   return coursesData.courses as Course[];
+}
+
+export function getProducts(): Product[] {
+  return productsData.products as Product[];
+}
+
+/**
+ * The date the product prices were last read from Keune's feed (`_synced` in
+ * `content/products.json`, rewritten by `npm run keune:update`). The shop page
+ * prints it beside "Pris hos keune.com", because the price that binds is
+ * Keune's at checkout, not ours.
+ */
+export function getProductsSyncedAt(): string {
+  const synced = (productsData as { _synced?: unknown })._synced;
+  return typeof synced === "string" ? synced : "";
 }
 
 /**
@@ -187,7 +239,55 @@ export function asStylist(row: Record<string, unknown>): Stylist {
     bio_sv: text("bio_sv"),
     bio_en: text("bio_en"),
     photo: text("photo") || undefined,
+    picks: Array.isArray(row.picks)
+      ? (row.picks as unknown[])
+          .filter((pick): pick is string => typeof pick === "string")
+          .map((pick) => pick.trim())
+          .filter((pick) => pick !== "")
+      : [],
   };
+}
+
+/** How many of a stylist's picks the team modal lists. */
+export const MAX_PICKS = 3;
+
+/**
+ * A stylist's picks as the team modal's links: the product's title and its
+ * salon-attributed deep link, tagged `personal-<stylist slug>` so the kickback
+ * report can be read per stylist.
+ *
+ * Only slugs the product list actually carries survive — an unknown one (a
+ * typo, or a product retired from the wall) is dropped silently rather than
+ * rendered as a link to a page that may not exist. Duplicates collapse, order is
+ * the stylist's, and the list stops at `MAX_PICKS`.
+ */
+export function stylistPicks(
+  stylist: Pick<Stylist, "slug" | "picks">,
+  products: readonly Product[],
+): { title: string; href: string }[] {
+  const bySlug = new Map(products.filter((p) => p.slug !== "").map((p) => [p.slug, p]));
+  const seen = new Set<string>();
+  const out: { title: string; href: string }[] = [];
+  for (const slug of stylist.picks ?? []) {
+    const product = bySlug.get(slug);
+    if (!product || seen.has(slug)) continue;
+    seen.add(slug);
+    out.push({ title: product.title, href: keuneLink(product.slug, `personal-${stylist.slug}`) });
+    if (out.length === MAX_PICKS) break;
+  }
+  return out;
+}
+
+/**
+ * A stylist's first name in the genitive, for "{name} favoriter" / "{name}
+ * picks". Swedish adds no -s to a name that already ends in s, x or z
+ * ("Chriss favoriter", "Iris favoriter"); English always takes 's.
+ */
+export function possessiveFirstName(name: string, locale: Locale): string {
+  const first = name.trim().split(/\s+/)[0] ?? "";
+  if (first === "") return "";
+  if (locale === "en") return `${first}'s`;
+  return /[sxz]$/i.test(first) ? first : `${first}s`;
 }
 
 /**
@@ -266,6 +366,65 @@ export function asCourse(row: Record<string, unknown>): Course {
     link: text("link"),
     image: text("image") || undefined,
   };
+}
+
+/**
+ * A stored collection row read back as a `Product` — the `asBrand` contract:
+ * every property coerced, a missing one blank rather than a crash. `line` is
+ * trimmed and lowercased so "Care " from the admin still files under care; a
+ * `price` that arrives as a number (a hand-edited payload) is kept as the same
+ * two-decimal text the JSON carries.
+ */
+export function asProduct(row: Record<string, unknown>): Product {
+  const text = (key: string) => (typeof row[key] === "string" ? (row[key] as string) : "");
+  const price = row.price;
+  return {
+    slug: text("slug").trim(),
+    line: text("line").trim().toLowerCase(),
+    title: text("title"),
+    price: typeof price === "number" && Number.isFinite(price) ? price.toFixed(2) : text("price"),
+    image: text("image") || undefined,
+    blurb_sv: text("blurb_sv"),
+    blurb_en: text("blurb_en"),
+  };
+}
+
+/**
+ * Products grouped by line, in `PRODUCT_LINES` order, with empty lines left
+ * out entirely (no heading over nothing). A row whose `line` is not one of the
+ * four is not rendered: there is no fifth heading to put it under, and the
+ * admin label names the valid values.
+ */
+export function groupProducts(
+  products: readonly Product[],
+): { line: ProductLine; items: Product[] }[] {
+  return PRODUCT_LINES.map((line) => ({
+    line,
+    items: products.filter((p) => p.line === line),
+  })).filter((group) => group.items.length > 0);
+}
+
+const NBSP = " ";
+
+/**
+ * Keune's price text (`"299.00"`) as a Swedish price label: `299 kr`, with the
+ * öre shown only when there are some (`299,50 kr`) and thousands grouped
+ * (`1 299 kr`). The spaces are non-breaking so a narrow card never strands
+ * "kr" on its own line. Anything that is not a plain amount renders as `""` —
+ * the card then shows no price at all, never `NaN kr`.
+ */
+export function productPrice(price: string | null | undefined): string {
+  const text = String(price ?? "").trim().replace(",", ".");
+  if (!/^\d+(\.\d{1,2})?$/.test(text)) return "";
+  const [whole = "", fraction = ""] = text.split(".");
+  const ore = fraction.padEnd(2, "0");
+  const grouped = whole.replace(/^0+(?=\d)/, "").replace(/\B(?=(\d{3})+(?!\d))/g, NBSP);
+  return `${grouped}${ore === "00" ? "" : `,${ore}`}${NBSP}kr`;
+}
+
+/** Localized product blurb. */
+export function productBlurb(product: Product, locale: Locale): string {
+  return locale === "en" ? product.blurb_en : product.blurb_sv;
 }
 
 /** `assetUrl` under the name the staff grid and the homepage already call it by. */

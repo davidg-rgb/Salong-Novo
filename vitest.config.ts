@@ -1,7 +1,17 @@
+/// <reference types="vitest/config" />
 import { fileURLToPath } from "node:url";
-import { defineConfig } from "vitest/config";
+import { getViteConfig } from "astro/config";
 
-export default defineConfig({
+/**
+ * Wrapped in Astro's Vite config (2026-09-29) so `.astro` components compile
+ * under Vitest — `tests/keune-render.test.ts` renders them through the Container
+ * API. `configFile: false` is load-bearing: loading `astro.config.mjs` pulls in
+ * the Cloudflare adapter's Vite plugin, which rejects Vitest's SSR environment
+ * ("environment options are incompatible with the Cloudflare Vite plugin").
+ * Without the adapter the components render in plain Node, which is what the
+ * tests want; nothing here affects `astro build`.
+ */
+export default getViteConfig({
   test: {
     globals: true,
     environment: "node",
@@ -13,4 +23,4 @@ export default defineConfig({
     // cannot resolve.
     alias: { "~": fileURLToPath(new URL("./src", import.meta.url)) },
   },
-});
+}, { configFile: false });

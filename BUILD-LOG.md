@@ -769,3 +769,72 @@ files). Two of the four third-party marks are now cleared of the go-live gate; t
 
 Tests: `tests/content.test.ts` 20/20 (exists-on-disk + fallback-exercised invariants) against the
 2026-08-30 full-gate baseline 607/607. No TS or component change.
+
+### 2026-09-29 — /butik: curated Keune product wall + stylist picks (salon-attributed links)
+Built from `Planning/KEUNE-KICKBACK.md` option B. Nothing is sold on this site: every CTA goes to
+keune.com through NOVO's salon route, which is what credits the purchase to the salon.
+
+- **Link builder** `src/lib/keune.ts`: `keuneLink(slug?, campaign)` = `keune.com/salon/6451330/` +
+  `pageSlug=/p/<slug>/` + three UTMs + `source=novo` LAST (absorbs Keune's `?fromKickbackFeeCode=`
+  append). Slug normalised (`/se/p/`, `/p/`, `/`, whitespace, trailing slashes); blank slug ⇒ generic
+  link; campaign folded to `[a-z0-9-]`, blank ⇒ `site`. `pageSlug` is percent-encoded by
+  `URLSearchParams`; Keune reads it via Next `useRouter().query` (decoded) — confirmed in its salon chunk.
+- **Content** `content/products.json`: 24 rows (care 12 · style 6 · 1922 4 · so-pure 2), NOVO-voice
+  one-line blurbs sv+en (purpose only, no efficacy/discount claims), `_synced` 2026-09-29. Images:
+  Keune's own PNG renders downloaded unmodified into `public/images/keune/` (4.8 MB, largest 1.5 MB —
+  not re-encoded per directive; lazy-loaded). Permission ASSUMED BY GO-LIVE, same gate as the logo.
+- **CMS**: `PRODUCTS` collection (`slug` editable — it points into Keune's site), `copy-shop` group,
+  `nav.shop` in Menyn, `labels.picksBy` in Teamsidan; STAFF gains `picks` (list, max 3).
+- **Page** `/butik` + `/en/shop` (N° 11, no booking CTA): `ProductGrid.astro` groups by line, typeset
+  frame when `image` is blank, `299 kr` price (nothing when not a plain amount), `rel="noopener sponsored"`,
+  full-range button (`butik-all`) and "Pris hos keune.com · <_synced>". Nav: BUTIK after Våra brands.
+- **Picks**: every stylist ships `picks: []` (nobody has chosen). Team modal lists up to 3 as
+  `personal-<slug>` links only when non-empty; the products list is not even queried until one exists.
+- **Våra brands**: Keune `url` is now the literal of `keuneGenericLink("varumarken")` (test-pinned).
+- **Sync** `scripts/keune-sync.mjs` (+ offline-tested `keune-sync.lib.mjs`): `--check` / `--update` /
+  `--images`, npm `keune:*`. Live run: `KEUNE-CHECK: 24/24 in sitemap · 24/24 in feed · 0 price drift`;
+  `--images`: 24 skipped (already on disk), 0 failed. JSON defaults only — never D1, never in the build.
+
+**Gates** (baseline 607/607 from the 2026-08-30 entry): `npm run test` → 681 passed / 29 files
+(+72 `tests/keune.test.ts`, +2 from the per-collection loop in `cms-collections.test.ts`) · `tsc` clean ·
+`astro check` 0 errors / 0 warnings / 6 hints (all pre-existing) · `astro build` Complete.
+
+**Probe** (headless Chrome against `astro dev`, 6 routes × 8 widths 320–1440): 0 overflow, 0 nav/CTA
+collisions, 0 broken images. It caught three things, all fixed: (1) with nine tabs, "Jobba hos oss"
+broke onto a THIRD line from ~1360 px — nav gap ceiling 28px → 22px (unchanged below ~1222 px; ≤2
+lines up to 1920 px, both locales); (2) ArticlePage's `.article :global(.btn)` top margin out-ranked the
+card CTA's `margin-top: auto`, so CTAs under 1- and 2-line titles did not align — selector raised;
+(3) script-created pick links missed StaffGrid's scoped CSS — `:global()`. Picks modal driven with
+injected data: 4 picks ⇒ 3 links, `rel="noopener sponsored"`, and the list does not leak into the next
+(empty) card. The labels that wrap to two lines on desktop (4 SV, 3 EN) wrapped identically before BUTIK.
+
+### 2026-09-29 — /butik fix round (review adjudicated): 6 items
+- **keuneSlug** now strips the origin (`https?://host`) and everything from the first `?`/`#` before the
+  `/se/p/` rules, so a pasted address-bar URL — including Keune's own `?fromKickbackFeeCode=NOVO` — reduces
+  to the bare slug. The invariant test now asserts on the DECODED href (the old raw-string check passed
+  vacuously on `%3FfromKickbackFeeCode%3DNOVO` inside `pageSlug`). Module comment no longer claims the
+  encoded `pageSlug` was click-tested: it was read in Keune's chunk, not clicked — one live click at go-live.
+- **BrandGrid**: `rel="noopener sponsored"` exactly when the href starts with `https://www.keune.com/salon/`
+  (`isKickbackLink` in `src/lib/keune.ts`); every other brand link stays `rel="noopener"`.
+- **keune-sync `--images`** refuses a slug that is not `^[a-z0-9-]+$` before any path is built (warned on
+  stderr, skipped, counted as failed ⇒ exit 1). `KEUNE_PRODUCTS_JSON` / `KEUNE_IMAGE_DIR` env overrides
+  (default: the real paths) let the spawned-script tests run in a temp sandbox with a hand-built products
+  document — no test reads or writes `content/` or `public/` through the script any more.
+- **Render tests** `tests/keune-render.test.ts` (Astro Container API): ProductGrid blank image ⇒ typeset
+  frame and no `<img>`, empty price/blurb omitted, no `NaN kr`, missing `_synced` ⇒ note omitted, 25
+  anchors on the shipped wall all passing the link invariants; StaffGrid 2 known + 1 unknown pick ⇒
+  exactly 2 links in `data-picks`, empty picks ⇒ no attribute and no products query; BrandGrid rel; both
+  shop pages (N° 11, no article booking CTA, nav `aria-current`). Replaces the two source-string scans.
+  Mutation-checked: eight deliberate breakages, each caught by a named test.
+- **vitest.config.ts**: `defineConfig` → Astro's `getViteConfig(…, { configFile: false })` + a
+  `/// <reference types="vitest/config" />` line. `configFile: false` is required — the Cloudflare adapter's
+  Vite plugin rejects Vitest's SSR environment. `tests/astro-modules.d.ts` declares `*.astro` for plain
+  `tsc` (Astro 7 ships no ambient declaration). Build unaffected.
+
+**Go-live gate — before the domain flip** (the shared `docs/cms/RUNBOOK.md` is the Forge template for
+every project, so this NOVO-specific line lives here and in `Planning/KEUNE-KICKBACK.md`):
+- [ ] If the brands collection was ever seeded into D1 ('Kopiera standardlistan'), the Keune row's url in the admin must be set to the salon link literal from content/brands.json — D1 overrides the JSON default.
+
+**Gates** (baseline 681/681 from the entry above): `npm run test` → 702 passed / 30 files (+6
+`keune.test.ts`, +15 `keune-render.test.ts`) · `tsc` clean · `astro check` 0 errors / 0 warnings / 6 hints
+(pre-existing) · `astro build` Complete.

@@ -6,6 +6,7 @@
     "competitions": "Utmärkelser",
     "education": "Utbildning & kurser",
     "brands": "Våra brands",
+    "shop": "Butik",
     "work": "Jobba hos oss",
     "contact": "Kontakta oss",
     "blog": "Blogg",
@@ -17,7 +18,9 @@
     "meetTeam": "Möt teamet",
     "readMore": "Läs mer",
     "readStory": "Läs vår historia",
-    "allTeam": "Hela teamet"
+    "allTeam": "Hela teamet",
+    "shopAtKeune": "Handla hos Keune",
+    "shopAll": "Se hela sortimentet hos Keune"
   },
   "labels": {
     "menu": "Meny",
@@ -31,7 +34,15 @@
     "findUs": "Hitta hit",
     "readingTime": "{n} min läsning",
     "published": "Publicerad",
-    "comingSoon": "Innehåll kommer snart"
+    "comingSoon": "Innehåll kommer snart",
+    "priceAt": "Pris hos keune.com",
+    "picksBy": "{name} favoriter",
+    "line": {
+      "care": "Vård",
+      "style": "Styling",
+      "1922": "1922 — för män",
+      "so-pure": "So Pure"
+    }
   },
   "awards": {
     "photo": "Foto",

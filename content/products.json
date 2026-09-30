@@ -1,0 +1,224 @@
+{
+  "_note": "The curated Keune product wall on /butik (/en/shop), 2026-09-29. ORDER IS RENDER ORDER within each line; the page groups rows by `line` (care, style, 1922, so-pure — any other value is not rendered). `slug` is the /se/p/<slug>/ segment from Keune's own sitemap, and every CTA is built from it by keuneLink() in src/lib/keune.ts — the salon-attributed deep link. Never paste a raw keune.com URL into a row. `price` is Keune's SEK price at `_synced`; `npm run keune:check` reports drift, `npm run keune:update` rewrites it. Blurbs are NOVO's own words and say only what a product is FOR (no efficacy claims, MFL 2008:486 §10).",
+  "_source": "keune.com/se sitemap + checkout-se.keune.com/products.json",
+  "_licence": "Product images are Keune's own renders (cdn.shopify.com), downloaded unmodified 2026-09-29 and wired on the same pre-production call as the brand logos: permission is ASSUMED GRANTED BY GO-LIVE and requested in the same mail as the Keune logo approval (still pending — see brands.json _licence). If Keune has not granted by then, blank `image` on every row: the card falls back to a typeset card by design, so blanking is the whole removal path.",
+  "_synced": "2026-09-29",
+  "products": [
+    {
+      "slug": "care-vital-nutrition-shampoo-300ml-2",
+      "line": "care",
+      "title": "Vital Nutrition Shampoo",
+      "price": "299.00",
+      "image": "/images/keune/care-vital-nutrition-shampoo-300ml-2.png",
+      "blurb_sv": "Milt schampo för torrt hår som behöver mer fukt.",
+      "blurb_en": "A gentle shampoo for dry hair that needs more moisture."
+    },
+    {
+      "slug": "care-vital-nutrition-conditioner-250ml-2",
+      "line": "care",
+      "title": "Vital Nutrition Conditioner",
+      "price": "299.00",
+      "image": "/images/keune/care-vital-nutrition-conditioner-250ml-2.png",
+      "blurb_sv": "Balsamet i samma serie, för torrt hår efter varje tvätt.",
+      "blurb_en": "The conditioner from the same line, for dry hair after every wash."
+    },
+    {
+      "slug": "care-vital-nutrition-mask-250ml-2",
+      "line": "care",
+      "title": "Vital Nutrition Mask",
+      "price": "399.00",
+      "image": "/images/keune/care-vital-nutrition-mask-250ml-2.png",
+      "blurb_sv": "Inpackning för torrt hår, när det behöver mer än ett balsam.",
+      "blurb_en": "A mask for dry hair, for when it needs more than a conditioner."
+    },
+    {
+      "slug": "care-color-brillianz-shampoo-300ml-2",
+      "line": "care",
+      "title": "Color Brillianz Shampoo",
+      "price": "299.00",
+      "image": "/images/keune/care-color-brillianz-shampoo-300ml-2.png",
+      "blurb_sv": "Schampo för färgat hår — för dig som vill ta hand om färgen mellan besöken.",
+      "blurb_en": "Shampoo for colour-treated hair — for looking after your colour between visits."
+    },
+    {
+      "slug": "care-color-brillianz-mask-250ml-2",
+      "line": "care",
+      "title": "Color Brillianz Mask",
+      "price": "399.00",
+      "image": "/images/keune/care-color-brillianz-mask-250ml-2.png",
+      "blurb_sv": "Inpackning för färgat hår, när färgen behöver lite extra omsorg.",
+      "blurb_en": "A mask for colour-treated hair, for when your colour needs a little extra care."
+    },
+    {
+      "slug": "care-blonde-savior-shampoo-300ml-2",
+      "line": "care",
+      "title": "Blonde Savior Shampoo",
+      "price": "299.00",
+      "image": "/images/keune/care-blonde-savior-shampoo-300ml-2.png",
+      "blurb_sv": "Schampo för blont hår — naturligt, slingat eller blekt.",
+      "blurb_en": "Shampoo for blonde hair — natural, highlighted or lightened."
+    },
+    {
+      "slug": "care-blonde-savior-mask-250ml-2",
+      "line": "care",
+      "title": "Blonde Savior Mask",
+      "price": "399.00",
+      "image": "/images/keune/care-blonde-savior-mask-250ml-2.png",
+      "blurb_sv": "Inpackningen för blont hår, i samma serie som schampot.",
+      "blurb_en": "The mask for blonde hair, from the same line as the shampoo."
+    },
+    {
+      "slug": "care-silver-savior-shampoo-300ml-2",
+      "line": "care",
+      "title": "Silver Savior Silver Shampoo",
+      "price": "299.00",
+      "image": "/images/keune/care-silver-savior-shampoo-300ml-2.png",
+      "blurb_sv": "Silverschampo med lila pigment, för kallt blont, silver och platina.",
+      "blurb_en": "Silver shampoo with violet pigment, for cool blonde, silver and platinum hair."
+    },
+    {
+      "slug": "care-confident-curl-shampoo-300ml-2",
+      "line": "care",
+      "title": "Confident Curl Shampoo",
+      "price": "299.00",
+      "image": "/images/keune/care-confident-curl-shampoo-300ml-2.png",
+      "blurb_sv": "Lågskummande schampo för lockigt hår.",
+      "blurb_en": "A low-lather shampoo for curly hair."
+    },
+    {
+      "slug": "care-confident-curl-leave-in-curly-300ml-2",
+      "line": "care",
+      "title": "Confident Curly Leave-in Curly",
+      "price": "399.00",
+      "image": "/images/keune/care-confident-curl-leave-in-curly-300ml-2.png",
+      "blurb_sv": "Lätt leave-in-kräm för lockar — ska inte sköljas ur.",
+      "blurb_en": "A light leave-in cream for curls — no rinsing."
+    },
+    {
+      "slug": "care-miracle-elixir-spray-150ml-2",
+      "line": "care",
+      "title": "Miracle Elixir Keratin Spray",
+      "price": "399.00",
+      "image": "/images/keune/care-miracle-elixir-spray-150ml-2.png",
+      "blurb_sv": "Lätt leave-in-spray med keratin, för hemmabruk.",
+      "blurb_en": "A light leave-in spray with keratin, for use at home."
+    },
+    {
+      "slug": "care-velvet-smooth-shampoo-300ml-2",
+      "line": "care",
+      "title": "Velvet Smooth Shampoo",
+      "price": "299.00",
+      "image": "/images/keune/care-velvet-smooth-shampoo-300ml-2.png",
+      "blurb_sv": "Schampo för hår som lätt blir burrigt.",
+      "blurb_en": "Shampoo for hair that frizzes easily."
+    },
+    {
+      "slug": "style-air-flow",
+      "line": "style",
+      "title": "Air Flow",
+      "price": "349.00",
+      "image": "/images/keune/style-air-flow.png",
+      "blurb_sv": "Lätt stylingkräm för dig som låter håret lufttorka.",
+      "blurb_en": "A light styling cream for when you let your hair air-dry."
+    },
+    {
+      "slug": "style-sea-foam",
+      "line": "style",
+      "title": "Sea Foam",
+      "price": "349.00",
+      "image": "/images/keune/style-sea-foam.png",
+      "blurb_sv": "Saltmousse för volym och grepp — strandhår utan strand.",
+      "blurb_en": "Salt mousse for volume and grip — beach hair, no beach required."
+    },
+    {
+      "slug": "style-golden-gloss",
+      "line": "style",
+      "title": "Golden Gloss",
+      "price": "499.00",
+      "image": "/images/keune/style-golden-gloss.png",
+      "blurb_sv": "Tvåfasig hårparfym med oljor — sista touchen innan du går ut.",
+      "blurb_en": "A two-phase hair perfume with oils — the finishing touch before you head out."
+    },
+    {
+      "slug": "style-steel-lock",
+      "line": "style",
+      "title": "Steel Lock",
+      "price": "299.00",
+      "image": "/images/keune/style-steel-lock.png",
+      "blurb_sv": "Hårspray med extra starkt hold och precisionsmunstycke.",
+      "blurb_en": "Extra-strong-hold hairspray with a precision nozzle."
+    },
+    {
+      "slug": "style-claytime",
+      "line": "style",
+      "title": "Claytime",
+      "price": "349.00",
+      "image": "/images/keune/style-claytime.png",
+      "blurb_sv": "Matt lera för kort hår och en lekfull, rufsig textur.",
+      "blurb_en": "A matte clay for short hair and playful, messy texture."
+    },
+    {
+      "slug": "style-smooth-operator",
+      "line": "style",
+      "title": "Smooth Operator",
+      "price": "399.00",
+      "image": "/images/keune/style-smooth-operator.png",
+      "blurb_sv": "Lätt serum för burrigt hår, som sista steg i stylingen.",
+      "blurb_en": "A light serum for frizz-prone hair, as the last step in your styling."
+    },
+    {
+      "slug": "1922-by-j-m-keune-essential-shampoo",
+      "line": "1922",
+      "title": "1922 By J.M. Keune Essential Shampoo",
+      "price": "269.00",
+      "image": "/images/keune/1922-by-j-m-keune-essential-shampoo.png",
+      "blurb_sv": "Milt vardagsschampo för både hår och kropp.",
+      "blurb_en": "A mild everyday shampoo for hair and body."
+    },
+    {
+      "slug": "1922-by-j-m-keune-premium-clay",
+      "line": "1922",
+      "title": "1922 By J.M. Keune Premium Clay",
+      "price": "269.00",
+      "image": "/images/keune/1922-by-j-m-keune-premium-clay.png",
+      "blurb_sv": "Torr lera med starkt hold och matt finish, för kort till mellanlångt hår.",
+      "blurb_en": "A dry clay with strong hold and a matte finish, for short to medium hair."
+    },
+    {
+      "slug": "1922-by-j-m-keune-original-pomade",
+      "line": "1922",
+      "title": "1922 By J.M. Keune Original Pomade",
+      "price": "269.00",
+      "image": "/images/keune/1922-by-j-m-keune-original-pomade.png",
+      "blurb_sv": "Klassisk pomada med starkt hold, för blanka och slickade frisyrer.",
+      "blurb_en": "A classic pomade with strong hold, for sleek and shiny styles."
+    },
+    {
+      "slug": "1922-by-j-m-keune-beard-oil",
+      "line": "1922",
+      "title": "1922 By J.M. Keune Beard Oil",
+      "price": "369.00",
+      "image": "/images/keune/1922-by-j-m-keune-beard-oil.png",
+      "blurb_sv": "Skäggolja med mandel- och avokadoolja, för ett välvårdat skägg.",
+      "blurb_en": "Beard oil with almond and avocado oil, for a well-kept beard."
+    },
+    {
+      "slug": "so-pure-restore-shampoo-refill-400ml",
+      "line": "so-pure",
+      "title": "So Pure Restore Shampoo Refill",
+      "price": "419.00",
+      "image": "/images/keune/so-pure-restore-shampoo-refill-400ml.png",
+      "blurb_sv": "Refill av ett milt schampo för torrt hår — fyll på flaskan du redan har.",
+      "blurb_en": "A refill of a gentle shampoo for dry hair — top up the bottle you already have."
+    },
+    {
+      "slug": "so-pure-polish-mask",
+      "line": "so-pure",
+      "title": "So Pure Polish Mask",
+      "price": "419.00",
+      "image": "/images/keune/so-pure-polish-mask.png",
+      "blurb_sv": "Inpackning med extrakt från chiafrö, för hår som lätt blir burrigt.",
+      "blurb_en": "A mask with chia seed extract, for hair that frizzes easily."
+    }
+  ]
+}

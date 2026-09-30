@@ -13,7 +13,7 @@ on **Cloudflare**, with a staff-writable blog.
 
 | Layer | State |
 |-------|-------|
-| Core logic (i18n, slug, markdown, images, posts, db, seo, redirects, content) | ✅ Built + **62 tests passing** |
+| Core logic (i18n, slug, markdown, images, posts, db, seo, redirects, content, keune) | ✅ Built + **702 tests passing** (30 files, 2026-09-29) |
 | App (Astro + Cloudflare): layout, components, all pages (SV+EN), blog, admin API, SEO | ✅ Builds green, `tsc` clean |
 | Visual design | ⏳ **Gated on direction pick** (A–F or Stitch) — neutral placeholder tokens in `src/styles/tokens.css` |
 | Cloudflare resources (D1, R2, Access) | ⏳ Create at deploy (see below) |
@@ -25,7 +25,7 @@ choosing a direction means **restyling** (tokens + component CSS), not rebuildin
 
 ```bash
 npm install
-npm test            # 62 unit tests (vitest)
+npm test            # 702 unit tests (vitest, incl. Astro Container render tests)
 npm run typecheck   # tsc --noEmit
 npm run dev         # Astro dev server (static pages; blog/admin need wrangler)
 npm run build       # production build -> dist/
@@ -52,12 +52,18 @@ npm run db:migrate:remote            # ...and to the remote D1
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run preview` | `wrangler dev --config dist/server/wrangler.json` (full runtime incl. D1/R2) |
 | `npm run db:migrate:local` / `:remote` | Apply D1 migrations |
+| `npm run bildbank:seed:local` / `:remote` | Seed the admin media library with the shipped photographs (`scripts/bildbank-seed.mjs`) |
+| `npm run keune:check` | Check every curated product in `content/products.json` against Keune's SE sitemap + Shopify feed; exit 1 if a slug left the sitemap |
+| `npm run keune:update` | Rewrite matched rows' `price` + `_synced` from the feed (`-- --dry-run` to preview) |
+| `npm run keune:images` | Download each matched product's first image into `public/images/keune/` (skips existing; `-- --force`, `-- --dry-run`) |
 
 ## Key facts (verified from live site, 2026-05-31)
 
 - **Booking:** external Voady — `https://bokning.voady.se/novo` (primary CTA everywhere)
 - **Address:** Rörstrandsgatan 39C, 113 40 Stockholm · T-bana S:t Eriksplan
-- **18 stylists** (roster in `content/staff.json`)
+- **17 stylists** (roster in `content/staff.json`)
+- **Butik:** 24 curated Keune products (`content/products.json`) on `/butik` + `/en/shop`; every
+  "Handla hos Keune" link is built by `src/lib/keune.ts` so purchases credit the salon (`Planning/KEUNE-KICKBACK.md`)
 - **Awards:** Årets Kollektion ×3, Ellen Rudd — Årets Nykomling 2026, Nordic Hairshot finalists
 
 ## Remaining before launch

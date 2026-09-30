@@ -208,6 +208,25 @@ export const brands = {
   } as Bi,
 };
 
+// "Butik" — the curated Keune product wall (2026-09-29, Planning/KEUNE-KICKBACK.md).
+// `howItWorks` is the disclosure and says exactly the three facts verified in a live
+// session, nothing more: the visitor pays Keune's normal price, a share of the
+// purchase goes to the salon when they shop via these links, and checkout happens on
+// keune.com. No discount claim — there is none; Keune's own "exklusiv rabatt" banner
+// is its newsletter offer, not the salon's. The intro says "ett urval", not "våra
+// stylisters val": the stylists have not chosen yet (their picks ship empty).
+export const shop = {
+  heading: { sv: "Keune — att ta med hem.", en: "Keune — to take home." } as Bi,
+  intro: {
+    sv: "Ett urval ur Keunes sortiment — vård, styling, 1922 för män och So Pure — med en rad om vad varje produkt är till för.",
+    en: "A selection from Keune's range — care, styling, 1922 for men and So Pure — with a line on what each product is for.",
+  } as Bi,
+  howItWorks: {
+    sv: "Handla via våra länkar så går en del av köpet till salongen — samma pris för dig, kassan sker hos keune.com.",
+    en: "Shop through our links and part of your purchase goes to the salon — the same price for you, and you check out at keune.com.",
+  } as Bi,
+};
+
 // Footer-only page. The heading is the dictionary's `footer.privacy`, so it is
 // editable once rather than twice.
 export const privacy = {
@@ -245,6 +264,7 @@ export const PAGE_COPY = {
   pricing: pricingPage,
   education,
   brands,
+  shop,
   work,
   privacy,
 } as const;

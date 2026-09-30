@@ -8,7 +8,8 @@ is an **asset/content donor only** (a launched-but-over-scoped Next.js build) �
 
 A booking-focused, fashion-magazine **brochure site** for Salong NOVO — a Schwarzkopf flagship
 hair salon in Vasastan, Stockholm. Bilingual (SV primary / EN day one). Self-contained on
-Cloudflare. Staff-writable blog. No webshop, no on-site booking (external Voady link).
+Cloudflare. Staff-writable blog. No on-site webshop or checkout (the `/butik` Keune wall links
+out — checkout is on keune.com), no on-site booking (external Voady link).
 
 ## Stack (locked + built)
 
@@ -33,6 +34,10 @@ Access (admin) · markdown-it (`html:false`) · Vitest. See `ARCHITECTURE.md`.
 - ✅ **Live on David's test account (2026-08-11):** `https://salong-novo.david-geborek.workers.dev`
   (D1 `novo_db` + R2 `novo-images`; admin 403s on `*.workers.dev` by design — Access needs a zone).
   Real staff portraits + 2026 award imagery + generated textures wired (2026-08-12).
+- ✅ **Keune product wall (2026-09-29):** `/butik` + `/en/shop` — 24 curated Keune products
+  (`content/products.json`, CMS collection `products`), every CTA a salon-attributed deep link built
+  by `src/lib/keune.ts`; stylist `picks` wired but empty; `npm run keune:check` keeps slugs/prices
+  honest. 26 public page files, 702 tests / 30 files. Mechanism: `Planning/KEUNE-KICKBACK.md`.
 - ⏳ **Remaining:** client content for Bokning & priser / Utbildning / Våra brands; RUNBOOK §5 on the
   client's Cloudflare account + domain (Access, DNS); the deferred WebP variant Worker; GA4/consent.
 - **Local dev:** `.dev.vars` (gitignored) sets `DEV_ADMIN_EMAIL` + `ADMIN_API_TOKEN`; run
@@ -40,7 +45,8 @@ Access (admin) · markdown-it (`html:false`) · Vitest. See `ARCHITECTURE.md`.
 
 ## Key decisions (don't relitigate)
 
-- Fresh rebuild, simpler than the old build. **No webshop / gift cards / commerce.**
+- Fresh rebuild, simpler than the old build. **No webshop / gift cards / commerce.** (2026-09-29:
+  `/butik` is an OUTBOUND Keune product wall — no cart, no checkout, no payment on this site.)
 - Booking = external **Voady** `https://bokning.voady.se/novo` (NOT Voyado), primary CTA everywhere.
 - **Bilingual day one** (SV root + EN `/en`). Blog posts single-language with locale marker.
 - **Staff = grid → modal** on the **Team** page (bio + per-person "Boka tid hos [namn]" Voady link).
@@ -51,6 +57,8 @@ Access (admin) · markdown-it (`html:false`) · Vitest. See `ARCHITECTURE.md`.
 **⚠ Client-confirmed IA (2026-06-01) — see `ARCHITECTURE.md §2A + §12, supersedes older route map):**
 - **7 nav tabs** (client order): Kontakta oss · Team · Bokning & priser · Tävlingar · Utbildning &
   kurser · Våra brands · Jobba hos oss.
+  *On disk now (`SiteHeader.astro` `navKeys`, 2026-09-29): 9 tabs — Kontakta oss · Team ·
+  Behandlingar · Utmärkelser · Utbildning & kurser · Våra brands · Butik · Blogg · Jobba hos oss.*
 - **Prices are now SHOWN** — "Bokning & priser" page (reverses the old "no prices / services deferred").
 - **New pages:** Utbildning & kurser, Våra brands. **Renames:** `services`→`pricing`, `awards`→`Tävlingar`.
 - **About** story folds into the **homepage**; `/om-oss` demoted to footer. **Blog** kept (per David) but
@@ -65,7 +73,8 @@ Access (admin) · markdown-it (`html:false`) · Vitest. See `ARCHITECTURE.md`.
 - `Design input/Mockups/` — 6 HTML mockups (A Noir, B Galleri, C Avant, D Atelier, E Studio,
   F Chromatic) + `index.html` + previews. D/E/F have the working staff modal.
 - `Current actuals/` — live-site audit + 5 screenshots (the lean 5-page SV site we replace).
-- `content/` — staff.json (18 stylists), services.json, awards.json, site.json, copy.md.
+- `content/` — staff.json (17 stylists), services.json, awards.json, brands.json, courses.json,
+  products.json (24 Keune products), site.json, copy.md, `Logos/`.
 - `src/` — the app. `src/lib` + `src/i18n` = pure tested logic; `.astro` = thin presentation.
 - `ARCHITECTURE.md`, `BUILD-GUIDELINES.md`, `README.md` — read these before changing code.
 

@@ -16,7 +16,10 @@
     "db:migrate:local": "wrangler d1 migrations apply novo_db --local",
     "db:migrate:remote": "wrangler d1 migrations apply novo_db --remote",
     "bildbank:seed:local": "node scripts/bildbank-seed.mjs --local",
-    "bildbank:seed:remote": "node scripts/bildbank-seed.mjs --remote"
+    "bildbank:seed:remote": "node scripts/bildbank-seed.mjs --remote",
+    "keune:check": "node scripts/keune-sync.mjs --check",
+    "keune:update": "node scripts/keune-sync.mjs --update",
+    "keune:images": "node scripts/keune-sync.mjs --images"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^14.1.7",

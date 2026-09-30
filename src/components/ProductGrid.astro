@@ -1,0 +1,143 @@
+---
+/**
+ * The curated Keune product wall (`/butik`, `/en/shop`), 2026-09-29.
+ *
+ * Every CTA is built HERE from the row's slug by `keuneLink()` — the salon
+ * route plus `pageSlug`, which is what attributes the purchase to NOVO
+ * (`Planning/KEUNE-KICKBACK.md`). No row stores a URL, so no row can skip the
+ * attribution. `utm_campaign` names the placement per line (`butik-care`, …)
+ * and `butik-all` for the full-range button, so the kickback report can be read
+ * against the page. `rel="sponsored"` because the salon earns on the click.
+ *
+ * Grouped by line in a fixed order (`groupProducts`); an empty line prints no
+ * heading. Built, like the brand grid, to be COMPLETE WITHOUT THE ASSETS: a row
+ * with no `image` gets a typeset frame instead of a broken <img>, which is also
+ * the whole removal path if Keune declines its product renders. A price that is
+ * not a plain amount renders nothing rather than "NaN kr".
+ *
+ * Rows come through `resolveCollection` exactly as the brand grid's do: JSON
+ * defaults until the client edits the list, D1 from the first save onward.
+ */
+import { type Locale, useT } from "../i18n";
+import {
+  asProduct,
+  assetUrl,
+  getProductsSyncedAt,
+  groupProducts,
+  productBlurb,
+  productPrice,
+} from "../lib/content";
+import { keuneGenericLink, keuneLink } from "../lib/keune";
+import { resolveCollection } from "../lib/collections";
+import { bindings } from "../lib/cms/bindings";
+import { PRODUCTS } from "../cms.config";
+const { locale } = Astro.props as { locale: Locale };
+const t = useT(locale, (await Astro.locals.getCms()).kv);
+const groups = groupProducts((await resolveCollection(Astro.locals.db, PRODUCTS)).items.map(asProduct));
+const imageBase = (await bindings()).PUBLIC_IMAGE_BASE ?? "";
+const synced = getProductsSyncedAt();
+---
+<div class="shop">
+  {groups.map((group) => (
+    <div class="line">
+      <h2 class="line-heading">{t(`labels.line.${group.line}`)}</h2>
+      <ul class="product-grid" role="list">
+        {group.items.map((product) => {
+          const image = assetUrl(product.image, imageBase);
+          const price = productPrice(product.price);
+          const blurb = productBlurb(product, locale);
+          return (
+            <li class="product">
+              {/* Decorative either way: the product's name is the heading right
+                  below, so an alt would announce it twice. */}
+              {image
+                ? (
+                  <span class="shot" aria-hidden="true">
+                    <img src={image} alt="" loading="lazy" decoding="async" />
+                  </span>
+                )
+                : (
+                  <span class="shot shot--type" aria-hidden="true">
+                    <span>{product.title}</span>
+                  </span>
+                )}
+              <div class="body">
+                <h3 class="name">{product.title}</h3>
+                {price && <p class="price">{price}</p>}
+                {blurb && <p class="desc">{blurb}</p>}
+                <a
+                  class="btn btn--ghost cta"
+                  href={keuneLink(product.slug, `butik-${group.line}`)}
+                  target="_blank"
+                  rel="noopener sponsored"
+                >{t("cta.shopAtKeune")}</a>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  ))}
+  <div class="shop-foot">
+    <a class="btn" href={keuneGenericLink("butik-all")} target="_blank" rel="noopener sponsored">
+      {t("cta.shopAll")}
+    </a>
+    {synced && <p class="synced">{t("labels.priceAt")} · {synced}</p>}
+  </div>
+</div>
+
+<style>
+  /* The brand grid's idiom: two columns at the article's measure, breaking out
+     to the full 1152px content box (and a third column) from 1248px — the first
+     width where it fits beside the scrollbar. The 50%/-50% pair is measured
+     against the article's centred box, so the grid lines up with every .wrap. */
+  .shop { margin-top: clamp(28px, 4vw, 48px); }
+  .line + .line { margin-top: clamp(44px, 6vw, 72px); }
+  .line-heading {
+    font-size: clamp(24px, 2.8vw, 34px); line-height: 1.2; color: var(--ink);
+    padding-bottom: 14px; margin-bottom: clamp(18px, 2.4vw, 28px);
+    border-bottom: 1px solid var(--hairline);
+  }
+  .product-grid { list-style: none; display: grid; grid-template-columns: repeat(2, 1fr); gap: clamp(16px, 2vw, 26px); }
+  @media (min-width: 1248px) {
+    .line-heading, .product-grid, .shop-foot {
+      width: 1152px; margin-left: 50%; transform: translateX(-50%);
+    }
+    .product-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+  .product {
+    display: flex; flex-direction: column;
+    border: 1px solid var(--hairline); background: var(--white);
+  }
+  /* Square, contained, on white: Keune's renders are packshots on transparent
+     or white grounds, and cropping a bottle to fill the frame cuts its label. */
+  .shot { display: block; aspect-ratio: 1/1; background: var(--white); overflow: hidden; padding: clamp(14px, 2vw, 24px); }
+  .shot img { width: 100%; height: 100%; object-fit: contain; display: block; }
+  /* No picture: the name set in the serif on clay, at the same aspect, so a
+     row of cards with and without images still lines up. */
+  .shot--type { display: grid; place-items: center; background: var(--clay); text-align: center; }
+  .shot--type span {
+    font-family: var(--font-serif); font-size: clamp(20px, 2.2vw, 26px); line-height: 1.2;
+    color: var(--ink); max-width: 14ch; text-wrap: balance;
+  }
+  .body { padding: clamp(20px, 2.4vw, 28px); display: flex; flex-direction: column; flex: 1; border-top: 1px solid var(--hairline); }
+  .name { font-weight: 400; font-size: clamp(19px, 2vw, 23px); line-height: 1.2; color: var(--ink); }
+  .price { margin-top: 8px; font-size: 13px; font-weight: 600; letter-spacing: 0.08em; color: var(--bronze-dark); }
+  .desc { color: var(--on-variant); font-size: 14.5px; line-height: 1.6; margin-top: 10px; max-width: 34ch; }
+  /* Bottom-aligned across a row (auto margin), with a floor of 18px under the
+     last line of text — flex items do not collapse margins, so both apply.
+     Specificity is deliberate: ArticlePage's `.article :global(.btn)` gives every
+     slotted button a fixed top margin (0,3,0), which would beat a bare `.cta` and
+     leave CTAs unaligned under titles of different lengths. */
+  .product .body > .cta { margin-top: auto; align-self: flex-start; }
+  .body > :not(.cta):nth-last-child(2) { margin-bottom: 18px; }
+  .shop-foot {
+    margin-top: clamp(36px, 5vw, 56px);
+    display: flex; flex-wrap: wrap; align-items: center; gap: 14px 22px;
+  }
+  /* Same override, for the same reason: the row centres the button and the
+     price note on one line, which a 48px inherited top margin would break. */
+  .shop-foot > .btn { margin-top: 0; }
+  .synced { font-size: 12.5px; color: var(--on-variant); letter-spacing: 0.02em; }
+  @media (max-width: 560px) { .product-grid { grid-template-columns: 1fr; } }
+</style>

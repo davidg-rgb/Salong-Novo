@@ -6,6 +6,7 @@
     "competitions": "Awards",
     "education": "Education & courses",
     "brands": "Our brands",
+    "shop": "Shop",
     "work": "Work with us",
     "contact": "Contact",
     "blog": "Blog",
@@ -17,7 +18,9 @@
     "meetTeam": "Meet the team",
     "readMore": "Read more",
     "readStory": "Read our story",
-    "allTeam": "The full team"
+    "allTeam": "The full team",
+    "shopAtKeune": "Shop at Keune",
+    "shopAll": "See the full range at Keune"
   },
   "labels": {
     "menu": "Menu",
@@ -31,7 +34,15 @@
     "findUs": "Find us",
     "readingTime": "{n} min read",
     "published": "Published",
-    "comingSoon": "Coming soon"
+    "comingSoon": "Coming soon",
+    "priceAt": "Price at keune.com",
+    "picksBy": "{name} picks",
+    "line": {
+      "care": "Care",
+      "style": "Styling",
+      "1922": "1922 — for men",
+      "so-pure": "So Pure"
+    }
   },
   "awards": {
     "photo": "Photo",
