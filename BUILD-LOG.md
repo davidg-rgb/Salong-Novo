@@ -968,3 +968,60 @@ Complete · `npm run e2e` → 34 passed (Chromium, `wrangler dev` via `npm run p
 
 **Gates** (baseline 756/756 + 34 e2e at e64308f): `npm test` → 764 passed / 31 files · `tsc` clean ·
 `astro check` 0 errors / 0 warnings / 6 hints (pre-existing) · `astro build` Complete · `npm run e2e` → 41 passed.
+
+### 2026-10-10 — Blog editor rebuilt: in-place "Google Docs" editor, light admin theme, AdminNav groups
+
+The owner's screenshot showed an unreadable editor, and they asked for "Google Docs", not Markdown beside a preview.
+Three root causes, each fixed:
+
+- **Dark tokens on a light shell.** `admin-blog.css` declared `--admin-bg #161616`, panels `#1f1f1f` and text
+  `#d8d8d8`, loaded over AdminBase's cream body. The result was black inputs on cream, and ghost buttons
+  ("Avpublicera", "Förhandsgranska", "Byt", "Ta bort") in `#d8d8d8` on cream. The `--admin-*` names now alias the
+  light tokens. Field boundaries are `#7d7c74` at 3.9:1 on cream. The `#e3e0da` hairline is for dividers only.
+  Bronze never carries text. There are three button tiers and one terracotta `:focus-visible` ring. Controls are
+  44px tall below 720px. The toast is the one dark element. `tests/admin-contrast.test.ts` reads every colour out
+  of the CSS and computes each WCAG pair: 35 pairs, plus the colours that must not carry text or a field edge.
+- **The body was a monospace Markdown textarea with a server-rendered preview.** It is now Tiptap 3, pinned at
+  3.31.4 (`@tiptap/core`, `pm`, `starter-kit`, `extension-image`, `extensions`, and the official `markdown`; MIT, no
+  framework). It sits on a white sheet with PostView's prose rules and a sticky toolbar. The toolbar has a Style
+  select (Normal text, Rubrik H2, Underrubrik H3), B, I, both lists, quote, link, image, undo and redo.
+  The link is a `<dialog>`: an empty URL removes the link, and `javascript:` and `data:` are refused.
+  Image reuses the ImagePicker and keeps `src` as the media URL, the same value `insertImage` wrote.
+  A Markdown toggle opens the source textarea. **Storage stays Markdown**: `getMarkdown()` runs into `draft.body`
+  with a 150 ms debounce, so validation, save and publish are unchanged. The editor no longer calls
+  `/api/admin/preview`; the route stays. The save status reads "Osparade ändringar", then "Sparar…", then
+  "Sparat HH:MM". Autosave fires 30 s after the last change, for SAVED DRAFTS only: never a published post and
+  never an unsaved new post, whose create would redirect under the cursor. Saves are gated to one request at a
+  time. Ctrl/Cmd+S saves. On ≥1100px the rail sits on the right and is sticky, with actions first. Below that,
+  the action block sticks to the viewport bottom as a 2×2 grid.
+- **AdminNav duplicates.** Three collection labels are renamed: "Varumärken (lista)", "Produkter (lista)" and
+  "Kurser (lista)". The 24 chips render as three labelled sub-rows: Fakta, Sidtexter, Listor. Grouping comes from
+  the pure `src/lib/admin-nav.ts`.
+
+Found on the way:
+- **ImagePicker's nested `<form method="dialog">` closed the editor `<form>` in real browsers.** A browser ignores
+  the nested start tag but honours its `</form>`. Everything rendered after the picker fell outside `form`, so
+  `form.querySelector("[data-toast]")` was null and error toasts never showed. The picker now renders last, and a
+  test pins the hook order against the first `</form>`. happy-dom does not emulate the rule.
+- The cover thumb showed a broken-image frame while empty, because tokens.css `img { display: block }` beat the
+  UA `[hidden]` rule. Fixed in admin-blog.css.
+- The serialiser normalises some Markdown (`_x_` becomes `*x*`). The client keeps the stored string while the
+  document still serialises to its load-time value, so opening a post and closing it leaves it clean.
+
+Tests (+90):
+- `editor-roundtrip` (8), with happy-dom, covers H2/H3, bold/italic, link, image, both lists, quote and literal `#`
+  and `*`. It checks the rendered HTML is identical, a second round-trip is byte-identical, headings are ATX and
+  bullets are `-`, and empty and malformed input are handled. It also pins one accepted loss: an empty `> ` is
+  dropped.
+- `editor-dom` (21) uses a new `happy-dom-ssr` environment. It is aliased in `vitest.config.ts`, because the
+  docblock only takes a bare name and stock happy-dom compiles `.astro` for the client. It renders the real
+  PostEditor and boots the real client.
+- `editor-policy` (16), `admin-contrast` (40) and `admin-nav` (5).
+
+**Gates** (baseline 764/764 + 41 e2e):
+- `npm test` passed 854 tests in 36 files.
+- `tsc` is clean.
+- `astro check` reports 0 errors, 0 warnings and 6 hints. The hints were there before.
+- `astro build` completes. The editor chunk is `/_astro/editor.client.*.js` at 469 KB raw and 145 KB gzip, with
+  no `eval` and no `new Function`.
+- `npm run e2e` passed 41 tests.

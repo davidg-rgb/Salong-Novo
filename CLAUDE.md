@@ -22,10 +22,15 @@ Access (admin) · markdown-it (`html:false`) · Vitest. See `ARCHITECTURE.md`.
   `npm run build` green. The §10.1 acceptance trace (create → write Markdown → publish → live on
   `/blogg`; drafts stay private) is **verified end-to-end against local D1** (2026-06-01).
 - ✅ **Admin Panel UI built** (ARCHITECTURE §10, sub-phases 4a–4f): Cloudflare-Access auth core
-  (RS256 via Web Crypto), middleware identity, dashboard (filter/search/delete), Markdown editor
-  with server-rendered live preview (preview == production), auto-slug + immutable-after-publish,
-  image upload (magic-byte sniff) + cover/inline pickers + public R2 streaming, draft/publish, and
-  an Access-gated draft preview. Vanilla-TS client (<8 KB), no framework.
+  (RS256 via Web Crypto), middleware identity, dashboard (filter/search/delete), auto-slug +
+  immutable-after-publish, image upload (magic-byte sniff) + cover/inline pickers + public R2
+  streaming, draft/publish, and an Access-gated draft preview. No framework.
+  **Editor since 2026-10-10:** in-place "Google Docs" editor (Tiptap 3.31.4 + `@tiptap/markdown`,
+  ~145 KB gz, admin-only): Style select (Normal text / Rubrik H2 / Underrubrik H3), B/I, lists,
+  quote, link dialog, image, undo/redo, Markdown-source toggle; Docs-style save status, autosave
+  for drafts (30 s), Ctrl+S. **Storage stays Markdown** (markdown-it renders the site;
+  `tests/editor-roundtrip.test.ts` pins parser agreement). Light admin theme, WCAG 2.2 AA computed
+  by `tests/admin-contrast.test.ts`. The editor no longer calls `/api/admin/preview`.
 - ✅ **Visual design applied** ("Haute Editorial" + recognition layer, §11): `tokens.css` + every
   public component restyled; Playfair Display + Hanken Grotesk fonts wired globally.
 - ✅ **Forge CMS retrofit + client IA DONE (2026-08-11):** Astro 7 / Workers, all 7 client tabs
@@ -48,7 +53,7 @@ Access (admin) · markdown-it (`html:false`) · Vitest. See `ARCHITECTURE.md`.
 - ✅ **Hero film (2026-10-10):** the salon video ("Hemsida Novo Final") is the hero plate —
   `public/video/` (1080p ≥900px, 720p below, poster frames), attached by `refresh.ts` only with
   motion allowed + Save-Data off; no JS / reduced motion / refused autoplay keep the poster.
-  764 tests / 31 files + `npm run e2e` (Playwright, 41).
+  `npm run e2e` (Playwright, 41). After the editor rebuild (same day): 854 tests / 36 files.
 - ⏳ **Remaining:** client content for Bokning & priser / Utbildning / Våra brands; RUNBOOK §5 on the
   client's Cloudflare account + domain (Access, DNS); the deferred WebP variant Worker; GA4/consent.
 - **Local dev:** `.dev.vars` (gitignored) sets `DEV_ADMIN_EMAIL` + `ADMIN_API_TOKEN`; run

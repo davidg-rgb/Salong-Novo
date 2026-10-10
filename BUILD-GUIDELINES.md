@@ -58,9 +58,11 @@ The admin panel (ARCHITECTURE §10) is **built**. Extend it in the same grain:
    by `parsePostWrite` (`src/lib/admin-validate.ts`); 2xx bodies carry `ok:true`, non-2xx are the
    `ApiError` envelope. Use the §10.5 status matrix.
 4. **Client JS** is vanilla TS in `src/admin/*.client.ts` — no framework, no `client:*`. Keep all
-   logic in the pure tested core (`src/lib/editor.ts`); the controller only does DOM glue. Live
-   Markdown preview goes through `POST /api/admin/preview` (the *same* `renderMarkdown` the public
-   page uses) so preview == production. Target < 8 KB client JS.
+   logic in the pure tested core (`src/lib/editor.ts`); the controller only does DOM glue. Since
+   2026-10-10 the post body is edited in place (Tiptap 3 + `@tiptap/markdown`, `src/admin/rich-editor.ts`),
+   Markdown stays the stored form and `tests/editor-roundtrip.test.ts` pins that the site's
+   `renderMarkdown` agrees with what the editor saves. The editor chunk is ~145 KB gz and loads on
+   `/admin/posts/*` only; every other admin controller stays tiny vanilla TS.
 5. **Admin strings** live in `src/lib/admin-strings.ts` (`ADMIN` const, Swedish), never in the
    public `ui.*.json`. Admin CSS is `src/styles/admin.css` on the dark token theme (WCAG AA body
    text via `--snow`/`#d8d8d8`, not `--muted`).
@@ -97,8 +99,8 @@ The admin panel (ARCHITECTURE §10) is **built**. Extend it in the same grain:
 - Images: render via `responsiveImageAttrs()` + `parseVariants()` — they gracefully serve the
   original when no WebP variants exist yet (the variant Worker is deferred, §10.7), so no image
   ever 404s. `loading="lazy"` below the fold.
-- No heavy client JS — the staff modal is ~30 lines of vanilla JS; the admin editor controller is
-  < 8 KB and ships no framework / no markdown-it. Keep islands tiny.
+- No heavy client JS on the PUBLIC site — the staff modal is ~30 lines of vanilla JS. The one
+  exception is the admin post editor (Tiptap, admin-only, ~145 KB gz). Keep islands tiny.
 - Target Lighthouse ≥ 90 mobile across Perf/A11y/Best-Practices/SEO.
 
 ## Security

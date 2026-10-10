@@ -14,6 +14,11 @@ export const ADMIN = {
     newPost: "Nytt inlägg",
     viewSite: "Visa sajt",
     logout: "Logga ut",
+    // AdminNav "Innehåll" sub-rows (2026-10-10): the 24 derived chips in three
+    // labelled groups, in config order — site facts, page copy, lists.
+    groupFacts: "Fakta",
+    groupCopy: "Sidtexter",
+    groupLists: "Listor",
   },
 
   dashboard: {
@@ -55,8 +60,27 @@ export const ADMIN = {
     localeEn: "EN",
     excerpt: "Utdrag",
     excerptSuggest: "Föreslå",
-    bodyPlaceholder: "Skriv ditt inlägg i Markdown…",
-    previewPlaceholder: "Förhandsvisning visas här",
+    // In-place editor (2026-10-10): the body is a document, not a Markdown field.
+    bodyPlaceholder: "Börja skriva…",
+    bodyLabel: "Brödtext",
+    styleLabel: "Textstil",
+    styleNormal: "Brödtext",
+    styleHeading: "Rubrik",
+    styleSubheading: "Underrubrik",
+    // The source-mode toggle names the mode it switches TO.
+    markdownMode: "Markdown",
+    textMode: "Text",
+    markdownModeHint: "Visa och redigera texten som Markdown",
+    textModeHint: "Tillbaka till vanlig redigering",
+    // Link dialog
+    linkTitle: "Länk",
+    linkUrl: "Adress (URL)",
+    linkText: "Text som visas",
+    linkApply: "Använd",
+    linkRemove: "Ta bort länk",
+    linkCancel: "Avbryt",
+    linkInvalid: "Adressen måste börja med https://, mailto: eller tel:",
+    sidePanel: "Inställningar för inlägget",
     cover: "Omslagsbild",
     coverChange: "Byt",
     coverRemove: "Ta bort",
@@ -75,8 +99,9 @@ export const ADMIN = {
     saving: "Sparar…",
     // Fill {time}
     saved: "Sparat {time}",
-    previewLoading: "Skriver…",
-    previewError: "Kunde inte ladda förhandsvisning · Försök igen",
+    // Fill {time}
+    autosaved: "Sparat automatiskt {time}",
+    unsaved: "Osparade ändringar",
     unsavedGuard: "Du har osparade ändringar. Lämna sidan?",
     // Fill {n}
     fixFields: "Rätta {n} fält innan publicering",
@@ -94,12 +119,14 @@ export const ADMIN = {
   aria: {
     bold: "Fetstil",
     italic: "Kursiv",
-    heading: "Rubrik",
     quote: "Citat",
     bulletList: "Punktlista",
     orderedList: "Numrerad lista",
     link: "Länk",
     image: "Bild",
+    undo: "Ångra",
+    redo: "Gör om",
+    toolbar: "Formatering",
   },
 } as const;
 

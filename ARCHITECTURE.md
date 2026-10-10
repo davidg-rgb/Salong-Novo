@@ -252,7 +252,7 @@ locales + `x-default` from `alternates(pageKey)`.
 
 **✅ Admin Panel UI — BUILT** (sub-phases 4a–4f, §10). The full Cloudflare-Access-gated panel: auth
 core (`src/lib/access.ts`, RS256 via Web Crypto, 42 tests) + middleware identity; dashboard
-(`listAdmin` + filter/search + delete); editor with Markdown toolbar, server-rendered live preview
+(`listAdmin` + filter/search + delete); editor (in-place Tiptap since 2026-10-10, §10.6; originally a Markdown toolbar + server-rendered live preview)
 (preview == production), auto-slug, SEO counters, dirty guard, draft/publish/unpublish; image upload
 (magic-byte sniff, MIME-derived key) + cover/inline pickers + public R2 streaming (`/api/media/*`);
 Access-gated draft preview via the real `PostView`. A non-technical user can now write and publish a
@@ -393,8 +393,8 @@ src/
 ├── components/admin/
 │   ├── AdminNav.astro               NEW  top nav + Access email readout + /cdn-cgi/access/logout
 │   ├── PostList.astro               NEW  dashboard table (title/locale/status/updated/actions)
-│   ├── PostEditor.astro             NEW  the editor form shell (meta, toolbar, textarea, preview, pickers, action bar)
-│   ├── MarkdownToolbar.astro        NEW  static role="toolbar" buttons with data-cmd + SV aria-labels
+│   ├── PostEditor.astro             NEW  the editor form shell (title, slug, sheet, rail: actions/cover/SEO, dialogs)
+│   ├── EditorToolbar.astro          2026-10-10  Style select + data-cmd buttons (replaced MarkdownToolbar)
 │   ├── ImagePicker.astro            NEW  inline-image dialog: dropzone + required alt + recent grid
 │   └── CoverPicker.astro            NEW  cover-image thumb + byt/ta bort
 ├── pages/admin/
@@ -444,7 +444,7 @@ src/
 | `GET /api/admin/posts` | `api/admin/posts.ts` | List + filter for the dashboard / client refresh. |
 | `GET /api/admin/posts/[id]` | `api/admin/posts/[id].ts` | Load one post by id. |
 | `POST/PUT/DELETE /api/admin/posts` | `api/admin/posts.ts` | Create / update / delete. |
-| `POST /api/admin/preview` | `api/admin/preview.ts` | Markdown → HTML for the live preview pane. |
+| `POST /api/admin/preview` | `api/admin/preview.ts` | Markdown → HTML. No longer called by the editor since 2026-10-10 (in-place editing); kept. |
 | `POST /api/admin/upload` | `api/admin/upload.ts` | Image upload → R2 + media row. |
 | `GET/DELETE /api/admin/media` | `api/admin/media.ts` | List media (picker) / delete media. |
 | `GET /api/media/[...key]` | `api/media/[...key].ts` | **Public** R2 object streaming (no auth — images are public content). |
@@ -743,6 +743,15 @@ guarantee preview == production (`html:false`, custom link rule, typographer) wi
 *Trade-off, stated honestly:* no offline preview — acceptable for an always-online Access-gated tool. Target
 client JS on `/admin`: **< 8 KB** (no framework, no markdown-it).
 
+> **Superseded 2026-10-10 — in-place editor.** The owner asked for a "Google Docs" editor, not Markdown next to a
+> preview. The body is now edited in place with **Tiptap 3** (`@tiptap/core` + `starter-kit` + `extension-image` +
+> `extensions` + the official `@tiptap/markdown`, all pinned 3.31.4, MIT, no framework). The editor chunk is ~145 KB
+> gzip, admin-only (the public bundle is unchanged); the < 8 KB target above no longer holds for `/admin/posts/*`.
+> **Storage stays Markdown** and markdown-it (`html:false`) still renders the site; the editor parses with `marked`,
+> so `tests/editor-roundtrip.test.ts` pins that both agree on every construct the toolbar produces. The editor no
+> longer calls `POST /api/admin/preview` (the route stays); the sheet uses PostView's prose rules instead, and
+> **Förhandsgranska** still opens the real PostView at `/admin/preview/{id}`.
+
 **Admin UI language — DECIDED: Swedish-only.** The owner and all 18 stylists operate in Swedish; the admin
 serves 1–3 internal users. Post **locale (SV/EN)** is an orthogonal field, not the chrome language, so no admin
 language switcher exists. Strings live in `src/lib/admin-strings.ts` (a flat typed `ADMIN` const), separate from
@@ -791,8 +800,8 @@ AdminBase.astro                  { title: string; userEmail?: string | null }
    │   └─ <dialog> delete-confirm
    └─ PostEditor.astro           { draft: PostDraft; mode: "create" | "edit" }
       ├─ (meta strip: title, slug chip, locale toggle, excerpt — in PostEditor)
-      ├─ MarkdownToolbar.astro   { }                                  // static data-cmd buttons
-      ├─ (textarea#md-body + <div class="preview body"> — in PostEditor)
+      ├─ EditorToolbar.astro     { }                                  // Style select + data-cmd buttons (2026-10-10)
+      ├─ (div[data-rich-surface] Tiptap sheet + textarea#md-body source mode — in PostEditor)
       ├─ CoverPicker.astro       { coverImage: string | null; imageBase: string }
       ├─ ImagePicker.astro       { imageBase: string }                // dialog, hidden until invoked
       ├─ (SEO fields: seoTitle, seoDesc — in PostEditor)
@@ -800,7 +809,8 @@ AdminBase.astro                  { title: string; userEmail?: string | null }
 ```
 `PostEditor.astro` serializes the initial `draft` into a `<script type="application/json" id="draft-data">`
 block that `editor.client.ts` reads (no second fetch on edit). Client controllers — `editor.client.ts`
-(toolbar→`editor.ts`, debounced preview fetch, upload, dirty guard, save/publish/delete) and `dashboard.client.ts`
+(the Tiptap document via `src/admin/rich-editor.ts`, link dialog, upload, autosave, dirty guard,
+save/publish/delete) and `dashboard.client.ts`
 (filter/search, delete-confirm) — are the **only** JS on `/admin`.
 
 **Dashboard fields.** Table columns: **Titel** (link to `/admin/posts/{id}`), **Språk** (SV/EN pill),
@@ -810,7 +820,9 @@ over rendered rows): search `Sök titel…`, status `Alla·Utkast·Publicerat`, 
 `Inga inlägg ännu.` + `Skriv ditt första inlägg`. Delete uses a native `<dialog>` confirm
 (`Ta bort "{title}"? Detta går inte att ångra.`).
 
-**Editor fields & Markdown + live preview.** Two-pane on desktop (≥ 960px), stacked on mobile:
+**Editor fields & the in-place document (2026-10-10).** One document column (title, slug chip, the white sheet)
+plus a rail — right and sticky at ≥ 1100px, stacked below it with the action block stuck to the viewport bottom.
+Rail order: actions, save status, cover, language, excerpt, SEO.
 
 - **Titel** — required; on input, if `!slugManual`, the slug chip updates via `nextSlug`.
 - **Slug** — read-only chip `/blogg/{slug}` (or `/en/blog/{slug}` for EN); `✎ redigera` makes it editable and
@@ -818,15 +830,19 @@ over rendered rows): search `Sök titel…`, status `Alla·Utkast·Publicerat`, 
   in the response and the chip updates (toast if `-2` was appended).
 - **Språk (SV/EN)** segmented control (changing locale on an edit warns: post moves to the other blog).
 - **Utdrag (excerpt)** — counter `n/200`; `Föreslå` fills from the existing `excerpt(body)` helper when empty.
-- **Body** — `<textarea>` + `MarkdownToolbar`. Toolbar buttons (static HTML, `data-cmd`, SV `aria-label`):
-  **B** `wrapInline("**")` Cmd/Ctrl+B · *I* `wrapInline("_")` +I · **H2** `prefixBlock("## ")` +2 ·
-  **" "** `prefixBlock("> ")` · **•** `toggleList(false)` · **1.** `toggleList(true)` · **🔗** `insertLink` +K ·
-  **🖼** opens `ImagePicker` → `insertImage`. Controller flow per button: read `{value,start,end}` → call the pure
-  `editor.ts` fn → write back, restore selection, dispatch `input`, mark dirty, schedule preview.
-- **Live preview** — `debounce(250ms)` `POST /api/admin/preview` with `{body}`; render the returned HTML into
-  `<div class="preview body">` (sharing PostView's prose CSS via `admin.css` so it *looks* like the live post).
-  Inline image keys resolve via the shared rewrite (§10.7) so both preview and production show images identically.
-  Preview pane states: `Skriver…` (debounce pending) · rendered HTML · `Kunde inte ladda förhandsvisning · Försök igen`.
+- **Body** — a Tiptap document on a white sheet (PostView's prose rules, so it looks like the site) under a sticky
+  `EditorToolbar`: **Style** select (`Normal text` · `Rubrik` H2 · `Underrubrik` H3; heading levels are [2,3] only,
+  the post sits under an H1) · **B** Ctrl/Cmd+B · *I* +I · bullet list · numbered list · quote · link +K (a
+  `<dialog class="link-dialog">`: URL + text, empty URL removes the link, `javascript:`/`data:` refused) · image
+  (the existing `ImagePicker`; inserts an image node whose `src` is the media URL, as `insertImage` did) · undo +Z ·
+  redo +Y. Active state = `aria-pressed`. StarterKit input rules stay on (`## `, `- `, `1. `, `> `). No
+  Ctrl+Alt+digit bindings (AltGr on Swedish keyboards). Every document change is serialised with `getMarkdown()`
+  (150 ms debounce) into `draft.body`, so dirty/validation/save are unchanged. A **Markdown** toggle at the
+  toolbar's right end swaps the sheet for the `#md-body` textarea (source mode, where `insertLink`/`insertImage`
+  still run); switching back re-parses it.
+- **Save status** (`aria-live="polite"`): `Osparade ändringar` → `Sparar…` → `Sparat HH:MM`. **Autosave** 30 s after
+  the last change for a saved DRAFT only (`shouldAutosave`: never a published post, never an unsaved new post); one
+  request at a time (`createSaveGate`); **Ctrl/Cmd+S** saves.
 - **Omslagsbild** — `CoverPicker` (upload → store `key` in `draft.coverImage`, thumbnail + `Byt`/`Ta bort`).
 - **SEO-titel / SEO-beskrivning** — `counter` states (green ideal / amber warn / red over): title ideal `[30,60]`
   hard 70; desc ideal `[70,160]` hard 200. Placeholders show the title/excerpt fallback used when blank.
@@ -835,7 +851,7 @@ over rendered rows): search `Sök titel…`, status `Alla·Utkast·Publicerat`, 
   A published post shows **Spara ändringar** + **Avpublicera** instead. On create success the client navigates to
   `/admin/posts/{newId}` so subsequent saves are PUT.
 
-**Editor states.** Empty body → placeholder `Skriv ditt inlägg i Markdown…`, preview muted `Förhandsvisning visas här`.
+**Editor states.** Empty body → placeholder `Börja skriva…`.
 Saving → button spinner `Sparar…`, inputs disabled, amber status dot. Saved → `Sparat HH:MM`, dirty cleared. Dirty →
 `beforeunload` + in-app nav intercept → `confirm(ADMIN.unsavedGuard)`. Validation error on Publish → inline red errors
 + summary `Rätta {n} fält innan publicering`. Upload error → SV-mapped (413 `Bilden är för stor (max 10 MB)`, 415
@@ -843,10 +859,13 @@ Saving → button spinner `Sparar…`, inputs disabled, amber status dot. Saved 
 toast `Något gick fel — försök igen`; the draft is never lost.
 
 **Accessibility.** Editor is a `<form>` with real `<label for>`; toolbar `role="toolbar"` + roving tabindex + SV
-`aria-label` per button; shortcuts fire only when the textarea is focused; dialogs are native `<dialog>` (`showModal()`
-focus trap, Esc to close); StatusBar `aria-live="polite"`, validation summary `role="alert"`, toasts `role="status"`;
-status badges pair color with text; reuse `:focus-visible { outline: 2px solid var(--gold) }`; respect
-`prefers-reduced-motion`; admin body text uses `--snow`/`#d8d8d8` (not `--muted`) for WCAG AA on the dark theme.
+`aria-label`/`title` (with shortcut) per control; Ctrl/Cmd+K fires in the document or the source textarea, Ctrl/Cmd+S
+anywhere in the form; dialogs are native `<dialog>` (`showModal()` focus trap, Esc to close); save status
+`aria-live="polite"`, validation summary `role="alert"`, toasts `role="status"`; status badges pair color with text;
+`:focus-visible { outline: 2px solid var(--admin-accent) }`; respect `prefers-reduced-motion`. **Light theme since
+2026-10-10** (`admin-blog.css` used to declare dark tokens on the light shell): WCAG 2.2 AA — text ≥ 4.5:1, field
+boundaries ≥ 3:1 (`#7d7c74`; the `#e3e0da` hairline is for dividers only), bronze never carries text — computed from
+the CSS by `tests/admin-contrast.test.ts`; controls 44px tall below 720px.
 
 ### 10.7 Media pipeline
 
@@ -956,7 +975,9 @@ row). Build the cron later; the script is optional v1.1.
 ### 10.9 Testing strategy
 
 The high-value, high-risk logic is pure string/object math → fast Vitest units (the repo's `tests/**/*.test.ts`, env
-`node`, alias `~ → ./src`; no jsdom). New/extended suites:
+`node`, alias `~ → ./src`). Since 2026-10-10 two files opt into a DOM per file: `// @vitest-environment happy-dom`
+(round-trip) and `happy-dom-ssr` (`tests/helpers/happy-dom-ssr.ts`, aliased in `vitest.config.ts`: happy-dom with
+SSR transforms, so the Container API can render `.astro`). New/extended suites:
 
 | Suite | Module under test | Representative cases |
 |-------|-------------------|----------------------|
@@ -968,6 +989,9 @@ The high-value, high-risk logic is pure string/object math → fast Vitest units
 | `tests/posts.test.ts` (EXTEND) | `src/lib/posts.ts` | `nextPublishedAt` full transition table (create-draft→null, create-published→now, draft→published→now, published re-save→unchanged, published→draft→null, re-publish→now). |
 | `tests/db.test.ts` (EXTEND) | `src/lib/db.ts` | `getById` (mapped Post / null / binds `[id]` / `WHERE id = ?`); `listAdmin` SQL+bind per filter; `listMedia` JSON parse + base join. |
 | `tests/images.test.ts` (EXTEND) | `src/lib/images.ts` | `parseVariants` (null/`"[]"`/`"[480,960]"`/garbage); `responsiveImageAttrs` (empty → `src`=served original, no srcset; populated → webp srcset). |
+| `tests/editor-roundtrip.test.ts` (2026-10-10, happy-dom) | `src/admin/rich-editor.ts` + `renderMarkdown` | Markdown → Tiptap → `getMarkdown()` renders the same public HTML (H2/H3, bold/italic, link, image, lists, quote, literal `#`/`*`); second round-trip byte-identical; ATX headings + `-` bullets; empty and malformed input; the one accepted loss (an empty `> `). |
+| `tests/editor-dom.test.ts` (2026-10-10, `happy-dom-ssr`) | `PostEditor.astro` + `editor.client.ts` | The real markup (Container API) + client: Style select ↔ paragraph/H2/H3 both ways, Ctrl+S saves once, no second request in flight, autosave drafts only (never published/new), link dialog set/remove/refuse, image picker choose (src = media URL) and cancel, source-mode link/image, Markdown-source mode both ways, hook order vs the nested `</form>`. |
+| `tests/editor-policy.test.ts` / `tests/admin-contrast.test.ts` / `tests/admin-nav.test.ts` (2026-10-10) | `editor.ts` policy, `admin-blog.css`, `admin-nav.ts` | Autosave gate + debounce, save gate, `isSaveShortcut`, `linkAction`; every WCAG pair from the CSS; no duplicate AdminNav labels. |
 | `tests/markdown.test.ts` (EXTEND) or `tests/admin-security.test.ts` (NEW) | render path | Adversarial: editor-toolbar output with a `javascript:` href / `onerror`-style alt renders through `renderMarkdown` with **no** executable HTML. |
 
 After this phase the suite goes from 62 → ~90+ tests; the existing 62 must stay green. The `.astro` + `.client.ts` glue
@@ -1082,8 +1106,8 @@ the shared types/validation everything imports. 4c is the editor core (needs 4b'
 | `src/layouts/AdminBase.astro` | Admin shell: `<html lang="sv">`, `noindex`, tokens only, AdminNav, no public chrome. |
 | `src/components/admin/AdminNav.astro` | Admin nav: Dashboard/Nytt inlägg/Visa sajt links, Access email, logout. |
 | `src/components/admin/PostList.astro` | Dashboard table (title/locale/status/updated/actions) + delete `<dialog>`. |
-| `src/components/admin/PostEditor.astro` | Editor form shell (meta, toolbar, textarea, preview, pickers, SEO, action bar); serializes draft to a JSON script block. |
-| `src/components/admin/MarkdownToolbar.astro` | Static `role="toolbar"` `data-cmd` buttons with SV aria-labels. |
+| `src/components/admin/PostEditor.astro` | Editor form shell (title, slug chip, the Tiptap sheet + source textarea, rail with actions/save status/cover/locale/excerpt/SEO, link dialog, pickers); serializes draft to a JSON script block. |
+| `src/components/admin/EditorToolbar.astro` | (2026-10-10, replaced MarkdownToolbar) Style select + `data-cmd` buttons with SV `aria-label`/`title`; wired by `src/admin/rich-editor.ts`. |
 | `src/components/admin/ImagePicker.astro` | Inline-image dialog: dropzone + required alt + recent-media grid → upload → `insertImage`. |
 | `src/components/admin/CoverPicker.astro` | Cover-image thumbnail + byt/ta bort → stores key in `draft.coverImage`. |
 | `src/pages/admin/index.astro` | Dashboard page (SSR `listAll` → PostList). |

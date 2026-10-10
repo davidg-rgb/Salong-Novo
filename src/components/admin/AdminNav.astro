@@ -7,7 +7,7 @@
  * editable group or a list puts it in the nav without anyone remembering to.
  * Nothing here is hardcoded, which is what keeps that true.
  *
- * The derived links sit on their own row. There are a dozen-plus of them and
+ * The derived links sit in their own block. There are two dozen of them and
  * they are the screens Nicole uses most; mixing them into the four section links
  * would bury both. Their labels come from the config (they name her content),
  * while the fixed sections resolve through `adminString` — the chrome is
@@ -16,6 +16,8 @@
  */
 import { CMS } from "../../cms.config";
 import { adminString } from "../../lib/cms/strings.sv";
+import { ADMIN } from "../../lib/admin-strings";
+import { navGroups } from "../../lib/admin-nav";
 
 interface Props {
   email?: string;
@@ -42,23 +44,18 @@ const ICONS: Record<string, string> = {
 };
 
 /**
- * The editable surfaces, in the order the config declares them: site facts,
- * then page copy, then lists.
+ * The editable surfaces as three labelled sub-rows (2026-10-10) — site facts,
+ * page copy, lists — in the order the config declares them. One undifferentiated
+ * 24-chip row made a copy page and the list of the same name ("Våra brands")
+ * indistinguishable; `navGroups` is pure so tests/admin-nav.test.ts can pin that
+ * no two labels are equal.
  */
-const derived = [
-  ...CMS.contentGroups.map((group) => ({
-    href: `/admin/content/${group.key}`,
-    label: group.label,
-  })),
-  ...CMS.editableCopy.map((page) => ({
-    href: `/admin/content/${page.page}`,
-    label: page.label,
-  })),
-  ...CMS.collections.map((collection) => ({
-    href: `/admin/collections/${collection.name}`,
-    label: collection.label,
-  })),
-];
+const groups = navGroups(CMS, {
+  facts: ADMIN.nav.groupFacts,
+  copy: ADMIN.nav.groupCopy,
+  lists: ADMIN.nav.groupLists,
+});
+const derived = groups.flatMap((group) => group.items);
 ---
 
 <nav class="admin-nav" aria-label={adminString("admin.title")}>
@@ -104,14 +101,19 @@ const derived = [
           <summary class="admin-nav__summary">{adminString("nav.contentToggle")}</summary>
           <div class="admin-nav__content" aria-label={adminString("nav.content")}>
             <span class="admin-nav__section">{adminString("nav.content")}</span>
-            {derived.map((item) => (
-              <a
-                class="admin-nav__chip"
-                href={item.href}
-                aria-current={path === item.href ? "page" : undefined}
-              >
-                {item.label}
-              </a>
+            {groups.map((group) => (
+              <div class="admin-nav__group" role="group" aria-labelledby={`admin-nav-${group.key}`}>
+                <span class="admin-nav__group-label" id={`admin-nav-${group.key}`}>{group.label}</span>
+                {group.items.map((item) => (
+                  <a
+                    class="admin-nav__chip"
+                    href={item.href}
+                    aria-current={path === item.href ? "page" : undefined}
+                  >
+                    {item.label}
+                  </a>
+                ))}
+              </div>
             ))}
           </div>
         </details>

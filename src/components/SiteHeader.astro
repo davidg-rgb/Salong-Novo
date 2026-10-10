@@ -16,8 +16,8 @@ const t = useT(locale, kv);
 
 // Primary nav = the client-confirmed tabs, in client order (ARCHITECTURE §2A.1), plus
 // BLOGG, promoted out of the footer on client request (round 2, 2026-08-25). The blog
-// stays in the footer too. `about` is still footer-only. BUTIK (the Keune product wall,
-// 2026-09-29) sits right after Våra brands, the page that introduces the brand.
+// stays in the footer too. `about` is still footer-only. BUTIK (the Keune page — one
+// outbound link since 2026-10-10, products hidden) sits right after Våra brands.
 const navKeys: PageKey[] = ["contact", "staff", "pricing", "competitions", "education", "brands", "shop", "blog", "work"];
 const otherLocale = LOCALES.find((l) => l !== locale)!;
 ---

@@ -181,7 +181,9 @@ export const AWARDS: CollectionDef = {
  */
 export const BRANDS: CollectionDef = {
   name: "brands",
-  label: "Våra brands",
+  // "(lista)" since 2026-10-10: the copy page below is also "Våra brands", and
+  // AdminNav showed two identical chips side by side.
+  label: "Varumärken (lista)",
   orderable: true,
   jsonFallback: () => withoutNotes(getBrands() as unknown as Record<string, unknown>[]),
   fields: [
@@ -206,7 +208,9 @@ export const BRANDS: CollectionDef = {
  */
 export const COURSES: CollectionDef = {
   name: "courses",
-  label: "Kurser & utbildningar",
+  // Was "Kurser & utbildningar" beside the copy page "Utbildning & kurser" —
+  // two near-identical chips (2026-10-10).
+  label: "Kurser (lista)",
   orderable: true,
   jsonFallback: () => withoutNotes(getCourses() as unknown as Record<string, unknown>[]),
   fields: [
@@ -225,7 +229,8 @@ export const COURSES: CollectionDef = {
 };
 
 /**
- * The curated Keune product wall on `/butik` (2026-09-29, `Planning/KEUNE-KICKBACK.md`).
+ * The curated Keune product list (2026-09-29, `Planning/KEUNE-KICKBACK.md`), HIDDEN on
+ * `/butik` since 2026-10-10 at the client's request (the page is copy + one link); kept for the return.
  *
  * `slug` is Keune's own `/se/p/<slug>/` path segment and the ONLY link input:
  * the "Handla hos Keune" CTA is built from it by `keuneLink()` at render, so a
@@ -243,7 +248,8 @@ export const COURSES: CollectionDef = {
  */
 export const PRODUCTS: CollectionDef = {
   name: "products",
-  label: "Butiken (Keune)",
+  // Distinct from the copy page "Butiken (Keune)" (2026-10-10).
+  label: "Produkter (lista)",
   orderable: true,
   jsonFallback: () => withoutNotes(getProducts() as unknown as Record<string, unknown>[]),
   fields: [
@@ -432,7 +438,7 @@ export const CMS: CmsConfig = {
         {
           key: "education.coursesEmpty",
           label: "Text när inga kurser är inlagda",
-          hint: "Visas bara så länge listan Kurser & utbildningar är tom.",
+          hint: "Visas bara så länge listan Kurser (lista) är tom.",
         },
       ],
     },
@@ -447,7 +453,7 @@ export const CMS: CmsConfig = {
     {
       /**
        * The shop page. `shop.howItWorks` is the page's disclosure — that NOVO
-       * earns a share when a visitor buys through these links — so it is
+       * earns a share when a visitor buys through its Keune link — so it is
        * editable like any other paragraph but must keep saying that.
        */
       page: "copy-shop",

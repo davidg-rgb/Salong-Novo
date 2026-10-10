@@ -5,15 +5,22 @@
  * never duplicated here) and talks to the admin API per `admin-api.ts`.
  *
  * Responsibilities:
- *  - Toolbar → editor.ts: read {value,start,end} off the textarea → call the pure
- *    fn → write back → restore selection → dispatch `input` → mark dirty →
- *    schedule a preview refresh. Keyboard shortcuts (Ctrl/Cmd+B/I/K) only when
- *    the textarea is focused. Roving tabindex on the toolbar.
- *  - Live preview: 250ms-debounced `POST /api/admin/preview` → render returned
- *    HTML into the shared-prose preview pane (preview == production).
+ *  - The body (2026-10-10): an in-place Tiptap document (`rich-editor.ts`) on a
+ *    white sheet, replacing the Markdown textarea + server-rendered preview pane
+ *    (the `/api/admin/preview` route is no longer called from here). The draft's
+ *    `body` is ALWAYS Markdown: every document change is serialised with
+ *    `getMarkdown()` (150 ms debounce) into `draft.body`, so dirty tracking,
+ *    validation, save and publish run exactly as before. A toolbar toggle swaps
+ *    the sheet for the `.md-body` textarea (Markdown-source mode); there the
+ *    caret helpers in `editor.ts` insert links and images.
+ *  - Link dialog (Ctrl/Cmd+K or toolbar): URL + text; empty URL removes the link.
+ *  - Save status (Docs-style): "Osparade ändringar" → "Sparar…" → "Sparat 14:32".
+ *    Autosave 30 s after the last change, DRAFTS ONLY (`shouldAutosave`); one
+ *    request at a time (`createSaveGate`); Ctrl/Cmd+S saves.
  *  - Upload: cover (`kind=cover`) + inline (`kind=inline`, alt-gated) via
- *    `POST /api/admin/upload` → `UploadResponse`. Inline insertion uses
- *    `insertImage` at the caret.
+ *    `POST /api/admin/upload` → `UploadResponse`. Inline insertion puts an image
+ *    node whose `src` is the media URL the upload/picker returned — the same
+ *    value `insertImage` wrote into the Markdown before.
  *  - Slug chip: auto from title via `nextSlug` unless the user takes manual control.
  *  - Counters (excerpt/SEO) via `counter`; publish enabled only when
  *    `validateDraft` passes; validation summary on failed publish.
@@ -25,26 +32,27 @@
  *    state; the draft is never lost.
  */
 import {
-  wrapInline,
-  prefixBlock,
   insertLink,
   insertImage,
-  toggleList,
   nextSlug,
   validateDraft,
   counter,
   toApiBody,
   isDirty,
+  shouldAutosave,
+  createAutosave,
+  createSaveGate,
+  linkAction,
   type PostDraft,
   type Selection,
   type FieldError,
 } from "../lib/editor";
+import { createRichEditor, mountToolbar, bindSaveShortcut } from "./rich-editor";
 import { ADMIN, fmt } from "../lib/admin-strings";
 import {
   isOk,
   type CreatePostResponse,
   type UpdatePostResponse,
-  type PreviewResponse,
   type UploadResponse,
   type MediaItem,
 } from "../lib/admin-api";
@@ -79,12 +87,13 @@ function initEditor(form: HTMLFormElement): void {
   const seoTitleInput = form.querySelector<HTMLInputElement>('[data-field="seoTitle"]')!;
   const seoDescInput = form.querySelector<HTMLTextAreaElement>('[data-field="seoDesc"]')!;
   const localeGroup = form.querySelector<HTMLElement>('[data-field="locale"]')!;
-  const previewEl = form.querySelector<HTMLElement>("[data-preview]")!;
-  const previewStatus = form.querySelector<HTMLElement>("[data-preview-status]");
   const saveStatus = form.querySelector<HTMLElement>("[data-save-status]");
   const validationBox = form.querySelector<HTMLElement>("[data-validation]");
   const toast = form.querySelector<HTMLElement>("[data-toast]");
-  const toolbar = form.querySelector<HTMLElement>("[data-md-toolbar]");
+  const toolbar = form.querySelector<HTMLElement>("[data-rich-toolbar]")!;
+  const sheet = form.querySelector<HTMLElement>("[data-sheet]")!;
+  const surface = form.querySelector<HTMLElement>("[data-rich-surface]")!;
+  const modeToggle = toolbar.querySelector<HTMLButtonElement>("[data-mode-toggle]")!;
 
   // Slug chip
   const slugPrefix = form.querySelector<HTMLElement>("[data-slug-prefix]");
@@ -99,10 +108,11 @@ function initEditor(form: HTMLFormElement): void {
   function markDirty(): void {
     // Reflected only through isDirty(draft, saved); no extra flag needed.
     renderSaveStatus();
+    autosave.poke();
   }
   function renderSaveStatus(): void {
-    if (!saveStatus) return;
-    saveStatus.textContent = dirty() ? "Osparade ändringar" : saveStatus.dataset.saved ?? "";
+    if (!saveStatus || saver.busy()) return;
+    saveStatus.textContent = dirty() ? ADMIN.states.unsaved : saveStatus.dataset.saved ?? "";
   }
 
   function showToast(text: string): void {
@@ -231,15 +241,156 @@ function initEditor(form: HTMLFormElement): void {
     markDirty();
   });
 
-  // ── Body textarea → live preview ──────────────────────────────
+  // ── Body: the in-place document ───────────────────────────────
+  // `baseline` hides the serialiser's normalisation (e.g. `_x_` → `*x*`) from
+  // dirty tracking: while the document still serialises to what it did at load,
+  // the body stays the stored string byte for byte.
+  let mdMode = false;
+  let bodyTimer: number | undefined;
+  const editor = createRichEditor({
+    element: surface,
+    markdown: draft.body,
+    placeholder: ADMIN.editor.bodyPlaceholder,
+    onUpdate: () => {
+      window.clearTimeout(bodyTimer);
+      bodyTimer = window.setTimeout(flushBody, 150);
+    },
+  });
+  let baseline = { md: editor.getMarkdown(), body: draft.body };
+  function flushBody(): void {
+    if (bodyTimer === undefined) return;
+    window.clearTimeout(bodyTimer);
+    bodyTimer = undefined;
+    if (mdMode) return;
+    const md = editor.getMarkdown();
+    draft.body = md === baseline.md ? baseline.body : md;
+    refreshPublishEnabled();
+    markDirty();
+  }
+  // Mounted: the document replaces the textarea (which stays the no-JS fallback).
+  surface.hidden = false;
+  bodyArea.hidden = true;
+  sheet.classList.add("sheet--ready");
+
+  const toolbarApi = mountToolbar(editor, toolbar, {
+    onLink: () => openLinkDialog(),
+    onImage: () => void openImagePicker(),
+  });
+
+  // Markdown-source mode: the same sheet, the raw text.
   bodyArea.addEventListener("input", () => {
     draft.body = bodyArea.value;
-    schedulePreview();
     refreshPublishEnabled();
     markDirty();
   });
+  bodyArea.addEventListener("keydown", (e) => {
+    if ((e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === "k") {
+      e.preventDefault();
+      openLinkDialog();
+    }
+  });
+  function setMarkdownMode(on: boolean): void {
+    if (on === mdMode) return;
+    if (on) {
+      flushBody();
+      bodyArea.value = draft.body;
+    } else {
+      editor.commands.setContent(bodyArea.value, { contentType: "markdown", emitUpdate: false });
+      baseline = { md: editor.getMarkdown(), body: draft.body };
+    }
+    mdMode = on;
+    surface.hidden = on;
+    bodyArea.hidden = !on;
+    modeToggle.textContent = on ? ADMIN.editor.textMode : ADMIN.editor.markdownMode;
+    modeToggle.title = on ? ADMIN.editor.textModeHint : ADMIN.editor.markdownModeHint;
+    // Formatting acts on the document; in source mode only link + image apply.
+    for (const el of toolbar.querySelectorAll<HTMLElement>("[data-cmd], [data-style]")) {
+      const keep = el.dataset.cmd === "link" || el.dataset.cmd === "image";
+      (el as HTMLButtonElement).disabled = on && !keep;
+    }
+    if (!on) toolbarApi.sync();
+    focusBody();
+  }
+  modeToggle.addEventListener("click", () => setMarkdownMode(!mdMode));
+  function focusBody(): void {
+    if (mdMode) bodyArea.focus();
+    else editor.commands.focus();
+  }
 
-  // ── Toolbar → editor.ts (pure transforms) ─────────────────────
+  // ── Link dialog ───────────────────────────────────────────────
+  const linkDialog = form.querySelector<HTMLDialogElement>("[data-link-dialog]")!;
+  const linkUrl = linkDialog.querySelector<HTMLInputElement>("[data-link-url]")!;
+  const linkText = linkDialog.querySelector<HTMLInputElement>("[data-link-text]")!;
+  const linkError = linkDialog.querySelector<HTMLElement>("[data-link-error]")!;
+  const linkRemove = linkDialog.querySelector<HTMLButtonElement>("[data-link-remove]")!;
+  /** The range the dialog acts on, captured at open (focus moves into the dialog). */
+  let linkRange: { from: number; to: number } | null = null;
+  let mdSel: Selection | null = null;
+
+  function openLinkDialog(): void {
+    linkError.hidden = true;
+    if (mdMode) {
+      mdSel = currentSelection();
+      linkUrl.value = "";
+      linkText.value = mdSel.value.slice(mdSel.start, mdSel.end);
+      linkRemove.hidden = true;
+    } else {
+      if (editor.isActive("link")) editor.chain().extendMarkRange("link").run();
+      const { from, to } = editor.state.selection;
+      linkRange = { from, to };
+      linkUrl.value = (editor.getAttributes("link").href as string | undefined) ?? "";
+      linkText.value = editor.state.doc.textBetween(from, to, " ");
+      linkRemove.hidden = !editor.isActive("link");
+    }
+    linkDialog.showModal();
+    linkUrl.focus();
+  }
+  function applyLink(): void {
+    const action = linkAction(linkUrl.value);
+    if (action.kind === "invalid") {
+      linkError.textContent = ADMIN.editor.linkInvalid;
+      linkError.hidden = false;
+      return;
+    }
+    const text = linkText.value.trim();
+    if (mdMode) {
+      if (action.kind === "set" && mdSel) applyEdit(insertLink(mdSel, action.href, text || undefined));
+      linkDialog.close();
+      return;
+    }
+    const range = linkRange ?? { from: editor.state.selection.from, to: editor.state.selection.to };
+    if (action.kind === "remove") {
+      editor.chain().focus().setTextSelection(range).unsetLink().run();
+    } else {
+      const current = editor.state.doc.textBetween(range.from, range.to, " ");
+      if (range.from === range.to || (text && text !== current)) {
+        // New text (or nothing selected): write the label carrying the link.
+        editor.chain().focus().insertContentAt(range, {
+          type: "text",
+          text: text || action.href,
+          marks: [{ type: "link", attrs: { href: action.href } }],
+        }).run();
+      } else {
+        editor.chain().focus().setTextSelection(range).setLink({ href: action.href }).run();
+      }
+    }
+    linkDialog.close();
+  }
+  linkDialog.querySelector("[data-link-apply]")!.addEventListener("click", applyLink);
+  linkDialog.querySelector("[data-link-cancel]")!.addEventListener("click", () => linkDialog.close());
+  linkRemove.addEventListener("click", () => { linkUrl.value = ""; applyLink(); });
+  for (const input of [linkUrl, linkText]) {
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); applyLink(); }
+    });
+  }
+  linkDialog.addEventListener("close", () => {
+    linkRange = null;
+    mdSel = null;
+    focusBody();
+  });
+
+  // Source-mode caret plumbing for the editor.ts helpers.
   function currentSelection(): Selection {
     return { value: bodyArea.value, start: bodyArea.selectionStart, end: bodyArea.selectionEnd };
   }
@@ -247,89 +398,7 @@ function initEditor(form: HTMLFormElement): void {
     bodyArea.value = result.value;
     bodyArea.setSelectionRange(result.start, result.end);
     bodyArea.focus();
-    draft.body = bodyArea.value;
     bodyArea.dispatchEvent(new Event("input", { bubbles: true }));
-  }
-  function runCommand(cmd: string): void {
-    const sel = currentSelection();
-    switch (cmd) {
-      case "bold": applyEdit(wrapInline(sel, "**", "fet text")); break;
-      case "italic": applyEdit(wrapInline(sel, "_", "kursiv text")); break;
-      case "heading": applyEdit(prefixBlock(sel, "## ")); break;
-      case "quote": applyEdit(prefixBlock(sel, "> ")); break;
-      case "bullet": applyEdit(toggleList(sel, false)); break;
-      case "ordered": applyEdit(toggleList(sel, true)); break;
-      case "link": {
-        const url = window.prompt("Länkadress (URL):", "https://");
-        if (url) applyEdit(insertLink(sel, url));
-        break;
-      }
-      case "image": openImagePicker(); break;
-    }
-  }
-  // Roving tabindex on the toolbar.
-  if (toolbar) {
-    const tools = Array.from(toolbar.querySelectorAll<HTMLButtonElement>("[data-cmd]"));
-    toolbar.addEventListener("click", (e) => {
-      const btn = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-cmd]");
-      if (btn) runCommand(btn.dataset.cmd!);
-    });
-    toolbar.addEventListener("keydown", (e) => {
-      const idx = tools.indexOf(document.activeElement as HTMLButtonElement);
-      if (idx === -1) return;
-      let next = -1;
-      if (e.key === "ArrowRight") next = (idx + 1) % tools.length;
-      else if (e.key === "ArrowLeft") next = (idx - 1 + tools.length) % tools.length;
-      else if (e.key === "Home") next = 0;
-      else if (e.key === "End") next = tools.length - 1;
-      if (next !== -1) {
-        e.preventDefault();
-        tools[idx]!.tabIndex = -1;
-        tools[next]!.tabIndex = 0;
-        tools[next]!.focus();
-      }
-    });
-  }
-
-  // Keyboard shortcuts — only while the body textarea is focused.
-  bodyArea.addEventListener("keydown", (e) => {
-    if (!(e.metaKey || e.ctrlKey)) return;
-    const k = e.key.toLowerCase();
-    if (k === "b") { e.preventDefault(); runCommand("bold"); }
-    else if (k === "i") { e.preventDefault(); runCommand("italic"); }
-    else if (k === "k") { e.preventDefault(); runCommand("link"); }
-  });
-
-  // ── Live preview (debounced) ──────────────────────────────────
-  let previewTimer: number | undefined;
-  function schedulePreview(): void {
-    if (previewStatus) previewStatus.textContent = ADMIN.states.previewLoading;
-    window.clearTimeout(previewTimer);
-    previewTimer = window.setTimeout(runPreview, 250);
-  }
-  async function runPreview(): Promise<void> {
-    try {
-      const res = await fetch("/api/admin/preview", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-admin-token": ADMIN_TOKEN },
-        credentials: "same-origin",
-        body: JSON.stringify({ body: draft.body }),
-      });
-      const data = await readJson<PreviewResponse>(res);
-      if (isOk(data) && typeof data.html === "string") {
-        if (data.html.trim().length === 0) {
-          previewEl.innerHTML = `<p class="preview__placeholder">${escapeHtml(ADMIN.editor.previewPlaceholder)}</p>`;
-        } else {
-          previewEl.innerHTML = data.html;
-        }
-        if (previewStatus) previewStatus.textContent = "";
-      } else {
-        throw new Error("preview_failed");
-      }
-    } catch (err) {
-      if (err instanceof SessionExpired) return handleSessionExpiry();
-      if (previewStatus) previewStatus.textContent = ADMIN.states.previewError;
-    }
   }
 
   // ── Image picker (inline) ─────────────────────────────────────
@@ -374,6 +443,8 @@ function initEditor(form: HTMLFormElement): void {
   for (const c of picker?.querySelectorAll<HTMLButtonElement>("[data-picker-cancel]") ?? []) {
     c.addEventListener("click", () => picker?.close());
   }
+  // Cancelled or chosen, the caret goes back where the owner was writing.
+  picker?.addEventListener("close", focusBody);
   dropzone?.addEventListener("click", () => pickerFile?.click());
   dropzone?.addEventListener("keydown", (e) => {
     if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pickerFile?.click(); }
@@ -415,8 +486,8 @@ function initEditor(form: HTMLFormElement): void {
     if (!pickedUrl) return;
     const alt = pickerAlt?.value.trim() ?? "";
     if (!alt) { setPickerError("Alt-text krävs."); return; }
-    const sel = currentSelection();
-    applyEdit(insertImage(sel, pickedUrl, alt));
+    if (mdMode) applyEdit(insertImage(currentSelection(), pickedUrl, alt));
+    else editor.chain().focus().setImage({ src: pickedUrl, alt }).run();
     picker?.close();
   });
 
@@ -544,7 +615,10 @@ function initEditor(form: HTMLFormElement): void {
     if (!publishBtn) return;
     // validateDraft against a published-status copy so the gate reflects publish rules.
     const probe: PostDraft = { ...draft, status: "published" };
-    publishBtn.disabled = validateDraft(probe).length > 0;
+    const missing = validateDraft(probe).length;
+    publishBtn.disabled = missing > 0;
+    // The disabled state is neutral by design, so the button itself says why.
+    publishBtn.title = missing > 0 ? ADMIN.states.fixFields.replace("{n}", String(missing)) : "";
   }
   const ERROR_TEXT: Record<string, string> = {
     title_required: "Titel krävs.",
@@ -562,27 +636,37 @@ function initEditor(form: HTMLFormElement): void {
   }
 
   // ── Save / publish / unpublish / delete ───────────────────────
-  function setBusy(busy: boolean): void {
+  /**
+   * `quiet` (autosave) keeps the document editable: the owner is typing, so the
+   * page must not dim or swallow clicks — only the action buttons pause.
+   */
+  function setBusy(busy: boolean, quiet = false): void {
     for (const b of form.querySelectorAll<HTMLButtonElement>("[data-action]")) b.disabled = busy;
     if (saveStatus && busy) saveStatus.textContent = ADMIN.states.saving;
-    if (busy) form.classList.add("editor--busy"); else { form.classList.remove("editor--busy"); refreshPublishEnabled(); }
+    if (busy) { if (!quiet) form.classList.add("editor--busy"); }
+    else { form.classList.remove("editor--busy"); refreshPublishEnabled(); }
   }
 
-  async function persist(targetStatus: "draft" | "published"): Promise<void> {
+  async function persist(targetStatus: "draft" | "published", auto = false): Promise<void> {
+    flushBody(); // a keystroke inside the 150 ms debounce is part of this save
     const probe: PostDraft = { ...draft, status: targetStatus };
     const errors = validateDraft(probe);
-    if (errors.length > 0) { showValidation(errors); return; }
+    if (errors.length > 0) { if (!auto) showValidation(errors); return; }
     showValidation([]);
     draft.status = targetStatus;
+    autosave.cancel();
+    // What is SENT becomes the saved snapshot — not the draft at response time,
+    // which may already hold words typed during the request (autosave).
+    const sent: PostDraft = structuredClone(draft);
 
-    setBusy(true);
+    setBusy(true, auto);
     try {
       const isCreate = draft.id === undefined;
       const res = await fetch("/api/admin/posts", {
         method: isCreate ? "POST" : "PUT",
         headers: { "Content-Type": "application/json", "x-admin-token": ADMIN_TOKEN },
         credentials: "same-origin",
-        body: JSON.stringify(toApiBody(draft)),
+        body: JSON.stringify(toApiBody(sent)),
       });
       const data = await readJson<CreatePostResponse | UpdatePostResponse>(res);
       if (!res.ok || !isOk(data)) {
@@ -592,14 +676,16 @@ function initEditor(form: HTMLFormElement): void {
       const post = data.post;
       // Sync the authoritative server values back into the model.
       const wasCreate = isCreate;
-      draft.id = post.id;
-      draft.slug = post.slug;
-      draft.slugManual = true; // server slug is now authoritative
-      draft.status = post.status;
-      saved = structuredClone(draft);
+      for (const d of [draft, sent]) {
+        d.id = post.id;
+        d.slug = post.slug;
+        d.slugManual = true; // server slug is now authoritative
+        d.status = post.status;
+      }
+      saved = sent;
       clearStash();
       refreshSlugChip();
-      stampSaved();
+      stampSaved(auto);
       if (wasCreate) {
         // Redirect so subsequent saves PUT against /admin/posts/{id}.
         window.location.href = `/admin/posts/${post.id}`;
@@ -612,13 +698,25 @@ function initEditor(form: HTMLFormElement): void {
       showToast(ADMIN.errors.generic);
     } finally {
       setBusy(false);
+      renderSaveStatus(); // edits made during the request show as unsaved again
+      if (dirty()) autosave.poke();
     }
   }
 
-  function stampSaved(): void {
+  // One save at a time: a second Ctrl+S / click / autosave while a request is
+  // in flight joins it instead of sending a parallel PUT (or a duplicate POST).
+  const saver = createSaveGate(persist);
+  const autosave = createAutosave({
+    allowed: () => shouldAutosave(draft, dirty()) && !saver.busy(),
+    save: () => void saver.run("draft", true),
+  });
+  const saveCurrent = () => saver.run(draft.status === "published" ? "published" : "draft");
+  bindSaveShortcut(form, () => void saveCurrent());
+
+  function stampSaved(auto = false): void {
     if (!saveStatus) return;
     const time = new Date().toLocaleTimeString("sv-SE", { hour: "2-digit", minute: "2-digit" });
-    const text = fmt(ADMIN.states.saved, { time });
+    const text = fmt(auto ? ADMIN.states.autosaved : ADMIN.states.saved, { time });
     saveStatus.dataset.saved = text;
     saveStatus.textContent = text;
   }
@@ -684,10 +782,11 @@ function initEditor(form: HTMLFormElement): void {
   async function preview(): Promise<void> {
     // Förhandsgranska: save first if new (need an id), then open the preview route.
     if (draft.id === undefined) {
-      await persist(draft.status); // create → redirects; preview reachable after.
+      await saver.run(draft.status); // create → redirects; preview reachable after.
       return;
     }
-    if (dirty()) await persist(draft.status);
+    flushBody();
+    if (dirty()) await saver.run(draft.status);
     if (draft.id !== undefined) window.open(`/admin/preview/${draft.id}`, "_blank", "noopener");
   }
 
@@ -696,9 +795,9 @@ function initEditor(form: HTMLFormElement): void {
     const btn = (e.target as HTMLElement).closest<HTMLButtonElement>("[data-action]");
     if (!btn) return;
     switch (btn.dataset.action) {
-      case "save": void persist(draft.status === "published" ? "published" : "draft"); break;
-      case "publish": void persist("published"); break;
-      case "unpublish": void persist("draft"); break;
+      case "save": void saveCurrent(); break;
+      case "publish": void saver.run("published"); break;
+      case "unpublish": void saver.run("draft"); break;
       case "preview": void preview(); break;
       case "delete": void remove(); break;
     }
@@ -749,16 +848,17 @@ function initEditor(form: HTMLFormElement): void {
     titleInput.value = draft.title;
     excerptInput.value = draft.excerpt;
     bodyArea.value = draft.body;
+    editor.commands.setContent(draft.body, { contentType: "markdown", emitUpdate: false });
     seoTitleInput.value = draft.seoTitle;
     seoDescInput.value = draft.seoDesc;
     refreshSlugChip();
     renderCover();
     renderAllCounters();
-    schedulePreview();
   }
 
   // ── Dirty guard ───────────────────────────────────────────────
   window.addEventListener("beforeunload", (e) => {
+    flushBody();
     if (dirty()) { e.preventDefault(); e.returnValue = ADMIN.states.unsavedGuard; }
   });
   // In-app nav intercept: any same-origin link click while dirty.
@@ -799,7 +899,6 @@ function initEditor(form: HTMLFormElement): void {
   renderCover();
   refreshPublishEnabled();
   renderSaveStatus();
-  if (draft.body.trim().length > 0) schedulePreview();
 }
 
 /** Upload-specific error so the caller can surface the SV-mapped message. */

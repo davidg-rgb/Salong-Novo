@@ -26,7 +26,7 @@ export type PageKey =
  * Localized slug for each page (empty string = locale root).
  * Primary nav order (client-confirmed 2026-06-01, ARCHITECTURE §2A): contact, staff,
  * pricing, competitions, education, brands, blog, work (blog promoted into the nav
- * on client request 2026-08-25), with shop (the Keune product wall, 2026-09-29) right
+ * on client request 2026-08-25), with shop (the Keune page, one link since 2026-10-10) right
  * after brands. about/privacy are footer-only.
  */
 export const ROUTES: Record<PageKey, Record<Locale, string>> = {

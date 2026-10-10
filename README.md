@@ -13,7 +13,7 @@ on **Cloudflare**, with a staff-writable blog.
 
 | Layer | State |
 |-------|-------|
-| Core logic (i18n, slug, markdown, images, posts, db, seo, redirects, content, keune) | ✅ Built + **764 tests passing** (31 files, 2026-10-10) |
+| Core logic (i18n, slug, markdown, images, posts, db, seo, redirects, content, keune) | ✅ Built + **854 tests passing** (36 files, 2026-10-10) |
 | App (Astro + Cloudflare): layout, components, all pages (SV+EN), blog, admin API, SEO | ✅ Builds green, `tsc` clean |
 | Visual design | ✅ "Haute Editorial" applied (§11, 2026-06-01); home-page refresh 2026-09-30 (fixed transparent header, 100svh hero (the salon film as its plate since 2026-10-10, poster fallback), awards marquee, owner cards, Lenis + motion layer in `src/styles/motion.css` / `src/scripts/refresh.ts`) |
 | Cloudflare resources (D1, R2, Access) | ⏳ Create at deploy (see below) |
@@ -25,7 +25,7 @@ choosing a direction means **restyling** (tokens + component CSS), not rebuildin
 
 ```bash
 npm install
-npm test            # 764 unit tests (vitest, incl. Astro Container render tests)
+npm test            # 854 unit tests (vitest, incl. Astro Container render + happy-dom editor tests)
 npm run e2e         # Playwright: builds, serves the Worker on :4321, runs the home-refresh suite
 npm run typecheck   # tsc --noEmit
 npm run dev         # Astro dev server (static pages; blog/admin need wrangler)

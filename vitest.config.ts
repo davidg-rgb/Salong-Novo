@@ -21,6 +21,12 @@ export default getViteConfig({
     // `fileURLToPath`, never `.pathname` — the vault path contains a space
     // ("Second Brain") and `.pathname` leaves it percent-encoded, which Vite
     // cannot resolve.
-    alias: { "~": fileURLToPath(new URL("./src", import.meta.url)) },
+    alias: {
+      "~": fileURLToPath(new URL("./src", import.meta.url)),
+      // `// @vitest-environment happy-dom-ssr` (2026-10-10): Vitest's docblock
+      // only takes a bare name (`[\w-]+`) and resolves it as the package
+      // `vitest-environment-<name>`; this alias is that package. See the file.
+      "vitest-environment-happy-dom-ssr": fileURLToPath(new URL("./tests/helpers/happy-dom-ssr.ts", import.meta.url)),
+    },
   },
 }, { configFile: false });

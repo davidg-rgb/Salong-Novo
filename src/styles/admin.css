@@ -12,6 +12,11 @@
  */
 
 /* ---------- shell ---------- */
+/* tokens.css gives every <section> the brochure's band padding (clamp(88px, 13vw, 170px)),
+   which put ~166px of nothing above the posts dashboard. Admin sections (.admin-panel,
+   .dashboard, .recent) carry their own spacing; :where() keeps this at zero specificity so
+   it beats tokens.css by source order only and never a class on the section itself. */
+:where(body.admin) section { padding: 0; }
 body.admin {
   background: var(--surface-container-low);
   color: var(--on-surface);
@@ -219,6 +224,38 @@ body.admin {
 @media (min-width: 720px) {
   .admin-nav__section {
     display: inline;
+  }
+}
+
+/*
+ * Sub-rows (2026-10-10): Fakta · Sidtexter · Listor. Twenty-four chips in one
+ * row hid which "Våra brands" was the page text and which was the list; each
+ * group now starts its own line under its own label.
+ */
+.admin-nav__content {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.admin-nav__group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--unit-xs);
+}
+
+.admin-nav__group-label {
+  flex: 0 0 100%;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--inverse-on-surface-variant);
+}
+
+@media (min-width: 720px) {
+  .admin-nav__group-label {
+    flex: 0 0 6.5rem;
   }
 }
 

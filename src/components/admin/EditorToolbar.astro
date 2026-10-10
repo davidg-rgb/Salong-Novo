@@ -1,0 +1,63 @@
+---
+/**
+ * The in-place editor's toolbar (2026-10-10; replaces MarkdownToolbar). Static
+ * markup only: `src/admin/rich-editor.ts` `mountToolbar` wires the Style select,
+ * the `data-cmd` buttons, `aria-pressed` state, undo/redo enablement and the
+ * roving tabindex. Sticky on the sheet's top edge.
+ *
+ * Glyphs are inline SVG (the admin CSP is `default-src 'self'`: no icon font, no
+ * external sprite); every button carries a real `aria-label` + `title` with its
+ * shortcut. Heading levels are H2/H3 only: the public post sits under an H1.
+ */
+import { ADMIN } from "../../lib/admin-strings";
+
+const mod = "Ctrl";
+const buttons = [
+  { cmd: "bold", label: ADMIN.aria.bold, shortcut: `${mod}+B`, path: "M7 5h6a3.5 3.5 0 0 1 0 7H7zM7 12h7a3.5 3.5 0 0 1 0 7H7z", toggle: true },
+  { cmd: "italic", label: ADMIN.aria.italic, shortcut: `${mod}+I`, path: "M11 5h7M6 19h7M15 5l-6 14", toggle: true },
+  { sep: true },
+  { cmd: "bullet", label: ADMIN.aria.bulletList, shortcut: null, path: "M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01", toggle: true },
+  { cmd: "ordered", label: ADMIN.aria.orderedList, shortcut: null, path: "M10 6h10M10 12h10M10 18h10M4 5h1v4M4 9h2M4 14.5a1 1 0 0 1 2 0c0 1-2 2-2 3.5h2", toggle: true },
+  { cmd: "quote", label: ADMIN.aria.quote, shortcut: null, path: "M5 7h5v6H7l-1 4M14 7h5v6h-3l-1 4", toggle: true },
+  { sep: true },
+  { cmd: "link", label: ADMIN.aria.link, shortcut: `${mod}+K`, path: "M10 13a5 5 0 0 0 7.07 0l3-3a5 5 0 0 0-7.07-7.07l-1.5 1.5M14 11a5 5 0 0 0-7.07 0l-3 3a5 5 0 0 0 7.07 7.07l1.5-1.5", toggle: true },
+  { cmd: "image", label: ADMIN.aria.image, shortcut: null, path: "M4 5h16v14H4zM4 15l4-4 4 4 3-3 5 5M15 9.5a1 1 0 1 0 0-.01", toggle: false },
+  { sep: true },
+  { cmd: "undo", label: ADMIN.aria.undo, shortcut: `${mod}+Z`, path: "M9 14L4 9l5-5M4 9h10a6 6 0 0 1 0 12h-3", toggle: false },
+  { cmd: "redo", label: ADMIN.aria.redo, shortcut: `${mod}+Y`, path: "M15 14l5-5-5-5M20 9H10a6 6 0 0 0 0 12h3", toggle: false },
+] as const;
+---
+<div class="sheet__toolbar" role="toolbar" aria-label={ADMIN.aria.toolbar} aria-controls="ed-body" data-rich-toolbar>
+  <select class="tool-style" data-style aria-label={ADMIN.editor.styleLabel} title={ADMIN.editor.styleLabel} tabindex="0">
+    <option value="p">{ADMIN.editor.styleNormal}</option>
+    <option value="h2">{ADMIN.editor.styleHeading}</option>
+    <option value="h3">{ADMIN.editor.styleSubheading}</option>
+  </select>
+  {buttons.map((b) =>
+    "sep" in b ? (
+      <span class="sheet__sep" aria-hidden="true"></span>
+    ) : (
+      <button
+        type="button"
+        class="md-tool"
+        data-cmd={b.cmd}
+        aria-label={b.shortcut ? `${b.label} (${b.shortcut})` : b.label}
+        title={b.shortcut ? `${b.label} (${b.shortcut})` : b.label}
+        aria-pressed={b.toggle ? "false" : undefined}
+        tabindex="-1"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d={b.path} />
+        </svg>
+      </button>
+    ),
+  )}
+  <span class="sheet__spacer"></span>
+  <button
+    type="button"
+    class="md-tool md-tool--text"
+    data-mode-toggle
+    title={ADMIN.editor.markdownModeHint}
+    tabindex="-1"
+  >{ADMIN.editor.markdownMode}</button>
+</div>

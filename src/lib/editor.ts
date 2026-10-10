@@ -3,6 +3,8 @@
  * editor. NO DOM, NO fetch. The vanilla controller (`src/admin/editor.client.ts`)
  * reads `{value, start, end}` off the textarea, calls these, and writes the
  * result back (restoring the selection). See ARCHITECTURE §10.6 / §10.9.
+ * Since 2026-10-10 the body is edited in place (Tiptap); the textarea is the
+ * Markdown-source mode, where `insertLink`/`insertImage` still run.
  *
  * Every caret transform takes a `Selection` and returns an `EditResult` — the new
  * string plus the new selection range so the controller can restore it exactly.
@@ -321,4 +323,112 @@ export function isDirty(current: PostDraft, saved: PostDraft): boolean {
     current.seoDesc !== saved.seoDesc ||
     current.status !== saved.status
   );
+}
+
+// ── In-place editor helpers (2026-10-10) ──────────────────────────────────
+// The body is now edited in a Tiptap document (`src/admin/rich-editor.ts`); the
+// caret transforms above stay for the Markdown-source mode's toolbar-free
+// textarea and for `admin-security.test.ts`. What follows is the DOM-free policy
+// the new editor runs on, kept here so it is unit-tested in plain Node.
+
+/** The Style dropdown's three values: paragraph, H2 ("Rubrik"), H3 ("Underrubrik"). */
+export type BlockStyle = "p" | "h2" | "h3";
+
+/** Autosave fires this long after the LAST change (Docs-style debounce). */
+export const AUTOSAVE_MS = 30_000;
+
+/**
+ * Whether an autosave may run now. Drafts only: saving a PUBLISHED post puts
+ * the edit live immediately, so that stays an explicit click. An unsaved new
+ * post (no `id`) is excluded too — its first save is a create that redirects to
+ * `/admin/posts/{id}`, which must not happen under the owner's cursor. A draft
+ * that would fail validation (no title) waits rather than flashing the summary.
+ */
+export function shouldAutosave(draft: PostDraft, dirty: boolean): boolean {
+  return (
+    dirty &&
+    draft.status === "draft" &&
+    draft.id !== undefined &&
+    validateDraft(draft).length === 0
+  );
+}
+
+/** Minimal timer surface so the scheduler is testable with fake timers. */
+export interface Timers {
+  set: (fn: () => void, ms: number) => unknown;
+  clear: (handle: unknown) => void;
+}
+
+/**
+ * Debounced autosave. `poke()` on every change restarts the countdown; when it
+ * elapses `save()` runs only if `allowed()` still says so (status may have
+ * flipped to published, or a manual save may have cleaned the draft, meanwhile).
+ */
+export function createAutosave(opts: {
+  delay?: number;
+  allowed: () => boolean;
+  save: () => void;
+  timers?: Timers;
+}): { poke: () => void; cancel: () => void } {
+  const timers: Timers = opts.timers ?? {
+    set: (fn, ms) => setTimeout(fn, ms),
+    clear: (h) => clearTimeout(h as ReturnType<typeof setTimeout>),
+  };
+  let handle: unknown;
+  const cancel = () => {
+    if (handle !== undefined) timers.clear(handle);
+    handle = undefined;
+  };
+  return {
+    poke() {
+      cancel();
+      if (!opts.allowed()) return;
+      handle = timers.set(() => {
+        handle = undefined;
+        if (opts.allowed()) opts.save();
+      }, opts.delay ?? AUTOSAVE_MS);
+    },
+    cancel,
+  };
+}
+
+/**
+ * One request at a time. A second call while the first is in flight (Ctrl+S
+ * held down, autosave racing a click) returns the pending promise instead of
+ * starting a parallel PUT — or, for a create, a duplicate POST.
+ */
+export function createSaveGate<A extends unknown[]>(
+  fn: (...args: A) => Promise<void>,
+): { run: (...args: A) => Promise<void>; busy: () => boolean } {
+  let pending: Promise<void> | null = null;
+  return {
+    run(...args: A) {
+      if (pending) return pending;
+      pending = fn(...args).finally(() => { pending = null; });
+      return pending;
+    },
+    busy: () => pending !== null,
+  };
+}
+
+/** Ctrl+S / Cmd+S (not with Alt: AltGr on Swedish keyboards is Ctrl+Alt). */
+export function isSaveShortcut(e: { key: string; ctrlKey: boolean; metaKey: boolean; altKey: boolean }): boolean {
+  return (e.ctrlKey || e.metaKey) && !e.altKey && e.key.toLowerCase() === "s";
+}
+
+/**
+ * What the link dialog's "Använd" does. Empty URL removes the link (Docs
+ * behaviour); a bare host gets `https://`; `javascript:`/`data:` and other
+ * non-web schemes are refused (markdown-it's validateLink would drop them on the
+ * public page anyway — refusing here keeps the editor honest about it).
+ */
+export function linkAction(rawUrl: string): { kind: "remove" } | { kind: "set"; href: string } | { kind: "invalid" } {
+  const url = rawUrl.trim();
+  if (url.length === 0) return { kind: "remove" };
+  if (/^(https?:|mailto:|tel:)/i.test(url) || url.startsWith("/") || url.startsWith("#")) {
+    return { kind: "set", href: url };
+  }
+  // A scheme, but not `host:port` (a digit after the colon).
+  if (/^[a-z][a-z0-9+.-]*:(?!\d)/i.test(url)) return { kind: "invalid" };
+  return { kind: "set", href: `https://${url}` };
 }

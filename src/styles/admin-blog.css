@@ -1,31 +1,39 @@
 /*
- * Admin-only CSS (§10.6 / §11). Dark token theme. Loaded by every /admin page on
- * top of tokens.css. Two principles:
- *   1. WCAG AA on the dark surface — body copy uses a light text token
- *      (--admin-text ≈ #d8d8d8), never the public --muted (too dim on charcoal).
- *   2. The live-preview pane (.preview.body) SHARES PostView's prose rules so
- *      "preview == production" holds visually as well as semantically.
- * Terracotta is the focus ring + primary action; bronze is texture/hairline.
+ * Admin blog CSS (§10.6 / §11): the post list, the editor and the preview route.
+ * Loaded on top of tokens.css + admin.css (AdminBase).
+ *
+ * LIGHT theme since 2026-10-10. This file used to declare a dark token set
+ * (#161616 page, #1f1f1f panels, #d8d8d8 text) while AdminBase paints the body
+ * cream: black inputs on a cream page and #d8d8d8 ghost-button text on cream —
+ * "Avpublicera / Förhandsgranska / Byt / Ta bort" were unreadable in the
+ * owner's screenshot. The --admin-* names are kept so every selector below
+ * flipped at once; they now alias the light tokens in tokens.css.
+ *
+ * Contrast is computed, not eyeballed: tests/admin-contrast.test.ts parses the
+ * :root block and the literal colours below and asserts each WCAG 2.2 AA pair.
+ * Changing a colour here means changing its row there.
  */
 
 :root {
-  --admin-bg: var(--charcoal, #161616);
-  --admin-panel: #1f1f1f;
-  --admin-panel-2: #262626;
-  --admin-line: #3a3632;
-  --admin-text: #d8d8d8;       /* body copy — AA on #161616 */
-  --admin-text-dim: #a9a39a;   /* secondary — still AA-ish for non-essential */
-  --admin-heading: var(--cream, #f8f8f8);
-  /* Fallbacks track tokens.css: darkened 2026-08-25 so white-on-fill clears AA. */
-  --admin-accent: var(--terracotta, #836044);
-  --admin-accent-deep: var(--terracotta-deep, #6b4f37);
-  --admin-gold: var(--bronze, #a68b67);
+  --admin-bg: var(--surface-container-low, #f8f8f8);
+  --admin-panel: var(--white, #ffffff);            /* inputs, the sheet, dialogs */
+  --admin-panel-2: var(--surface-container-high, #ece7df);
+  --admin-line: var(--on-surface-muted, #7d7c74);  /* field boundary: 3.9:1 on cream, 4.2:1 on white (1.4.11) */
+  --admin-hairline: var(--hairline, #e3e0da);      /* dividers only — fails 3:1, never a field edge */
+  --admin-text: var(--ink, #1a1a1a);
+  --admin-text-dim: var(--on-variant, #5b5a55);    /* ≥ 4.5:1 on cream and white */
+  --admin-heading: var(--ink, #1a1a1a);
+  --admin-accent: var(--terracotta, #836044);      /* fills + focus ring; white on it 5.6:1 */
+  --admin-accent-deep: var(--terracotta-deep, #6b4f37); /* link text, ≥ 7:1 */
+  --admin-gold: var(--bronze, #a68b67);            /* decoration only — 3.2:1 on white, never text */
+  --admin-danger: #8c2f1c;
+  --admin-ok: #2e6b2e;
+  --admin-warn: #8a5a00;
+  --admin-over: #b3261e;
   --admin-radius: 4px;
 }
 
-body.admin {
-  color: var(--admin-text);
-}
+body.admin { color: var(--admin-text); }
 .admin-main { color: var(--admin-text); }
 .admin h1, .admin h2, .admin h3 { color: var(--admin-heading); font-family: var(--font-serif); }
 
@@ -34,9 +42,16 @@ body.admin {
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
 }
 
-/* ── Shared buttons ─────────────────────────────────────────────── */
+/* One focus ring for every control (2.4.7 / 2.4.11): terracotta is ≥ 3:1 on both surfaces. */
+.admin :is(button, a, input, select, textarea, summary, [tabindex], .ProseMirror):focus-visible {
+  outline: 2px solid var(--admin-accent);
+  outline-offset: 2px;
+}
+
+/* ── Shared buttons — three tiers ──────────────────────────────── */
 .btn-primary, .btn-ghost, .btn-danger, .btn-danger-ghost {
   display: inline-flex; align-items: center; justify-content: center; gap: .4rem;
+  min-height: 24px;
   font-family: var(--font-sans); font-size: .82rem; font-weight: 600;
   letter-spacing: .06em; padding: .6rem 1rem; border-radius: var(--admin-radius);
   cursor: pointer; border: 1px solid transparent; text-decoration: none;
@@ -44,30 +59,41 @@ body.admin {
 }
 .btn-primary { background: var(--admin-accent); color: #fff; border-color: var(--admin-accent); }
 .btn-primary:hover:not(:disabled) { background: var(--admin-accent-deep); border-color: var(--admin-accent-deep); }
-.btn-ghost { background: transparent; color: var(--admin-text); border-color: var(--admin-line); }
-.btn-ghost:hover:not(:disabled) { border-color: var(--admin-gold); color: var(--admin-heading); }
-.btn-danger { background: #8c2f1c; color: #fff; border-color: #8c2f1c; }
+.btn-ghost { background: var(--admin-panel); color: var(--admin-text); border-color: var(--admin-line); }
+.btn-ghost:hover:not(:disabled) { background: var(--admin-panel-2); }
+.btn-danger { background: var(--admin-danger); color: #fff; border-color: var(--admin-danger); }
 .btn-danger:hover:not(:disabled) { background: #a33620; }
-.btn-danger-ghost { background: transparent; color: #e08a72; border-color: #5a3328; }
-.btn-danger-ghost:hover:not(:disabled) { background: #3a221c; color: #f0a892; }
+/* Listed after .btn-ghost so `class="btn-ghost btn-danger-ghost"` takes the danger colours. */
+.btn-danger-ghost { background: var(--admin-panel); color: var(--admin-danger); border-color: var(--admin-danger); }
+.btn-danger-ghost:hover:not(:disabled) { background: var(--admin-danger); color: #fff; }
 .btn-sm { padding: .35rem .7rem; font-size: .75rem; }
-button:disabled, .btn-primary:disabled { opacity: .45; cursor: not-allowed; }
-.link-btn {
-  background: none; border: none; color: var(--admin-gold); cursor: pointer;
-  font-size: .8rem; padding: 0; text-decoration: underline; text-underline-offset: 2px;
+@media (max-width: 719px) {
+  .btn-primary, .btn-ghost, .btn-danger, .btn-danger-ghost { min-height: 44px; }
 }
-.link-btn:hover { color: var(--admin-accent); }
+/* Disabled at FULL opacity (2026-10-10): a .45-alpha terracotta fill with white text is
+   the washed light-on-light look the owner reported. Neutral fill + dim text stays 6:1
+   (admin-contrast.test.ts pins it) and still reads as "not now". */
+button:disabled { cursor: not-allowed; }
+.btn-primary:disabled, .btn-ghost:disabled, .btn-danger-ghost:disabled {
+  background: var(--admin-panel-2); color: var(--admin-text-dim); border-color: var(--admin-line);
+}
+.link-btn {
+  background: none; border: none; color: var(--admin-accent-deep); cursor: pointer;
+  font-size: .8rem; padding: 0; min-height: 24px;
+  text-decoration: underline; text-underline-offset: 2px;
+}
+.link-btn:hover { color: var(--admin-text); }
 
 /* ── Segmented control (locale / filters) ──────────────────────── */
 .segmented { display: inline-flex; border: 1px solid var(--admin-line); border-radius: var(--admin-radius); overflow: hidden; }
 .seg {
   background: var(--admin-panel); color: var(--admin-text-dim); border: none;
-  padding: .45rem .8rem; font-size: .8rem; font-weight: 600; cursor: pointer;
+  padding: .45rem .8rem; min-height: 24px; font-size: .8rem; font-weight: 600; cursor: pointer;
   border-right: 1px solid var(--admin-line); transition: background .15s, color .15s;
 }
 .seg:last-child { border-right: none; }
-.seg:hover { color: var(--admin-heading); }
-.seg--on { background: var(--admin-accent); color: #fff; }
+.seg:hover { color: var(--admin-heading); background: var(--admin-panel-2); }
+.seg--on, .seg--on:hover { background: var(--admin-accent); color: #fff; }
 
 /* ── Dashboard ─────────────────────────────────────────────────── */
 .dashboard__head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
@@ -88,40 +114,72 @@ button:disabled, .btn-primary:disabled { opacity: .45; cursor: not-allowed; }
   letter-spacing: .1em; text-transform: uppercase; color: var(--admin-text-dim);
   padding: .6rem .75rem; border-bottom: 1px solid var(--admin-line);
 }
-.post-table td { padding: .7rem .75rem; border-bottom: 1px solid var(--admin-line); vertical-align: middle; }
+.post-table td { padding: .7rem .75rem; border-bottom: 1px solid var(--admin-hairline); vertical-align: middle; }
 .post-table tr[hidden] { display: none; }
 .cell-title a { color: var(--admin-heading); font-weight: 600; text-decoration: none; }
-.cell-title a:hover { color: var(--admin-accent); text-decoration: underline; }
+.cell-title a:hover { color: var(--admin-accent-deep); text-decoration: underline; }
 .cell-date { color: var(--admin-text-dim); white-space: nowrap; }
 .col-actions, .cell-actions { text-align: right; white-space: nowrap; }
 .cell-actions { display: flex; gap: .75rem; justify-content: flex-end; align-items: center; }
-.row-action { background: none; border: none; cursor: pointer; color: var(--admin-gold); font-size: .82rem; text-decoration: none; padding: 0; }
-.row-action:hover { color: var(--admin-accent); text-decoration: underline; }
-.row-action--danger { color: #e08a72; }
-.row-action--danger:hover { color: #f0a892; }
+.row-action {
+  background: none; border: none; cursor: pointer; color: var(--admin-accent-deep);
+  font-size: .82rem; padding: 0; min-height: 24px;
+  text-decoration: underline; text-underline-offset: 2px;
+}
+.row-action:hover { color: var(--admin-text); }
+.row-action--danger { color: var(--admin-danger); }
+.row-action--danger:hover { color: var(--admin-text); }
 
 .pill { display: inline-block; font-size: .7rem; font-weight: 700; letter-spacing: .05em; padding: .15rem .5rem; border-radius: 999px; }
 .pill--locale { background: var(--admin-panel-2); color: var(--admin-text); border: 1px solid var(--admin-line); }
 .badge { display: inline-flex; align-items: center; gap: .35rem; font-size: .72rem; font-weight: 700; letter-spacing: .04em; padding: .2rem .55rem; border-radius: var(--admin-radius); }
 .badge::before { content: ""; width: 7px; height: 7px; border-radius: 50%; }
-.badge--published { color: #e8d3ad; background: rgba(166,139,103,.16); border: 1px solid var(--admin-gold); }
-.badge--published::before { background: var(--admin-gold); }
+.badge--published { color: var(--admin-accent-deep); background: #f4ece0; border: 1px solid var(--admin-accent); }
+.badge--published::before { background: var(--admin-accent); }
 .badge--draft { color: var(--admin-text-dim); background: var(--admin-panel-2); border: 1px solid var(--admin-line); }
 .badge--draft::before { background: var(--admin-text-dim); }
 
-.empty-state { text-align: center; padding: 4rem 1rem; border: 1px dashed var(--admin-line); border-radius: var(--admin-radius); }
+.empty-state { text-align: center; padding: 4rem 1rem; border: 1px dashed var(--admin-line); border-radius: var(--admin-radius); background: var(--admin-panel); }
 .empty-state p { color: var(--admin-text-dim); margin-bottom: 1.25rem; }
 .no-results { color: var(--admin-text-dim); padding: 2rem; text-align: center; }
 .db-warning code { background: var(--admin-panel-2); padding: .1rem .35rem; border-radius: 3px; }
 
-/* ── Editor layout ─────────────────────────────────────────────── */
+/* ── Editor layout ─────────────────────────────────────────────────
+ * One document column + a rail. ≥1100px: the rail sits right and is sticky
+ * (actions first, so Save is above the fold). Below: the rail dissolves
+ * (`display: contents`) so the action block becomes a direct grid child of the
+ * form and can stick to the viewport bottom for the whole length of the page —
+ * a sticky child cannot leave its parent's box, so inside the rail it could not.
+ */
 .editor { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
+.editor__main { min-width: 0; order: 1; }
+.editor__rail { display: contents; }
+.editor__side { display: flex; flex-direction: column; gap: 1.25rem; order: 2; }
+.editor__actions {
+  order: 3; position: sticky; bottom: 0; z-index: 5;
+  display: flex; flex-direction: column; gap: .5rem;
+  background: var(--admin-panel); border-top: 1px solid var(--admin-hairline);
+  margin: 0 calc(-1 * var(--margin-mobile, 20px)); padding: .75rem var(--margin-mobile, 20px);
+}
+@media (min-width: 720px) and (max-width: 1099px) {
+  .editor__actions { margin-inline: calc(-1 * var(--gutter, 24px)); padding-inline: var(--gutter, 24px); }
+}
+/* admin.css caps .admin-main at 960px (forms); the editor needs a 760px sheet
+ * plus a 320px rail, so its page alone widens. */
+.admin-main:has(> .editor) { max-width: 1180px; }
 @media (min-width: 1100px) {
   .editor { grid-template-columns: minmax(0, 1fr) 320px; align-items: start; }
+  .editor__rail {
+    order: 2; /* after .editor__main (order 1), or the rail takes the wide column */
+    display: flex; flex-direction: column; gap: 1.25rem;
+    position: sticky; top: 1rem; max-height: calc(100vh - 2rem); overflow-y: auto;
+    padding: 2px; /* room for the focus ring inside the scroll box */
+  }
+  /* Inside the rail the mobile orders would put the actions LAST; reset them. */
+  .editor__actions { order: 0; position: static; margin: 0; padding: 0; background: none; border: none; }
+  .editor__side { order: 1; }
 }
-.editor__main { min-width: 0; }
-.editor__side { display: flex; flex-direction: column; gap: 1.25rem; }
-.editor--busy { opacity: .8; pointer-events: none; }
+.editor--busy .editor__main, .editor--busy .editor__side { opacity: .8; pointer-events: none; }
 
 .field { display: flex; flex-direction: column; gap: .35rem; }
 .field--inline { gap: .5rem; }
@@ -130,100 +188,158 @@ button:disabled, .btn-primary:disabled { opacity: .45; cursor: not-allowed; }
 .field__input, .field__textarea {
   background: var(--admin-panel); color: var(--admin-text);
   border: 1px solid var(--admin-line); border-radius: var(--admin-radius);
-  padding: .55rem .75rem; font-size: .95rem; font-family: var(--font-sans); width: 100%;
+  padding: .55rem .75rem; min-height: 24px; font-size: .95rem; font-family: var(--font-sans); width: 100%;
 }
 .field__input::placeholder, .field__textarea::placeholder { color: var(--admin-text-dim); }
-.field__input--title { font-family: var(--font-serif); font-size: 1.35rem; }
 .field__textarea { resize: vertical; line-height: 1.5; }
 .field__textarea--sm { min-height: 3.2rem; }
 .field__hint { font-size: .72rem; color: var(--admin-text-dim); }
-.req { color: var(--admin-accent); }
+.req { color: var(--admin-accent-deep); }
+@media (max-width: 719px) {
+  .field__input, .segmented { min-height: 44px; width: 100%; }
+  .seg { flex: 1; min-height: 44px; }
+}
 
-.meta-strip { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.25rem; }
+/* Document title: a large borderless serif line, like a Docs title. The
+ * bottom rule is the field boundary (≥ 3:1), so it still reads as editable. */
+.doc-title {
+  width: 100%; background: transparent; color: var(--admin-heading);
+  border: none; border-bottom: 1px solid var(--admin-line); border-radius: 0;
+  font-family: var(--font-serif); font-size: clamp(28px, 3.4vw, 40px); line-height: 1.2;
+  padding: .25rem 0 .4rem; min-height: 44px;
+}
+.doc-title::placeholder { color: var(--admin-text-dim); }
+.doc-head { display: flex; flex-direction: column; gap: .6rem; margin-bottom: 1.25rem; }
 
 /* Slug chip */
-.slug-chip { display: inline-flex; align-items: center; gap: .35rem; font-size: .82rem; background: var(--admin-panel-2); border: 1px solid var(--admin-line); border-radius: var(--admin-radius); padding: .3rem .6rem; align-self: flex-start; max-width: 100%; }
+.slug-chip { display: inline-flex; align-items: center; gap: .35rem; font-size: .82rem; background: var(--admin-panel-2); border: 1px solid var(--admin-line); border-radius: var(--admin-radius); padding: .3rem .6rem; align-self: flex-start; max-width: 100%; flex-wrap: wrap; }
 .slug-chip__prefix { color: var(--admin-text-dim); }
-.slug-chip__slug { color: var(--admin-heading); font-weight: 600; }
-.slug-chip__input { background: transparent; border: none; color: var(--admin-heading); font-size: .82rem; min-width: 8rem; }
-.slug-chip__input:focus { outline: none; }
-.slug-chip__toggle { background: none; border: none; color: var(--admin-gold); cursor: pointer; font-size: .78rem; }
-.slug-chip__toggle:hover { color: var(--admin-accent); }
+.slug-chip__slug { color: var(--admin-heading); font-weight: 600; overflow-wrap: anywhere; }
+.slug-chip__input { background: var(--admin-panel); border: 1px solid var(--admin-line); border-radius: 3px; color: var(--admin-heading); font-size: .82rem; min-width: 8rem; padding: .1rem .3rem; }
+.slug-chip__toggle {
+  background: none; border: none; color: var(--admin-accent-deep); cursor: pointer;
+  font-size: .78rem; min-height: 24px; text-decoration: underline; text-underline-offset: 2px;
+}
+.slug-chip__toggle:hover { color: var(--admin-text); }
 
-/* Counter pills */
+/* Counter pills — each colour ≥ 4.5:1 on white and cream. */
 .counter { font-size: .72rem; font-variant-numeric: tabular-nums; color: var(--admin-text-dim); }
-.counter[data-state="ok"] { color: #8fcf8f; }
-.counter[data-state="warn"] { color: #e8c06a; }
-.counter[data-state="over"] { color: #e8806a; font-weight: 700; }
+.counter[data-state="ok"] { color: var(--admin-ok); }
+.counter[data-state="warn"] { color: var(--admin-warn); }
+.counter[data-state="over"] { color: var(--admin-over); font-weight: 700; }
 
-/* ── Two-pane write/preview ────────────────────────────────────── */
-.editor__panes { display: grid; grid-template-columns: 1fr; gap: 1rem; }
-@media (min-width: 960px) { .editor__panes { grid-template-columns: 1fr 1fr; } }
-.pane { display: flex; flex-direction: column; min-width: 0; border: 1px solid var(--admin-line); border-radius: var(--admin-radius); background: var(--admin-panel); }
-.pane__head { display: flex; align-items: center; justify-content: space-between; padding: .5rem .75rem; border-bottom: 1px solid var(--admin-line); }
-.pane__title { font-size: .72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--admin-text-dim); }
-.preview-status { font-size: .72rem; color: var(--admin-gold); }
-
-.md-toolbar { display: flex; flex-wrap: wrap; gap: .15rem; padding: .35rem; border-bottom: 1px solid var(--admin-line); background: var(--admin-panel-2); border-radius: var(--admin-radius) var(--admin-radius) 0 0; }
+/* ── The sheet: toolbar + in-place document ────────────────────── */
+.sheet {
+  max-width: 760px; background: var(--admin-panel);
+  border: 1px solid var(--admin-hairline); border-radius: var(--admin-radius);
+  box-shadow: 0 1px 3px rgba(26, 26, 26, .08);
+}
+.sheet__toolbar {
+  position: sticky; top: 0; z-index: 4;
+  display: flex; flex-wrap: wrap; align-items: center; gap: .15rem;
+  padding: .35rem; background: var(--admin-panel);
+  border-bottom: 1px solid var(--admin-hairline); border-radius: var(--admin-radius) var(--admin-radius) 0 0;
+}
+/* Until the document mounts (or with no JS) the textarea is the editor and the
+ * toolbar would be dead buttons. */
+.sheet:not(.sheet--ready) .sheet__toolbar { display: none; }
+.sheet__sep { width: 1px; align-self: stretch; margin: .3rem .25rem; background: var(--admin-hairline); }
+.sheet__spacer { flex: 1; }
+.tool-style {
+  height: 2.25rem; min-width: 9.5rem; padding: 0 .5rem;
+  background: var(--admin-panel); color: var(--admin-text);
+  border: 1px solid var(--admin-line); border-radius: 3px; font-size: .85rem; font-family: var(--font-sans);
+}
 .md-tool {
   background: transparent; border: 1px solid transparent; color: var(--admin-text);
-  min-width: 2rem; height: 2rem; padding: 0 .5rem; border-radius: 3px; cursor: pointer;
-  font-size: .9rem; font-weight: 700; display: inline-flex; align-items: center; justify-content: center;
+  min-width: 2.25rem; height: 2.25rem; padding: 0 .4rem; border-radius: 3px; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
 }
-.md-tool:hover { background: var(--admin-panel); border-color: var(--admin-line); }
+.md-tool svg { width: 18px; height: 18px; }
+.md-tool:hover:not(:disabled) { background: var(--admin-panel-2); }
+.md-tool[aria-pressed="true"] { background: var(--admin-panel-2); border-color: var(--admin-line); }
+.md-tool:disabled { opacity: .4; }
+.md-tool--text { font-size: .78rem; font-weight: 600; letter-spacing: .04em; padding: 0 .6rem; border-color: var(--admin-line); }
+@media (max-width: 719px) {
+  .md-tool, .tool-style { height: 44px; min-width: 44px; }
+  .tool-style { flex: 1 1 100%; }
+}
+
+.sheet__surface { padding: 2rem; min-height: 60vh; }
+@media (max-width: 719px) { .sheet__surface { padding: 1.25rem; } }
+.sheet__surface .ProseMirror { outline: none; min-height: calc(60vh - 4rem); }
+.sheet__surface .ProseMirror:focus-visible { outline: none; } /* the sheet shows focus instead */
+.sheet:focus-within { border-color: var(--admin-line); }
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder); color: var(--admin-text-dim);
+  float: left; height: 0; pointer-events: none;
+}
+.ProseMirror img.ProseMirror-selectednode { outline: 2px solid var(--admin-accent); outline-offset: 2px; }
+
+/* Markdown-source mode: the same sheet, the raw text. */
 .md-body {
-  flex: 1; min-height: 22rem; resize: vertical; border: none; outline: none;
+  display: block; width: 100%; min-height: 60vh; resize: vertical; border: none;
   background: var(--admin-panel); color: var(--admin-text);
-  padding: .85rem; font-family: "SFMono-Regular", ui-monospace, "Cascadia Code", Menlo, monospace;
+  padding: 2rem; font-family: "SFMono-Regular", ui-monospace, "Cascadia Code", Menlo, monospace;
   font-size: .92rem; line-height: 1.6;
 }
+.md-body:focus-visible { outline: none; }
 .md-body::placeholder { color: var(--admin-text-dim); }
+.md-body[hidden], .sheet__surface[hidden] { display: none; }
 
-.pane--preview .preview { flex: 1; padding: 1rem 1.1rem; overflow-y: auto; min-height: 22rem; }
-.preview__placeholder { color: var(--admin-text-dim); font-style: italic; }
-
-/* ── Preview prose — mirror PostView.astro so preview == production.
- *    Same selectors/scale; recolored for the dark admin surface.            */
-.preview.body { font-size: 16px; color: var(--admin-text); }
-.preview.body p { color: var(--admin-text); margin-bottom: 1.2rem; line-height: 1.7; max-width: 68ch; }
-.preview.body h2 { font-family: var(--font-serif); color: var(--admin-heading); font-size: 1.6rem; letter-spacing: -0.02em; margin: 1.8rem 0 .8rem; }
-.preview.body h3 { font-family: var(--font-serif); color: var(--admin-heading); margin: 1.4rem 0 .6rem; }
-.preview.body a { color: var(--admin-gold); text-decoration: underline; text-underline-offset: 3px; }
-.preview.body a:hover { color: var(--admin-accent); }
-.preview.body img { margin: 1.4rem 0; max-width: 100%; border-radius: 2px; }
-.preview.body blockquote { border-left: 2px solid var(--admin-gold); padding-left: 1.1rem; font-family: var(--font-serif); font-style: italic; font-size: 1.3rem; line-height: 1.4; color: #cbb48f; margin: 1.4rem 0; }
-.preview.body ul, .preview.body ol { margin: 0 0 1.2rem 1.2rem; color: var(--admin-text); }
-.preview.body li { margin-bottom: .4rem; line-height: 1.7; }
-.preview.body code { background: var(--admin-panel-2); padding: .1rem .35rem; border-radius: 3px; font-size: .85em; }
+/* ── Prose — mirrors PostView.astro so the sheet looks like the site.
+ *    Same scale and colours as the public `.body` rules (light theme). */
+.sheet__doc.body { font-size: clamp(16px, 1.2vw, 18px); color: var(--ink); }
+.sheet__doc.body p { color: var(--ink); margin-bottom: 1.4rem; line-height: 1.7; max-width: 68ch; }
+.sheet__doc.body h2 { font-family: var(--font-serif); font-size: clamp(24px, 3vw, 34px); letter-spacing: -0.02em; margin: 2.4rem 0 1rem; color: var(--ink); }
+.sheet__doc.body h3 { font-family: var(--font-serif); font-size: 1.17em; margin: 2rem 0 .8rem; color: var(--ink); }
+.sheet__doc.body > :first-child { margin-top: 0; }
+.sheet__doc.body a { color: var(--bronze-dark, #725a3a); text-decoration: underline; text-underline-offset: 3px; }
+.sheet__doc.body img { margin: 2rem 0; max-width: 100%; }
+.sheet__doc.body blockquote { border-left: 2px solid var(--admin-gold); padding-left: 1.4rem; font-family: var(--font-serif); font-style: italic; font-size: clamp(20px, 2.4vw, 28px); line-height: 1.4; color: var(--bronze-dark, #725a3a); margin: 2rem 0; }
+.sheet__doc.body blockquote p { color: inherit; margin-bottom: .6rem; }
+.sheet__doc.body ul, .sheet__doc.body ol { margin: 0 0 1.4rem 1.2rem; color: var(--ink); }
+.sheet__doc.body li { margin-bottom: .5rem; line-height: 1.7; }
+.sheet__doc.body li p { margin-bottom: 0; }
+.sheet__doc.body code { background: var(--admin-panel-2); padding: .1rem .35rem; border-radius: 3px; font-size: .85em; }
 
 /* ── Cover picker ──────────────────────────────────────────────── */
 .cover-picker { display: flex; flex-direction: column; gap: .6rem; }
 .cover-picker__frame { border: 1px solid var(--admin-line); border-radius: var(--admin-radius); overflow: hidden; background: var(--admin-panel); aspect-ratio: 16 / 9; display: flex; align-items: center; justify-content: center; }
 .cover-picker__thumb { width: 100%; height: 100%; object-fit: cover; }
 .cover-picker__empty { width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .5rem; background: transparent; border: none; color: var(--admin-text-dim); cursor: pointer; font-size: .85rem; }
-.cover-picker__empty:hover { color: var(--admin-heading); }
+.cover-picker__empty:hover { color: var(--admin-heading); background: var(--admin-panel-2); }
 .cover-picker__icon { font-size: 1.5rem; }
 .cover-picker__actions { display: flex; gap: .5rem; }
-.cover-picker__error, .img-picker__error, .field__error { color: #e8806a; font-size: .8rem; }
+.cover-picker__error, .img-picker__error, .field__error { color: var(--admin-danger); font-size: .8rem; }
+/* `hidden` must win over the display these set (tokens.css `img { display: block }`
+ * beat the UA [hidden] rule: an empty cover showed a broken-image frame). */
+.cover-picker__thumb[hidden], .cover-picker__empty[hidden], .cover-picker__actions[hidden] { display: none; }
 
 /* ── SEO / validation / status ─────────────────────────────────── */
-.validation-summary { background: rgba(140,47,28,.18); border: 1px solid #8c2f1c; border-radius: var(--admin-radius); padding: .75rem .9rem; color: #f0c0b0; font-size: .85rem; }
+.validation-summary { background: #fbeae6; border: 1px solid var(--admin-danger); border-radius: var(--admin-radius); padding: .75rem .9rem; color: var(--admin-danger); font-size: .85rem; }
 .validation-summary__title { font-weight: 700; margin-bottom: .35rem; }
 .validation-summary ul { margin: 0 0 0 1.1rem; }
 .action-bar { display: flex; flex-wrap: wrap; gap: .5rem; }
 .action-bar .btn-primary, .action-bar .btn-ghost { flex: 1 1 auto; }
+@media (max-width: 719px) {
+  /* 2×2, not four full-width rows: the sticky block must not eat the screen.
+   * After the base .action-bar rule — a media query adds no specificity. */
+  .action-bar { display: grid; grid-template-columns: 1fr 1fr; }
+  .action-bar > * { min-height: 44px; width: 100%; }
+}
 .save-status { font-size: .78rem; color: var(--admin-text-dim); min-height: 1.1rem; }
 
-/* ── Image picker dialog ───────────────────────────────────────── */
-dialog.img-picker, dialog.confirm-dialog { border: 1px solid var(--admin-line); border-radius: var(--admin-radius); background: var(--admin-panel); color: var(--admin-text); padding: 0; max-width: 560px; width: 92vw; }
-dialog::backdrop { background: rgba(0,0,0,.6); }
+/* ── Dialogs (image picker, confirm, link) ─────────────────────── */
+dialog.img-picker, dialog.confirm-dialog, dialog.link-dialog { border: 1px solid var(--admin-line); border-radius: var(--admin-radius); background: var(--admin-panel); color: var(--admin-text); padding: 0; max-width: 560px; width: 92vw; box-shadow: 0 12px 40px rgba(26, 26, 26, .2); }
+dialog::backdrop { background: rgba(26, 26, 26, .45); }
 .img-picker__inner { display: flex; flex-direction: column; }
-.img-picker__head { display: flex; align-items: center; justify-content: space-between; padding: .9rem 1.1rem; border-bottom: 1px solid var(--admin-line); }
+.img-picker__head { display: flex; align-items: center; justify-content: space-between; padding: .9rem 1.1rem; border-bottom: 1px solid var(--admin-hairline); }
 .img-picker__head h2 { font-size: 1.1rem; }
-.img-picker__close { background: none; border: none; color: var(--admin-text); font-size: 1.4rem; cursor: pointer; line-height: 1; }
+.img-picker__close { background: none; border: none; color: var(--admin-text); font-size: 1.4rem; cursor: pointer; line-height: 1; min-width: 44px; min-height: 44px; }
 .img-picker__body { padding: 1.1rem; display: flex; flex-direction: column; gap: 1rem; }
 .dropzone { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .4rem; padding: 1.4rem; border: 2px dashed var(--admin-line); border-radius: var(--admin-radius); cursor: pointer; text-align: center; color: var(--admin-text-dim); }
-.dropzone:hover, .dropzone--over { border-color: var(--admin-accent); color: var(--admin-heading); }
+.dropzone:hover, .dropzone--over { border-color: var(--admin-accent); color: var(--admin-heading); background: var(--admin-panel-2); }
 .dropzone__icon { font-size: 1.5rem; }
 .dropzone__hint { font-size: .72rem; }
 .img-picker__preview img { max-height: 160px; width: auto; border-radius: 3px; }
@@ -233,23 +349,25 @@ dialog::backdrop { background: rgba(0,0,0,.6); }
 .recent__item { padding: 0; border: 1px solid var(--admin-line); border-radius: 3px; overflow: hidden; cursor: pointer; aspect-ratio: 1; background: var(--admin-panel-2); }
 .recent__item img { width: 100%; height: 100%; object-fit: cover; }
 .recent__item--on { border-color: var(--admin-accent); outline: 2px solid var(--admin-accent); }
-.img-picker__actions { display: flex; justify-content: flex-end; gap: .6rem; padding: .9rem 1.1rem; border-top: 1px solid var(--admin-line); }
+.img-picker__actions { display: flex; justify-content: flex-end; gap: .6rem; padding: .9rem 1.1rem; border-top: 1px solid var(--admin-hairline); }
 
-/* ── Confirm dialog ────────────────────────────────────────────── */
-.confirm-dialog__inner { padding: 1.4rem; display: flex; flex-direction: column; gap: 1.2rem; }
+.confirm-dialog__inner, .link-dialog__inner { padding: 1.4rem; display: flex; flex-direction: column; gap: 1.2rem; }
 .confirm-dialog__msg { color: var(--admin-text); font-size: .95rem; }
-.confirm-dialog__actions { display: flex; justify-content: flex-end; gap: .6rem; }
+.confirm-dialog__actions, .link-dialog__actions { display: flex; justify-content: flex-end; gap: .6rem; flex-wrap: wrap; }
+.link-dialog__inner h2 { font-size: 1.1rem; }
+.link-dialog__actions .link-dialog__remove { margin-right: auto; }
 
 /* ── Preview route banner ──────────────────────────────────────── */
-.preview-banner { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; background: rgba(166,139,103,.14); border: 1px solid var(--admin-gold); border-radius: var(--admin-radius); padding: .7rem 1rem; margin-bottom: 1.5rem; color: #e8d3ad; font-size: .85rem; }
-.preview-banner__dot { width: 9px; height: 9px; border-radius: 50%; background: var(--admin-gold); }
-.preview-banner__back { margin-left: auto; color: var(--admin-gold); text-decoration: underline; }
-/* The preview surface renders the public PostView on a light card so it looks
- * exactly like production (PostView's prose is written for the light theme). */
-.preview-surface { background: var(--white, #fff); color: var(--ink, #1a1a1a); border-radius: var(--admin-radius); padding: 1rem; }
+.preview-banner { display: flex; align-items: center; gap: .75rem; flex-wrap: wrap; background: #f4ece0; border: 1px solid var(--admin-accent); border-radius: var(--admin-radius); padding: .7rem 1rem; margin-bottom: 1.5rem; color: var(--admin-text); font-size: .85rem; }
+.preview-banner__dot { width: 9px; height: 9px; border-radius: 50%; background: var(--admin-accent); }
+.preview-banner__back { margin-left: auto; color: var(--admin-accent-deep); text-decoration: underline; }
+/* The preview surface renders the public PostView on a white card so it looks
+ * exactly like production. */
+.preview-surface { background: var(--white, #fff); color: var(--ink, #1a1a1a); border: 1px solid var(--admin-hairline); border-radius: var(--admin-radius); padding: 1rem; }
 .preview-surface :where(h1, h2, h3) { color: var(--ink, #1a1a1a); }
 
-/* ── Toast ─────────────────────────────────────────────────────── */
-.toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%); background: var(--admin-panel-2); color: var(--admin-heading); border: 1px solid var(--admin-line); border-radius: var(--admin-radius); padding: .7rem 1.1rem; font-size: .85rem; box-shadow: 0 6px 24px rgba(0,0,0,.4); z-index: 50; }
+/* ── Toast — the one dark element (it floats over either surface). ─ */
+.toast { position: fixed; bottom: 5.5rem; left: 50%; transform: translateX(-50%); background: var(--ink, #1a1a1a); color: var(--cream, #f8f8f8); border-radius: var(--admin-radius); padding: .7rem 1.1rem; font-size: .85rem; box-shadow: 0 6px 24px rgba(0,0,0,.25); z-index: 50; }
+@media (min-width: 1100px) { .toast { bottom: 1.5rem; } }
 
 @media (prefers-reduced-motion: reduce) { .toast { transition: none; } }
