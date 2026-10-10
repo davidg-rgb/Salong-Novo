@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeAll, beforeEach } from "vitest";
+import { readFileSync } from "node:fs";
 import { experimental_AstroContainer } from "astro/container";
 import { asStylist, isOwnerRow, getStaff } from "~/lib/content";
 import { t, localizePath, type Locale } from "~/i18n";
@@ -143,6 +144,58 @@ describe.each(["sv", "en"] as const)("Home — rendered (%s)", (locale) => {
     }
     expect(count(html, /class="role-tag"/g)).toBe(2);
     expect(owners.map((card) => /aria-label="([^",]*)/.exec(card)?.[1])).toEqual(["Chriss Berner", "Jannie Olofsson"]);
+  });
+});
+
+// The hero film (2026-10-10). The browser must fetch no mp4 unless refresh.ts
+// attaches one, so the markup carries a poster and two data-src paths, never a
+// `src`, a <source> or `autoplay`. The script's gates are the Playwright suite's.
+describe.each(["sv", "en"] as const)("Home — the hero film's markup (%s)", (locale) => {
+  const videoTag = (html: string) => /<video\s[^>]*>/.exec(section(html, /<section class="hero"/, "</section>"))?.[0] ?? "";
+
+  it("renders one muted, inline, looping <video> with a poster and both data-src paths, inside the plate", async () => {
+    const html = await render(Home, locale);
+    const hero = section(html, /<section class="hero"/, "</section>");
+    expect(count(hero, /<video\s/g)).toBe(1);
+    const tag = videoTag(html);
+    for (const attr of [/\smuted[\s>=]/, /\splaysinline[\s>=]/, /\sloop[\s>=]/, /\saria-hidden="true"/, /\stabindex="-1"/])
+      expect(tag).toMatch(attr);
+    expect(tag).toContain('preload="none"');
+    expect(tag).toContain('poster="/video/hero-poster.jpg"');
+    expect(tag).toContain('data-src-hd="/video/hero-1080.mp4"');
+    expect(tag).toContain('data-src-sd="/video/hero-720.mp4"');
+    // Inside .hero-soft, so it inherits the plate's drift, bleed and parallax.
+    expect(section(hero, /<div class="hero-soft"/, "</div>")).toContain("<video");
+  });
+
+  it("carries no src, no <source> and no autoplay — nothing is fetched until the script decides", async () => {
+    const html = await render(Home, locale);
+    const tag = videoTag(html);
+    expect(tag).not.toMatch(/\ssrc=/);
+    expect(tag).not.toMatch(/\sautoplay/);
+    expect(section(html, /<section class="hero"/, "</section>")).not.toContain("<source");
+  });
+
+  it("no longer references the hair texture", async () => {
+    expect(await render(Home, locale)).not.toContain("hair-band.jpg");
+  });
+});
+
+describe("the hero film — off the render path", () => {
+  it("Home.astro's styles no longer paint hair-band.jpg (the footer band still does, on purpose)", () => {
+    const source = readFileSync(new URL("../src/components/Home.astro", import.meta.url), "utf8");
+    const style = source.slice(source.indexOf("<style>"), source.indexOf("</style>"));
+    expect(style).not.toContain("hair-band.jpg");
+    expect(readFileSync(new URL("../src/components/SiteFooter.astro", import.meta.url), "utf8")).toContain("hair-band.jpg");
+  });
+
+  it("the four film assets exist, and /video/* carries the same cache rule as /images/*", () => {
+    for (const file of ["hero-1080.mp4", "hero-720.mp4", "hero-poster.jpg", "hero-poster-720.jpg"])
+      expect(() => readFileSync(new URL(`../public/video/${file}`, import.meta.url))).not.toThrow();
+    const headers = readFileSync(new URL("../public/_headers", import.meta.url), "utf8");
+    const rule = (path: string) => new RegExp(`^${path.replace("*", "[*]")}[ \t]*[\r]?[\n][ \t]+(Cache-Control: [^\r\n]+)`, "m").exec(headers)?.[1];
+    expect(rule("/video/*")).toBe("Cache-Control: public, max-age=86400, stale-while-revalidate=2592000");
+    expect(rule("/video/*")).toBe(rule("/images/*"));
   });
 });
 

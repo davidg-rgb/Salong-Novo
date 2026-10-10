@@ -103,6 +103,16 @@ html.nr-motion .hero:not(.nr-go) .hero-soft { opacity: 0; }
   0% { transform: scale(1.06) translate3d(0, 0, 0); }
   100% { transform: scale(1.12) translate3d(-1.5%, 1%, 0); }
 }
+/* The salon film (2026-10-10) fades in over the plate's dark base once it is really
+   playing — refresh.ts adds .nr-video-on on the first `playing` event — so a slow or
+   refused start shows the plate fading in, never a frozen or blank frame. Motion only:
+   without html.nr-motion (no JS, reduced motion) the element is its poster, fully
+   opaque, which is the static plate. .nr-video-off is refresh.ts saying the film will
+   not run (Save-Data, no source, a refused autoplay or a load error): the poster comes
+   back as the plate, so those visitors get the frame and not the bare dark base. */
+html.nr-motion .hero-video { opacity: 0; transition: opacity 1.2s var(--ease); }
+html.nr-motion .hero.nr-video-on .hero-video,
+html.nr-motion .hero.nr-video-off .hero-video { opacity: 1; }
 
 /* ── Scroll cue: a champagne drip down the hairline ────────────────────── */
 html.nr-motion .scroll-cue i::after {

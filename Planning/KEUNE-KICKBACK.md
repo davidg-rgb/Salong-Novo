@@ -151,6 +151,9 @@ Option B is live in the codebase (not yet deployed):
   as the "Butiken (Keune)" list in the admin.
 - `/butik` + `/en/shop` — the product wall; `utm_campaign` per placement: `butik-<line>`, `butik-all`,
   `varumarken` (the Keune card on Våra brands), `personal-<stylist-slug>` (picks).
+  **2026-10-10: products hidden** (client request). The page is the copy plus ONE `butik-all` link
+  (`src/components/ShopPitch.astro`); the `butik-<line>` placements are dormant until the grid
+  returns. ProductGrid, `products.json`, the admin list and keune-sync are unchanged.
 - Stylist picks — a `picks` list on every stylist, rendered in the team modal (max 3); all empty.
 - `scripts/keune-sync.mjs` — `npm run keune:check` (fails if a slug leaves the sitemap),
   `keune:update` (prices + `_synced`), `keune:images` (product page → Contentful WebP; exit 1 on any

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeAll, beforeEach } from "vitest";
 import { experimental_AstroContainer } from "astro/container";
 import { getProducts, getProductsSyncedAt } from "~/lib/content";
+import { shop } from "~/lib/pagecopy";
 import { keuneGenericLink } from "~/lib/keune";
 import ProductGrid from "~/components/ProductGrid.astro";
 import StaffGrid from "~/components/StaffGrid.astro";
@@ -304,17 +305,32 @@ describe("the shop pages, rendered", () => {
       request: new Request(`https://salongnovo.se${path}`),
     });
 
-  for (const [page, path, kicker, heading, bookingLabel] of [
-    [ButikPage, "/butik", "N° 11 — Butik", "Keune — att ta med hem.", "Boka tid"],
-    [ShopPage, "/en/shop", "N° 11 — Shop", "Keune — to take home.", "Book now"],
+  // 2026-10-10: the products are hidden (client request). The page is the copy plus
+  // ONE salon-attributed link to the full range; ProductGrid is tested above and
+  // simply not mounted here.
+  for (const [page, path, locale, kicker, heading, bookingLabel] of [
+    [ButikPage, "/butik", "sv", "N° 11 — Butik", "Keune — att ta med hem.", "Boka tid"],
+    [ShopPage, "/en/shop", "en", "N° 11 — Shop", "Keune — to take home.", "Book now"],
   ] as const) {
-    it(`${path}: N° 11 kicker, the shop heading, both paragraphs, the grid — and no booking CTA in the article`, async () => {
+    it(`${path}: N° 11 kicker, the shop heading, both paragraphs, one range link, no products — and no booking CTA in the article`, async () => {
       const html = await renderPage(page, path);
       const article = html.slice(html.indexOf('<section class="article'), html.indexOf("</section>", html.indexOf('<section class="article')));
       expect(text(article)).toContain(kicker);
       expect([...article.matchAll(/<h1[^>]*>([^<]*)<\/h1>/g)].map((m) => m[1])).toEqual([heading]);
-      expect(article.match(/<p[^>]*>/g)!.length).toBeGreaterThanOrEqual(2);
-      expect(cards(article)).toHaveLength(24);
+      expect(text(article)).toContain(shop.intro[locale]);
+      expect(text(article)).toContain(shop.howItWorks[locale]);
+      // No product wall: no cards, no product images, no per-product deep link.
+      expect(cards(article)).toHaveLength(0);
+      expect(images(article)).toHaveLength(0);
+      expect(state.calls).not.toContain("products");
+      expect(article).not.toContain("pageSlug");
+      for (const p of getProducts()) expect(article).not.toContain(encodeURIComponent(`/p/${p.slug}/`));
+      // Exactly one sponsored link, and it is the generic full-range link.
+      const sponsored = anchors(article).filter((a) => a.rel === "noopener sponsored");
+      expect(sponsored).toHaveLength(1);
+      expect(sponsored[0]!.href).toBe(keuneGenericLink("butik-all"));
+      expect(sponsored[0]!.target).toBe("_blank");
+      expectKickbackInvariants(sponsored[0]!.href!, /^butik-all$/);
       // booking={false}: the only booking buttons are the header's, never the article's.
       expect(text(article)).not.toContain(bookingLabel);
       // The nav marks this page as current.

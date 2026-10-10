@@ -1,0 +1,15 @@
+---
+/**
+ * The shop page's pitch (2026-10-10): one salon-attributed link to Keune's full
+ * range, in place of the product wall while the client has the products hidden.
+ * The same href, target and rel as ProductGrid's range button — `butik-all` is
+ * the campaign the kickback report already reads, and `rel="sponsored"` because
+ * the salon earns on the click. One component so `/butik` and `/en/shop` cannot
+ * drift apart. ArticlePage spaces a slotted `.btn`, so this carries no styles.
+ */
+import { type Locale, useT } from "../i18n";
+import { keuneGenericLink } from "../lib/keune";
+const { locale } = Astro.props as { locale: Locale };
+const t = useT(locale, (await Astro.locals.getCms()).kv);
+---
+<a class="btn" href={keuneGenericLink("butik-all")} target="_blank" rel="noopener sponsored">{t("cta.shopAll")}</a>

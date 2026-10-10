@@ -33,6 +33,7 @@ function boot(): void {
   if (hero) root.classList.add("nr-home");
 
   if (hero) wordmark(hero);
+  if (hero) heroVideo(hero, reduce);
   if (!reduce) marquee();
   italicLastWord();
   document.querySelectorAll<HTMLElement>(".story h2, .team-head h2, .strip-head h2").forEach(splitWords);
@@ -112,6 +113,62 @@ function wordmark(hero: HTMLElement): void {
   const go = () => requestAnimationFrame(() => requestAnimationFrame(() => hero.classList.add("nr-go")));
   const fonts = document.fonts?.ready ?? Promise.resolve();
   void Promise.race([fonts, new Promise((resolve) => setTimeout(resolve, 900))]).then(go);
+}
+
+/**
+ * The hero's salon film (2026-10-10). Home.astro renders the <video> with a poster
+ * and no source, so the browser fetches no mp4 until this attaches one. It does so
+ * only with motion allowed, Save-Data off and both data-src paths present; 1080p
+ * from 900px wide, 720p below. Every other path adds .nr-video-off, which in
+ * motion.css hands the plate back to the poster frame.
+ *
+ * `muted` is set again as a property because autoplay policy reads the property;
+ * the attribute in the markup is what iOS needs. A refused play() (autoplay
+ * blocked, codec missing) is swallowed: the poster stays and nothing is logged.
+ * The hero drifts off-screen as the page scrolls, so an IntersectionObserver
+ * pauses the decoder there and resumes it when the hero comes back.
+ */
+function heroVideo(hero: HTMLElement, reduce: boolean): void {
+  const video = hero.querySelector<HTMLVideoElement>("video.hero-video");
+  if (!video || video.dataset.nrVideo) return;
+  video.dataset.nrVideo = "1";
+  const off = () => {
+    if (!hero.classList.contains("nr-video-on")) hero.classList.add("nr-video-off");
+  };
+  const hd = video.dataset.srcHd?.trim() ?? "";
+  const sd = video.dataset.srcSd?.trim() ?? "";
+  const saveData = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData === true;
+  if (reduce) return; // no html.nr-motion: the poster is already the opaque plate
+  if (saveData || !hd || !sd) {
+    off();
+    return;
+  }
+  const play = () => {
+    video.play()?.catch(off);
+  };
+  video.addEventListener(
+    "playing",
+    () => {
+      hero.classList.remove("nr-video-off");
+      hero.classList.add("nr-video-on");
+    },
+    { once: true },
+  );
+  video.addEventListener("error", off, { once: true });
+  video.muted = true;
+  video.src = matchMedia("(min-width: 900px)").matches ? hd : sd;
+  video.load();
+  play();
+  if (!("IntersectionObserver" in window)) return;
+  new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (entry.isIntersecting) {
+        if (video.paused) play();
+      } else if (!video.paused) {
+        video.pause();
+      }
+    }
+  }).observe(hero);
 }
 
 /**

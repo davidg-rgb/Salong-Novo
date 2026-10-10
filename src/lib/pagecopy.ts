@@ -213,22 +213,25 @@ export const brands = {
   } as Bi,
 };
 
-// "Butik" — the curated Keune product wall (2026-09-29, Planning/KEUNE-KICKBACK.md).
-// `howItWorks` is the disclosure and says exactly the three facts verified in a live
-// session, nothing more: the visitor pays Keune's normal price, a share of the
-// purchase goes to the salon when they shop via these links, and checkout happens on
+// "Butik" — Keune to take home (2026-09-29, Planning/KEUNE-KICKBACK.md).
+// 2026-10-10, client request: the products are HIDDEN for now. The page is this copy
+// plus one salon-attributed link to Keune's full range (the pitch); ProductGrid, the
+// `products` collection and its tests stay, so the wall can come back unchanged. The
+// intro therefore no longer describes a product list, and the disclosure says "vår
+// länk" — there is one. `howItWorks` still says exactly the three facts verified in a
+// live session, nothing more: the visitor pays Keune's normal price, a share of the
+// purchase goes to the salon when they shop via the link, and checkout happens on
 // keune.com. No discount claim — there is none; Keune's own "exklusiv rabatt" banner
-// is its newsletter offer, not the salon's. The intro says "ett urval", not "våra
-// stylisters val": the stylists have not chosen yet (their picks ship empty).
+// is its newsletter offer, not the salon's.
 export const shop = {
   heading: { sv: "Keune — att ta med hem.", en: "Keune — to take home." } as Bi,
   intro: {
-    sv: "Ett urval ur Keunes sortiment — vård, styling, 1922 för män och So Pure — med en rad om vad varje produkt är till för.",
-    en: "A selection from Keune's range — care, styling, 1922 for men and So Pure — with a line on what each product is for.",
+    sv: "Vi arbetar med Keune i salongen — vård, styling, 1922 för män och So Pure. Samma produkter som vi använder på dig finns att ta med hem.",
+    en: "We work with Keune in the salon — care, styling, 1922 for men and So Pure. The same products we use on you are there to take home.",
   } as Bi,
   howItWorks: {
-    sv: "Handla via våra länkar så går en del av köpet till salongen — samma pris för dig, kassan sker hos keune.com.",
-    en: "Shop through our links and part of your purchase goes to the salon — the same price for you, and you check out at keune.com.",
+    sv: "Handla via vår länk så går en del av köpet till salongen — samma pris för dig, kassan sker hos keune.com.",
+    en: "Shop through our link and part of your purchase goes to the salon — the same price for you, and you check out at keune.com.",
   } as Bi,
 };
 

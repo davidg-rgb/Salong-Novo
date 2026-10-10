@@ -931,3 +931,40 @@ the complete static page.
 **Gates** (baseline 723/723 from the entry above): `npm test` → 756 passed / 31 files (+33, all in
 `home-render.test.ts`) · `tsc` clean · `astro check` 0 errors / 0 warnings / 6 hints (pre-existing) · `astro build`
 Complete · `npm run e2e` → 34 passed (Chromium, `wrangler dev` via `npm run preview -- --port 4321`).
+
+### 2026-10-10 — Hero film as the plate + /butik without products (client requests)
+
+- **Hero film** (`Home.astro`, `refresh.ts`, `motion.css`): the salon video "Hemsida Novo Final" replaces the
+  hair texture as the hero plate. The assets were pre-encoded into `public/video/`: `hero-1080.mp4`
+  (10.8 MB), `hero-720.mp4` (4.4 MB), and the two poster frames. The `<video>` sits inside `.hero-soft`, so it
+  inherits the drift, the -6% bleed and the parallax. It is server-rendered `muted playsinline loop
+  preload="none"` with a poster and `data-src-hd`/`data-src-sd`, and with NO `src`, `<source>` or `autoplay`.
+  The browser fetches no mp4 until `heroVideo()` attaches one. That needs motion allowed, Save-Data off and
+  both data-src values present. It picks 1080p at ≥900px and 720p below, then `muted=true`, `load()`, and
+  `play().catch()`. The first `playing` adds `.nr-video-on`, which fades the film in over 1.2s. An
+  IntersectionObserver pauses the film off-screen and resumes it on return.
+- **Fallback = the poster.** No JS or reduced motion: no `nr-motion`, so the poster is the opaque plate.
+  Save-Data, an empty data-src, a refused `play()` or a load `error` add `.nr-video-off`, which shows the
+  poster again under `nr-motion`. The scrim moved to `.hero-soft::after`, above the video, with the same three
+  stops. `hair-band.jpg` is gone from the hero but stays on the footer band.
+- **`_headers`**: `/video/*` gets the same one-day + 30-day SWR rule as `/images/*`. The paths are stable and the
+  client may re-cut the film.
+- **/butik + /en/shop without products**: the pages now render the heading, the new intro and the disclosure.
+  Below them is ONE `butik-all` sponsored link (new `src/components/ShopPitch.astro`, the same href, target
+  and rel as ProductGrid's range button). The `shop` copy is rewritten: the intro no longer describes a list,
+  and the disclosure says "vår länk / our link". ProductGrid, `products.json`, the admin list, keune-sync and
+  their tests are untouched.
+- **e2e and wrangler dev**: `wrangler dev`'s proxy worker exits ("Network connection lost") when a page closes
+  mid-mp4-stream. That happened 2 of 2 times on the `hero|reduced` subset. The spec now fulfils the two mp4s
+  from disk via `page.route`, and one test fetches both from the Worker in full: 200, `video/mp4`, byte size
+  equal. After the change the subset passed 3 of 3 runs.
+- **Tests**: `home-render.test.ts` gained 8 cases, covering the video markup in sv + en, no src/autoplay/source,
+  no hair-band in the render or in Home's styles, the asset files, and the `/video/*` header rule.
+  `keune-render.test.ts` rewrote the shop-pages case, asserting no cards, no product images, no
+  `products` resolve, no `pageSlug`, exactly one sponsored `butik-all` link, both paragraphs, and no booking
+  CTA. `home-refresh.spec.ts` gained 7 tests: plays at 1080p, 720p at 390px, served by the Worker, pauses
+  off-screen, Save-Data, empty data-src, and refused play(). The reduced-motion, no-JS and inner-page tests
+  gained film assertions.
+
+**Gates** (baseline 756/756 + 34 e2e at e64308f): `npm test` → 764 passed / 31 files · `tsc` clean ·
+`astro check` 0 errors / 0 warnings / 6 hints (pre-existing) · `astro build` Complete · `npm run e2e` → 41 passed.

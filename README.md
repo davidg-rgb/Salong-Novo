@@ -13,9 +13,9 @@ on **Cloudflare**, with a staff-writable blog.
 
 | Layer | State |
 |-------|-------|
-| Core logic (i18n, slug, markdown, images, posts, db, seo, redirects, content, keune) | ✅ Built + **756 tests passing** (31 files, 2026-09-30) |
+| Core logic (i18n, slug, markdown, images, posts, db, seo, redirects, content, keune) | ✅ Built + **764 tests passing** (31 files, 2026-10-10) |
 | App (Astro + Cloudflare): layout, components, all pages (SV+EN), blog, admin API, SEO | ✅ Builds green, `tsc` clean |
-| Visual design | ✅ "Haute Editorial" applied (§11, 2026-06-01); home-page refresh 2026-09-30 (fixed transparent header, 100svh hero, awards marquee, owner cards, Lenis + motion layer in `src/styles/motion.css` / `src/scripts/refresh.ts`) |
+| Visual design | ✅ "Haute Editorial" applied (§11, 2026-06-01); home-page refresh 2026-09-30 (fixed transparent header, 100svh hero (the salon film as its plate since 2026-10-10, poster fallback), awards marquee, owner cards, Lenis + motion layer in `src/styles/motion.css` / `src/scripts/refresh.ts`) |
 | Cloudflare resources (D1, R2, Access) | ⏳ Create at deploy (see below) |
 
 The design is the only thing waiting. Everything in `src/` is design-independent scaffolding;
@@ -25,7 +25,7 @@ choosing a direction means **restyling** (tokens + component CSS), not rebuildin
 
 ```bash
 npm install
-npm test            # 756 unit tests (vitest, incl. Astro Container render tests)
+npm test            # 764 unit tests (vitest, incl. Astro Container render tests)
 npm run e2e         # Playwright: builds, serves the Worker on :4321, runs the home-refresh suite
 npm run typecheck   # tsc --noEmit
 npm run dev         # Astro dev server (static pages; blog/admin need wrangler)
@@ -64,8 +64,10 @@ npm run db:migrate:remote            # ...and to the remote D1
 - **Booking:** external Voady — `https://bokning.voady.se/novo` (primary CTA everywhere)
 - **Address:** Rörstrandsgatan 39C, 113 40 Stockholm · T-bana S:t Eriksplan
 - **17 stylists** (roster in `content/staff.json`)
-- **Butik:** 24 curated Keune products (`content/products.json`) on `/butik` + `/en/shop`; every
-  "Handla hos Keune" link is built by `src/lib/keune.ts` so purchases credit the salon (`Planning/KEUNE-KICKBACK.md`)
+- **Butik:** `/butik` + `/en/shop` show copy and ONE salon-attributed link to Keune's full range since
+  2026-10-10 (client request: products hidden for now). The 24 curated products (`content/products.json`),
+  `ProductGrid.astro` and the admin list stay for the return; every Keune link is built by
+  `src/lib/keune.ts` so purchases credit the salon (`Planning/KEUNE-KICKBACK.md`)
 - **Awards:** Årets Kollektion ×3, Ellen Rudd — Årets Nykomling 2026, Nordic Hairshot finalists
 
 ## Remaining before launch

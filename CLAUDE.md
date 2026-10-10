@@ -8,7 +8,7 @@ is an **asset/content donor only** (a launched-but-over-scoped Next.js build) �
 
 A booking-focused, fashion-magazine **brochure site** for Salong NOVO — a Schwarzkopf flagship
 hair salon in Vasastan, Stockholm. Bilingual (SV primary / EN day one). Self-contained on
-Cloudflare. Staff-writable blog. No on-site webshop or checkout (the `/butik` Keune wall links
+Cloudflare. Staff-writable blog. No on-site webshop or checkout (`/butik` links
 out — checkout is on keune.com), no on-site booking (external Voady link).
 
 ## Stack (locked + built)
@@ -38,11 +38,17 @@ Access (admin) · markdown-it (`html:false`) · Vitest. See `ARCHITECTURE.md`.
   (`content/products.json`, CMS collection `products`), every CTA a salon-attributed deep link built
   by `src/lib/keune.ts`; stylist `picks` wired but empty; `npm run keune:check` keeps slugs/prices
   honest. 26 public page files. Mechanism: `Planning/KEUNE-KICKBACK.md`.
+  **Products HIDDEN since 2026-10-10** (client request): the page is the copy + one `butik-all` link
+  (`ShopPitch.astro`); ProductGrid, the data, the admin list and its tests stay for the return.
 - ✅ **Home-page refresh (2026-09-30):** Desktop-Claude kit implemented natively (no override layer):
   fixed transparent→frosted header on `/` only, 1340px hamburger, 100svh hero with letter intro +
   scroll cue, awards strip head + numbered captions + marquee, owner cards from `owner`/`role`
   data, bio slide-up, ink CTA button, Lenis. Motion is JS-gated (`html.nr-motion`); reduced-motion
-  and no-JS get the complete static page. 756 tests / 31 files + `npm run e2e` (Playwright, 34).
+  and no-JS get the complete static page.
+- ✅ **Hero film (2026-10-10):** the salon video ("Hemsida Novo Final") is the hero plate —
+  `public/video/` (1080p ≥900px, 720p below, poster frames), attached by `refresh.ts` only with
+  motion allowed + Save-Data off; no JS / reduced motion / refused autoplay keep the poster.
+  764 tests / 31 files + `npm run e2e` (Playwright, 41).
 - ⏳ **Remaining:** client content for Bokning & priser / Utbildning / Våra brands; RUNBOOK §5 on the
   client's Cloudflare account + domain (Access, DNS); the deferred WebP variant Worker; GA4/consent.
 - **Local dev:** `.dev.vars` (gitignored) sets `DEV_ADMIN_EMAIL` + `ADMIN_API_TOKEN`; run
@@ -51,7 +57,7 @@ Access (admin) · markdown-it (`html:false`) · Vitest. See `ARCHITECTURE.md`.
 ## Key decisions (don't relitigate)
 
 - Fresh rebuild, simpler than the old build. **No webshop / gift cards / commerce.** (2026-09-29:
-  `/butik` is an OUTBOUND Keune product wall — no cart, no checkout, no payment on this site.)
+  `/butik` is an OUTBOUND Keune page — no cart, no checkout, no payment on this site.)
 - Booking = external **Voady** `https://bokning.voady.se/novo` (NOT Voyado), primary CTA everywhere.
 - **Bilingual day one** (SV root + EN `/en`). Blog posts single-language with locale marker.
 - **Staff = grid → modal** on the **Team** page (bio + per-person "Boka tid hos [namn]" Voady link).

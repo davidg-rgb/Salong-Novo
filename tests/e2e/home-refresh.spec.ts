@@ -10,12 +10,25 @@
  *
  *   npm run e2e    (builds, serves the Worker on :4321, runs Chromium)
  */
-import { mkdirSync } from "node:fs";
+import { mkdirSync, statSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { expect, test, type Page } from "@playwright/test";
 
 const HOME = "/";
 const SHOTS = fileURLToPath(new URL("./__shots__/", import.meta.url));
+const VIDEO_DIR = fileURLToPath(new URL("../../public/video/", import.meta.url));
+
+// Since the hero film landed (2026-10-10) every home-page test starts a 4-11 MB
+// mp4 download, and `wrangler dev`'s proxy worker dies ("Network connection
+// lost", the whole server exits) when a page closes mid-stream — observed twice
+// on the hero|reduced subset. The browser therefore gets the film from disk; the
+// "served by the Worker" test below fetches it from the server in full, so the
+// static-asset path is still proven. Production Workers are not affected.
+test.beforeEach(async ({ page }) => {
+  await page.route(/\/video\/hero-(?:1080|720)\.mp4$/, (route) =>
+    route.fulfill({ path: `${VIDEO_DIR}${new URL(route.request().url()).pathname.split("/").pop()}`, contentType: "video/mp4" }),
+  );
+});
 
 async function open(page: Page, width: number, height = 900, path = HOME) {
   await page.setViewportSize({ width, height });
@@ -138,11 +151,109 @@ test.describe("sections", () => {
   });
 });
 
+// ── The hero film (2026-10-10) ──────────────────────────────────────────────
+// refresh.ts attaches a source only with motion allowed, Save-Data off and both
+// data-src paths present; every other path leaves the poster as the plate.
+
+const video = (page: Page) => page.locator(".hero video.hero-video");
+const videoSrc = (page: Page) => video(page).evaluate((v) => (v as HTMLVideoElement).getAttribute("src") ?? "");
+/** Playing, by the class refresh.ts sets on `playing` or by the element itself. */
+const playing = (page: Page) =>
+  page.evaluate(() => {
+    const v = document.querySelector<HTMLVideoElement>(".hero video.hero-video")!;
+    return document.querySelector(".hero")!.classList.contains("nr-video-on") || !v.paused;
+  });
+
+test.describe("hero film", () => {
+  test("hero video attaches source and plays (desktop: 1080p)", async ({ page }) => {
+    const errors: string[] = [];
+    page.on("pageerror", (e) => errors.push(String(e)));
+    await open(page, 1440);
+    expect(await videoSrc(page)).toMatch(/\/video\/hero-1080\.mp4$/);
+    await expect.poll(() => playing(page), { timeout: 5000 }).toBe(true);
+    await expect(page.locator(".hero")).toHaveClass(/nr-video-on/, { timeout: 5000 });
+    await expect(video(page)).toHaveCSS("opacity", "1", { timeout: 3000 });
+    expect(errors).toEqual([]);
+  });
+
+  test("both films are served by the Worker as static assets, whole", async ({ page }) => {
+    for (const file of ["hero-1080.mp4", "hero-720.mp4"]) {
+      const res = await page.request.get(`/video/${file}`);
+      expect(res.status(), file).toBe(200);
+      expect(res.headers()["content-type"], file).toContain("video/mp4");
+      expect((await res.body()).length, file).toBe(statSync(`${VIDEO_DIR}${file}`).size);
+    }
+  });
+
+  test("a 390px phone gets the 720p file", async ({ page }) => {
+    await open(page, 390, 844);
+    expect(await videoSrc(page)).toMatch(/\/video\/hero-720\.mp4$/);
+  });
+
+  test("the decoder pauses once the hero leaves the viewport and resumes when it returns", async ({ page }) => {
+    await open(page, 1440);
+    await expect.poll(() => playing(page), { timeout: 5000 }).toBe(true);
+    const heroH = await page.locator(".hero").evaluate((el) => (el as HTMLElement).offsetHeight);
+    await page.evaluate((y) => window.scrollTo({ top: y, behavior: "instant" }), heroH * 2 + 200);
+    await expect.poll(() => video(page).evaluate((v) => (v as HTMLVideoElement).paused), { timeout: 4000 }).toBe(true);
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+    await expect.poll(() => video(page).evaluate((v) => (v as HTMLVideoElement).paused), { timeout: 4000 }).toBe(false);
+  });
+
+  test("Save-Data: no source is attached and the poster stays the plate", async ({ page }) => {
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "connection", { configurable: true, get: () => ({ saveData: true }) });
+    });
+    await open(page, 1440);
+    expect(await videoSrc(page)).toBe("");
+    await expect(page.locator(".hero")).toHaveClass(/nr-video-off/);
+    await expect(page.locator(".hero")).not.toHaveClass(/nr-video-on/);
+    await expect(video(page)).toHaveCSS("opacity", "1", { timeout: 3000 });
+  });
+
+  test("an empty data-src skips the film: no source, poster stays", async ({ page }) => {
+    await page.route(
+      (url) => url.pathname === "/",
+      async (route) => {
+        const response = await route.fetch();
+        const body = (await response.text()).replace(/data-src-hd="[^"]*"/, 'data-src-hd=""');
+        await route.fulfill({ response, body });
+      },
+    );
+    await open(page, 1440);
+    expect(await videoSrc(page)).toBe("");
+    await expect(page.locator(".hero")).toHaveClass(/nr-video-off/);
+    await expect(video(page)).toHaveCSS("opacity", "1", { timeout: 3000 });
+  });
+
+  test("a refused play() leaves the poster as the plate, with no error", async ({ page }) => {
+    const errors: string[] = [];
+    page.on("pageerror", (e) => errors.push(String(e)));
+    page.on("console", (m) => {
+      if (m.type() === "error") errors.push(m.text());
+    });
+    await page.addInitScript(() => {
+      HTMLMediaElement.prototype.play = () => Promise.reject(new DOMException("autoplay refused", "NotAllowedError"));
+    });
+    await open(page, 1440);
+    expect(await videoSrc(page)).toMatch(/hero-1080\.mp4$/);
+    await expect(page.locator(".hero")).toHaveClass(/nr-video-off/);
+    await expect(page.locator(".hero")).not.toHaveClass(/nr-video-on/);
+    await expect(video(page)).toHaveAttribute("poster", "/video/hero-poster.jpg");
+    await expect(video(page)).toHaveCSS("opacity", "1", { timeout: 3000 });
+    expect(errors).toEqual([]);
+  });
+});
+
 test.describe("reduced motion", () => {
   test.use({ reducedMotion: "reduce" });
   test("no motion layer, no clones, everything visible", async ({ page }) => {
     await open(page, 1440);
     await expect(page.locator("html")).not.toHaveClass(/nr-motion/);
+    // The film never loads: no source, the poster is the plate, fully opaque.
+    expect(await videoSrc(page)).toBe("");
+    await expect(video(page)).toHaveAttribute("poster", "/video/hero-poster.jpg");
+    await expect(video(page)).toHaveCSS("opacity", "1");
     await expect(page.locator(".strip-track > .tile")).toHaveCount(5);
     for (const li of await page.locator(".team-grid > li").all()) await expect(li).toHaveCSS("opacity", "1");
     await expect(page.locator(".story h2")).toBeVisible();
@@ -184,6 +295,8 @@ test.describe("inner pages", () => {
       await page.waitForTimeout(400);
       expect(errors).toEqual([]);
       await expect(page.locator("html")).not.toHaveClass(/\bnr-home\b/);
+      // No hero, so no film: heroVideo() is never reached.
+      await expect(page.locator("video")).toHaveCount(0);
       const header = page.locator(".site-header");
       await expect(header).toHaveCSS("position", "sticky");
       await expect(header).toHaveCSS("background-color", "rgba(255, 255, 255, 0.94)");
@@ -234,6 +347,9 @@ test.describe("no JavaScript", () => {
     await expect(page.locator(".site-header")).toHaveCSS("position", "sticky");
     for (const li of await page.locator(".team-grid > li").all()) await expect(li).toHaveCSS("opacity", "1");
     await expect(page.locator(".hero-soft")).toHaveCSS("opacity", "1");
+    // No JS, no film: the poster is the plate.
+    expect(await page.locator(".hero video").getAttribute("src")).toBeNull();
+    await expect(page.locator(".hero video")).toHaveCSS("opacity", "1");
     expect(await teamRows(page)).toEqual([2, 5, 5, 5]);
   });
 });
