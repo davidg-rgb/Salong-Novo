@@ -22,10 +22,14 @@ interface Props {
   /** The closing booking CTA. Off on pages whose last address is not a booking
    *  audience — careers ends on the APL block asking students to EMAIL. */
   booking?: boolean;
+  /** Centre the closing CTA. Default is the prose's left edge; a page whose slot
+   *  breaks out to full content width (the brand grid) has no left edge for the
+   *  button to belong to, so it sits on the page's centre line instead. */
+  bookingCenter?: boolean;
 }
-const { locale, kicker, no, heading, paragraphs, sections = [], booking = true } = Astro.props;
+const { locale, kicker, no, heading, paragraphs, sections = [], booking = true, bookingCenter = false } = Astro.props;
 ---
-<section class="article wrap">
+<section class:list={["article", "wrap", bookingCenter && "article--cta-center"]}>
   {kicker && <p class="kicker">{no ? `N° ${no} — ${kicker}` : kicker}</p>}
   <h1>{heading}</h1>
   <div class="prose">
@@ -61,4 +65,5 @@ const { locale, kicker, no, heading, paragraphs, sections = [], booking = true }
   }
   .sub p { color: var(--ink); font-size: clamp(17px, 1.5vw, 21px); margin-bottom: 1.4rem; line-height: 1.6; max-width: 62ch; }
   .article :global(.btn) { margin-top: clamp(28px, 4vw, 48px); }
+  .article--cta-center :global(.btn) { display: flex; width: max-content; margin-inline: auto; }
 </style>

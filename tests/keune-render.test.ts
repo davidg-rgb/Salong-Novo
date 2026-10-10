@@ -278,12 +278,30 @@ describe("BrandGrid — sponsored rel on kickback links only, rendered", () => {
   it("the shipped Keune card is sponsored; every other brand link stays plain", async () => {
     const html = await render(BrandGrid);
     const links = anchors(html);
-    expect(links.map((l) => [l.href, l.rel])).toEqual([
-      [keuneGenericLink("varumarken"), "noopener sponsored"],
-      ["https://www.ghdhair.com", "noopener"],
-      ["https://dc-hair.com", "noopener"],
-      ["https://richyhair.se", "noopener"],
+    // One brand = one href, in card order; every anchor of a card (photo, logo/name,
+    // "Läs mer" — the whole card is clickable since 2026-10-10) carries the same rel.
+    expect([...new Set(links.map((l) => l.href))]).toEqual([
+      keuneGenericLink("varumarken"),
+      "https://www.ghdhair.com",
+      "https://dc-hair.com",
+      "https://richyhair.se",
     ]);
+    const relOf = (href: string) => [...new Set(links.filter((l) => l.href === href).map((l) => l.rel))];
+    expect(relOf(keuneGenericLink("varumarken"))).toEqual(["noopener sponsored"]);
+    for (const plain of ["https://www.ghdhair.com", "https://dc-hair.com", "https://richyhair.se"]) expect(relOf(plain)).toEqual(["noopener"]);
+    // Each card: logo/name link + "Läs mer" always, photo link only when a shot exists.
+    for (const card of html.split(/<li class="brand"/).slice(1)) {
+      const a = anchors(card);
+      if (!card.includes("href=")) {
+        // The salon's own candle ships without a url: a card, not a link.
+        expect(a.length).toBe(0);
+        continue;
+      }
+      expect(a.length).toBe(card.includes('class="shot"') ? 3 : 2);
+      expect(a.filter((l) => l.class === "mark" || l.class === "site").length).toBe(2);
+      expect(a.filter((l) => l.class === "shot").every((l) => l["aria-hidden"] === "true" && l.tabindex === "-1")).toBe(true);
+      expect(new Set(a.map((l) => l.href)).size).toBe(1);
+    }
   });
 
   it("a plain keune.com link is not a kickback link, and a blank url renders no anchor", async () => {
@@ -293,8 +311,10 @@ describe("BrandGrid — sponsored rel on kickback links only, rendered", () => {
       { slug: "c", name: "No Link", desc_sv: "x", desc_en: "x", url: "", logo: "", product: "" },
     ];
     const html = await render(BrandGrid);
-    expect(anchors(html).map((l) => l.rel)).toEqual(["noopener", "noopener sponsored"]);
+    // No logo/shot in the fixture ⇒ two anchors per linked card (name + "Läs mer"), none for a blank url.
+    expect(anchors(html).map((l) => l.rel)).toEqual(["noopener", "noopener", "noopener sponsored", "noopener sponsored"]);
     expect(html).toContain("No Link");
+    expect(html.split(/<li class="brand"/).slice(1).at(-1)).not.toContain("<a ");
   });
 });
 
