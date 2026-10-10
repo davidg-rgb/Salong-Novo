@@ -83,18 +83,36 @@ html.nr-motion:not(.nr-home) main .btn.nr-r {
    state is the first thing painted rather than a flash of the finished page that then
    vanishes and rises. html.nr-motion arrives early from Base.astro's head script;
    html.nr is boot()'s, and its arrival drops the hold in the same task that sets the
-   held states. If the module never runs, the step-end animation shows <main> at 2.5s
-   anyway. :has(.hero) keeps the home page out (html.nr-home is boot()'s too). */
-html.nr-motion:not(.nr) main:not(:has(.hero)) { animation: nr-hold 2.5s step-end both; }
+   held states. If the module never runs, the step-end animation shows <main> at the
+   cap anyway. :has(.hero) keeps the home page out (html.nr-home is boot()'s too).
+   --nr-hold is the ONE cap for every pre-boot hold (inner <main> and the home hero);
+   refresh.ts reads it to tell a late boot, which then skips the intro (2026-10-11). */
+html.nr-motion { --nr-hold: 2s; }
+html.nr-motion:not(.nr) main:not(:has(.hero)) { animation: nr-hold var(--nr-hold) step-end both; }
 @keyframes nr-hold {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+/* The home hero's held rules below (.hero:not(.nr-go) …, .hero-video) apply from first
+   paint now that nr-motion is early, so they get the same cap: if boot() has not run by
+   then, the copy, plate and film poster come back exactly as the static page has them.
+   Animations outrank the held declarations, and the hold ends the moment html.nr lands. */
+html.nr-motion:not(.nr) .hero :is(.kicker, .hero-tagline, .sub, .cta, .scroll-cue) {
+  animation: nr-hold-copy var(--nr-hold) step-end both;
+}
+html.nr-motion:not(.nr) .hero :is(.hero-soft, .hero-video) { animation: nr-hold var(--nr-hold) step-end both; }
+@keyframes nr-hold-copy {
+  from { opacity: 0; transform: translate3d(0, 22px, 0); }
+  to { opacity: 1; transform: none; }
+}
 
 /* Masthead: the kicker writes itself in, the h1's words rise through the home's masks,
-   the lead follows. Held until refresh.ts adds .nr-go (fonts, or 900ms at the latest). */
+   the lead follows. Held until refresh.ts adds .nr-go (fonts, or 900ms at the latest).
+   Both ends of the wipe are inset()s: clip-path:none does not interpolate with an
+   inset, so without the explicit end state the kicker snapped instead of wiping. */
 html.nr-motion .nr-mast .nr-kick { transition: clip-path 400ms var(--ease); }
 html.nr-motion .nr-mast:not(.nr-go) .nr-kick { clip-path: inset(0 100% 0 0); }
+html.nr-motion .nr-mast.nr-go .nr-kick { clip-path: inset(0 0 0 0); }
 html.nr-motion .nr-mast .nr-split .nr-w > span {
   transition: transform 820ms var(--ease);
   transition-delay: calc(140ms + var(--i, 0) * 60ms);

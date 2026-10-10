@@ -24,6 +24,8 @@ const root = document.documentElement;
 if (!root.classList.contains("nr")) boot();
 
 function boot(): void {
+  // Read before anything changes: has motion.css's pre-boot hold already run out?
+  const expired = holdExpired();
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   // Base.astro's head script may already have set nr-motion (2026-10-11); toggle so
   // this is the final word either way.
@@ -36,17 +38,50 @@ function boot(): void {
   // The home page's fixed/transparent header (SiteHeader.astro) keys off this.
   if (hero) root.classList.add("nr-home");
 
-  if (hero) wordmark(hero);
+  if (hero) wordmark(hero, expired);
   if (hero) heroVideo(hero, reduce);
   if (!reduce) marquee();
   italicLastWord();
   document.querySelectorAll<HTMLElement>(".story h2, .team-head h2, .strip-head h2").forEach(splitWords);
-  const inner = hero || reduce ? [] : innerPage();
+  const inner = hero || reduce ? [] : innerPage(expired);
   root.classList.add("nr");
   reveals(hero, reduce, inner);
 
   if (!reduce) smoothScroll();
   scrollLinked(hero, header, reduce);
+}
+
+/**
+ * True when this module arrived after motion.css's pre-boot hold (--nr-hold) let the
+ * page show (2026-10-11). The visitor has then already seen the finished page, and
+ * running the intro would hide it and play it again — a double flash. Callers skip
+ * the intro instead. False when the head script never set nr-motion (no hold ran).
+ */
+function holdExpired(): boolean {
+  if (!root.classList.contains("nr-motion")) return false;
+  // The hold's own clock first: it starts when the page is first styled, so a slow
+  // server response does not count against it (performance.now() runs from the
+  // navigation start). The cap in time is only the fallback for a browser without
+  // getAnimations().
+  if (typeof document.getAnimations === "function") {
+    const holds = document
+      .getAnimations()
+      .filter((a) => /^nr-hold/.test((a as CSSAnimation).animationName ?? ""));
+    if (holds.length > 0) return holds.some((a) => a.playState === "finished");
+  }
+  const raw = getComputedStyle(root).getPropertyValue("--nr-hold").trim();
+  const n = parseFloat(raw);
+  const cap = Number.isFinite(n) ? (raw.endsWith("ms") ? n : n * 1000) : 2000;
+  return performance.now() > cap;
+}
+
+/** Apply class changes with transitions off, so held/visible states land without animating. */
+function settleInto(els: Iterable<HTMLElement | SVGElement>, change: () => void): void {
+  const list = Array.from(els);
+  list.forEach((el) => (el.style.transition = "none"));
+  change();
+  void document.body.offsetHeight;
+  list.forEach((el) => (el.style.transition = ""));
 }
 
 /**
@@ -92,7 +127,7 @@ function splitWords(el: HTMLElement): void {
  * skipped: the white logo file carries two `display="none"` alternates of the Os,
  * and a zero box would file them under letter 0.
  */
-function wordmark(hero: HTMLElement): void {
+function wordmark(hero: HTMLElement, expired = false): void {
   const svg = hero.querySelector<SVGSVGElement>(".hero-brand svg");
   if (!svg) return;
   const vb = (svg.getAttribute("viewBox") ?? "0 0 1 1").trim().split(/[\s,]+/).map(Number);
@@ -114,6 +149,15 @@ function wordmark(hero: HTMLElement): void {
     shape.classList.add("nr-letter");
     shape.style.setProperty("--l", String(letter));
   });
+  // A late boot (the pre-boot hold already showed the hero) skips the intro: the hero
+  // goes straight to its resting state, with nothing transitioning (2026-10-11).
+  if (expired) {
+    const held = hero.querySelectorAll<HTMLElement | SVGElement>(
+      ".kicker, .hero-tagline, .sub, .cta, .scroll-cue, .hero-soft, .nr-letter",
+    );
+    settleInto(held, () => hero.classList.add("nr-go"));
+    return;
+  }
   // Start the intro once the fonts are in (so the copy does not reflow mid-rise), or
   // after 900ms, whichever comes first. Two frames let the held state paint first.
   const go = () => requestAnimationFrame(() => requestAnimationFrame(() => hero.classList.add("nr-go")));
@@ -266,20 +310,33 @@ function reveals(hero: HTMLElement | null, reduce: boolean, inner: Element[] = [
  * scrolling, after the masthead is long done). Grid columns are read from the
  * computed track list, so a phone's one-column grid gets no stagger and a 4-up row
  * gets four. List-like objects use a rolling stagger among the visible items only.
+ *
+ * Prose pages (ArticlePage without a slotted object: /priser, /om-oss, /integritet,
+ * /jobba-pa-novo, /butik) get the masthead and nothing else — the thesis over the
+ * per-page table (audit P3, 2026-10-11). `expired` (holdExpired()) is a late boot:
+ * no masthead, and what is already on screen is marked revealed with no transition;
+ * only below-the-fold objects still reveal on scroll.
  */
-function innerPage(): Element[] {
+function innerPage(expired = false): Element[] {
   const h1 = document.querySelector<HTMLElement>("main h1");
   if (!h1?.parentElement) return [];
   const targets: Element[] = [];
   const marked: HTMLElement[] = [];
   const vh = innerHeight;
+  // Marks are collected first and applied in one settle: base() and tracks() read
+  // layout, and a read after an earlier mark would start that mark's transition.
+  const pending: [HTMLElement, string, number][] = [];
   const mark = (el: Element, cls: string, delay: number) => {
     if (!(el instanceof HTMLElement)) return;
-    el.classList.add(cls);
-    el.style.setProperty("--d", `${delay}ms`);
+    pending.push([el, cls, delay]);
     marked.push(el);
     targets.push(el);
   };
+  const apply = () =>
+    pending.forEach(([el, cls, delay]) => {
+      el.classList.add(cls);
+      el.style.setProperty("--d", `${delay}ms`);
+    });
   const base = (el: Element) => (el.getBoundingClientRect().top < vh ? 560 : 0);
   /** Rolling stagger: the nth visible item waits n × step after the masthead. */
   const rolling = (selector: string, step: number) => {
@@ -295,7 +352,35 @@ function innerPage(): Element[] {
     Array.from(list.querySelectorAll(items)).forEach((el, i) => mark(el, cls, base(el) + (i % cols) * step));
   };
 
-  // Masthead. Measured and marked before anything moves (base() reads layout).
+  // The one object per page. Selectors that miss are no-ops. Measured and marked
+  // before the masthead moves anything (base() reads layout).
+  document.querySelectorAll(".staff-grid").forEach((list) => grid(list, ":scope > li", "nr-r", 70));
+  document.querySelectorAll<HTMLElement>(".year-mark").forEach(splitWords);
+  document.querySelectorAll(".shots").forEach((list) => grid(list, ":scope > li", "nr-img", 80));
+  document.querySelectorAll(".contact .map").forEach((map) => mark(map, "nr-img", base(map)));
+  rolling(".info > address, .info > .dir, .info > .reach, .info > .btn, .info > .cancel", 60);
+  document.querySelectorAll(".brand-grid").forEach((list) => grid(list, ":scope > .brand", "nr-r", 70));
+  rolling(".course-list > .course, .courses > .empty", 60);
+  rolling(".post-list > li, .blog > .empty", 60);
+  // A blog cover is clipped only if it already has a height: the <img> carries no
+  // size, and a clip on a 0-height box would reveal nothing and then jump.
+  const cover = document.querySelector<HTMLImageElement>(".post .cover img");
+  if (cover && cover.naturalHeight > 0 && cover.parentElement) mark(cover.parentElement, "nr-img", base(cover));
+  const words = Array.from(document.querySelectorAll<HTMLElement>(".year-mark .nr-w > span"));
+
+  if (expired) {
+    // Already seen: whatever is on screen stays put, the rest reveals on scroll.
+    const seen = [...marked, ...Array.from(document.querySelectorAll<HTMLElement>(".year-mark"))].filter(
+      (el) => el.getBoundingClientRect().top < vh,
+    );
+    settleInto([...marked, ...words], () => {
+      apply();
+      seen.forEach((el) => el.classList.add("nr-in"));
+    });
+    return targets;
+  }
+
+  // Masthead.
   const mast = h1.parentElement;
   mast.classList.add("nr-mast");
   const kicker = mast.querySelector<HTMLElement>(":scope > .kicker");
@@ -317,29 +402,10 @@ function innerPage(): Element[] {
     splitWords(h1);
   }
 
-  // The one object per page. Selectors that miss are no-ops.
-  rolling(".article > .prose > p:not(:first-child), .article > .sub, .article > .btn", 60);
-  document.querySelectorAll(".staff-grid").forEach((list) => grid(list, ":scope > li", "nr-r", 70));
-  document.querySelectorAll<HTMLElement>(".year-mark").forEach(splitWords);
-  document.querySelectorAll(".shots").forEach((list) => grid(list, ":scope > li", "nr-img", 80));
-  document.querySelectorAll(".contact .map").forEach((map) => mark(map, "nr-img", base(map)));
-  rolling(".info > address, .info > .dir, .info > .reach, .info > .btn, .info > .cancel", 60);
-  document.querySelectorAll(".brand-grid").forEach((list) => grid(list, ":scope > .brand", "nr-r", 70));
-  rolling(".course-list > .course, .courses > .empty", 60);
-  rolling(".post-list > li, .blog > .empty", 60);
-  // A blog cover is clipped only if it already has a height: the <img> carries no
-  // size, and a clip on a 0-height box would reveal nothing and then jump.
-  const cover = document.querySelector<HTMLImageElement>(".post .cover img");
-  if (cover && cover.naturalHeight > 0 && cover.parentElement) mark(cover.parentElement, "nr-img", base(cover));
-
-  // Set the held states without transitioning INTO them: if the page has already
-  // painted (motion.css's 2.5s hold expired on a slow load) a reveal would otherwise
-  // start fading out and be reversed by its own .nr-in before it ever showed.
+  // Set the held states without transitioning INTO them: a reveal that transitions
+  // into its hidden state starts fading out and is reversed by its own .nr-in.
   const held = mast.querySelectorAll<HTMLElement>(".nr-kick, .nr-lead, .nr-w > span");
-  const settle = [...marked, ...Array.from(held), ...Array.from(document.querySelectorAll<HTMLElement>(".year-mark .nr-w > span"))];
-  settle.forEach((el) => (el.style.transition = "none"));
-  void document.body.offsetHeight;
-  settle.forEach((el) => (el.style.transition = ""));
+  settleInto([...marked, ...Array.from(held), ...words], apply);
 
   // Start once the fonts are in or after 900ms, two frames later so the held state
   // paints first — the hero's race in wordmark().

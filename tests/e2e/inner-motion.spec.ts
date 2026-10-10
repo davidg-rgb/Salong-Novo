@@ -138,7 +138,7 @@ test.describe("early paint", () => {
     expect(errors).toEqual([]);
   });
 
-  test("the head script alone sets nr-motion; if the module never runs, <main> still shows at 2.5s", async ({ page }) => {
+  test("the head script alone sets nr-motion; if the module never runs, <main> still shows at the 2s cap", async ({ page }) => {
     // Block the bundled module: whatever is on <html> now came from the inline script.
     await page.route(/\/_astro\/.*\.js$/, (route) => route.abort());
     await page.goto("/personal", { waitUntil: "domcontentloaded" });
@@ -252,5 +252,128 @@ test.describe("no JavaScript", () => {
     await expect(page.locator(".shead h1")).toBeVisible();
     await expect(page.locator(".shead .kicker")).toHaveCSS("clip-path", "none");
     for (const li of await page.locator(".staff-grid > li").all()) await expect(li).toHaveCSS("opacity", "1");
+  });
+});
+
+// ── Audit fixes (2026-10-11) ────────────────────────────────────────────────
+
+test.describe("home without the module (P1)", () => {
+  test("home with /_astro/*.js aborted: after the cap, hero copy + plate + video are at opacity 1, no nr class", async ({ page }) => {
+    await page.route(/\/_astro\/.*\.js$/, (route) => route.abort());
+    await page.route(/\/video\/hero-(?:1080|720)\.mp4$/, (route) => route.abort());
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/", { waitUntil: "domcontentloaded" });
+    await page.waitForTimeout(2600);
+    const cls = await page.evaluate(() => document.documentElement.className.split(/\s+/));
+    expect(cls).toContain("nr-motion");
+    expect(cls).not.toContain("nr");
+    const ops = await page.$$eval(".hero .kicker, .hero .hero-tagline, .hero .sub, .hero .cta, .hero .scroll-cue, .hero .hero-soft, .hero .hero-video", (els) =>
+      els.map((el) => ({ c: el.className, op: getComputedStyle(el).opacity, tf: getComputedStyle(el).transform })),
+    );
+    expect(ops.length).toBe(7);
+    for (const o of ops) expect(o.op, o.c).toBe("1");
+    // The static copy has no transform: none, or the identity matrix the step-end lands on.
+    for (const o of ops.filter((x) => !/hero-(soft|video)/.test(x.c))) expect(o.tf, o.c).toMatch(/^(none|matrix\(1, 0, 0, 1, 0, 0\))$/);
+  });
+});
+
+test.describe("kicker wipe (P2)", () => {
+  test("/personal: 150ms after .nr-go the kicker is mid-wipe; at rest it is fully open", async ({ page }) => {
+    await page.addInitScript(() => {
+      const w = window as unknown as { __kick?: { anims: number; clip: string } };
+      const mo = new MutationObserver(() => {
+        const k = document.querySelector<HTMLElement>(".nr-mast.nr-go .nr-kick");
+        if (!k) return;
+        mo.disconnect();
+        setTimeout(() => (w.__kick = { anims: k.getAnimations().length, clip: getComputedStyle(k).clipPath }), 150);
+      });
+      mo.observe(document, { subtree: true, attributes: true, attributeFilter: ["class"] });
+    });
+    await open(page, "/personal");
+    await page.waitForFunction(() => (window as unknown as { __kick?: unknown }).__kick !== undefined, null, { timeout: 3000 });
+    const kick = await page.evaluate(() => (window as unknown as { __kick: { anims: number; clip: string } }).__kick);
+    expect(kick.anims).toBe(1);
+    const right = /^inset\(0px ([\d.]+)% 0px 0px\)$/.exec(kick.clip);
+    expect(right, kick.clip).not.toBeNull();
+    const pct = Number(right![1]);
+    expect(pct).toBeGreaterThan(0);
+    expect(pct).toBeLessThan(100);
+    await page.waitForTimeout(600);
+    expect(await page.locator(".nr-kick").evaluate((el) => getComputedStyle(el).clipPath)).toMatch(/^inset\(0px( 0px 0px 0px)?\)$/);
+  });
+});
+
+test.describe("prose pages (P3)", () => {
+  test("/om-oss: only the masthead moves; nothing else in .article is a reveal", async ({ page }) => {
+    await open(page, "/om-oss");
+    await expect(page.locator(".article")).toHaveClass(/\bnr-mast\b/);
+    const stray = await page.$$eval(".article *", (els) =>
+      els
+        .filter((el) => !el.matches("h1, h1 *, .kicker, .prose > p:first-child"))
+        .filter((el) => /\bnr-(r|img)\b/.test(el.getAttribute("class") ?? "") || (el as HTMLElement).style.getPropertyValue("--d") !== "")
+        .map((el) => el.outerHTML.slice(0, 80)),
+    );
+    expect(stray).toEqual([]);
+  });
+});
+
+test.describe("late module (P4)", () => {
+  // The module lands after the 2s hold has shown the page: the intro is skipped, so the
+  // page never dips. Opacity is sampled every 100ms from the hold's end for 2s.
+  async function lateBoot(page: Page, path: string, selector: string) {
+    await page.route(/\/_astro\/.*\.js$/, async (route) => {
+      await new Promise((r) => setTimeout(r, 2600));
+      await route.continue();
+    });
+    await page.addInitScript((sel) => {
+      const w = window as unknown as { __ops: string[]; __mast: boolean; __boot: number };
+      w.__ops = [];
+      w.__mast = false;
+      w.__boot = 0;
+      const start = () => {
+        const t0 = performance.now();
+        const tick = setInterval(() => {
+          const el = document.querySelector(sel);
+          w.__ops.push(el ? getComputedStyle(el).opacity : "missing");
+          if (document.querySelector(".nr-mast")) w.__mast = true;
+          if (!w.__boot && document.documentElement.classList.contains("nr")) w.__boot = performance.now();
+          if (performance.now() - t0 >= 2000) clearInterval(tick);
+        }, 100);
+      };
+      const wait = () => {
+        const el = document.querySelector(sel);
+        const hold = el?.getAnimations().find((a) => /^nr-hold/.test((a as CSSAnimation).animationName));
+        if (hold) void hold.finished.then(start);
+        else if (el && document.documentElement.classList.contains("nr")) w.__ops.push("booted-before-cap");
+        else requestAnimationFrame(wait);
+      };
+      requestAnimationFrame(wait);
+    }, selector);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(path, { waitUntil: "commit" });
+    await page.waitForFunction(() => (window as unknown as { __ops: string[] }).__ops.length >= 20, null, { timeout: 8000 });
+    return page.evaluate(() => {
+      const w = window as unknown as { __ops: string[]; __mast: boolean; __boot: number };
+      return { __ops: w.__ops, __mast: w.__mast, __boot: w.__boot };
+    });
+  }
+
+  test("/personal: main shows at the cap and never dips when the module lands; no masthead", async ({ page }) => {
+    const r = await lateBoot(page, "/personal", "main");
+    expect(r.__ops.every((o) => o === "1"), r.__ops.join(",")).toBe(true);
+    expect(r.__boot).toBeGreaterThan(0); // the module did land inside the window
+    expect(r.__mast).toBe(false);
+    expect(await page.locator(".nr-mast").count()).toBe(0);
+    // In-view portraits are revealed already, with no transition to run.
+    await expect(page.locator(".staff-grid > li").first()).toHaveClass(/\bnr-in\b/);
+    await expect(page.locator(".staff-grid > li").first()).toHaveCSS("opacity", "1");
+  });
+
+  test("home: the hero copy never dips when the module lands late", async ({ page }) => {
+    await page.route(/\/video\/hero-(?:1080|720)\.mp4$/, (route) => route.abort());
+    const r = await lateBoot(page, "/", ".hero .hero-tagline");
+    expect(r.__ops.every((o) => o === "1"), r.__ops.join(",")).toBe(true);
+    expect(r.__boot).toBeGreaterThan(0);
+    await expect(page.locator(".hero")).toHaveClass(/\bnr-go\b/);
   });
 });
