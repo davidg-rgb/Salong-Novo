@@ -117,6 +117,40 @@ test.describe("masthead and object, with motion", () => {
   });
 });
 
+test.describe("early paint", () => {
+  test("/personal: html.nr-motion is set at DOMContentLoaded, with no console error or CSP violation", async ({ page }) => {
+    const errors: string[] = [];
+    page.on("pageerror", (e) => errors.push(String(e)));
+    page.on("console", (m) => {
+      if (m.type() === "error") errors.push(m.text());
+    });
+    await page.addInitScript(() => {
+      const w = window as unknown as { __csp: string[]; __dcl: string };
+      w.__csp = [];
+      document.addEventListener("securitypolicyviolation", (e) => w.__csp.push(e.violatedDirective));
+      document.addEventListener("DOMContentLoaded", () => (w.__dcl = document.documentElement.className));
+    });
+    await page.goto("/personal", { waitUntil: "domcontentloaded" });
+    const seen = await page.evaluate(() => (window as unknown as { __dcl: string }).__dcl);
+    expect(seen).toMatch(/\bnr-motion\b/);
+    await page.waitForFunction(() => document.documentElement.classList.contains("nr"));
+    expect(await page.evaluate(() => (window as unknown as { __csp: string[] }).__csp)).toEqual([]);
+    expect(errors).toEqual([]);
+  });
+
+  test("the head script alone sets nr-motion; if the module never runs, <main> still shows at 2.5s", async ({ page }) => {
+    // Block the bundled module: whatever is on <html> now came from the inline script.
+    await page.route(/\/_astro\/.*\.js$/, (route) => route.abort());
+    await page.goto("/personal", { waitUntil: "domcontentloaded" });
+    const cls = await page.evaluate(() => document.documentElement.className);
+    expect(cls).toMatch(/\bnr-motion\b/);
+    expect(cls.split(/\s+/)).not.toContain("nr");
+    await expect(page.locator("main")).toHaveCSS("opacity", "0");
+    await expect(page.locator("main")).toHaveCSS("opacity", "1", { timeout: 4000 });
+    await expect(page.locator(".shead h1")).toBeVisible();
+  });
+});
+
 test.describe("the home page's reveal is unchanged", () => {
   test("home .nr-r computes 1.1s / 1.3s and 28px; inner main 0.55s / 0.65s and 18px; the footer keeps the home's", async ({ page }) => {
     await page.route(/\/video\/hero-(?:1080|720)\.mp4$/, (route) => route.abort());

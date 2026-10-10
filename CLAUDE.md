@@ -56,7 +56,7 @@ Access (admin) · markdown-it (`html:false`) · Vitest. See `ARCHITECTURE.md`.
   `npm run e2e` (Playwright, 41). After the editor rebuild (same day): 854 tests / 36 files.
 - ✅ **Inner-page motion (2026-10-11, branch `genjutsu-trial`):** every inner page opens with a
   masthead (kicker wipe, h1 word masks, lead) and reveals one object (portraits, years + shots, map,
-  brand cards, course/post rows) at inner-page speed; home unchanged. `npm run e2e` (Playwright, 56);
+  brand cards, course/post rows) at inner-page speed; home unchanged. `npm run e2e` (Playwright, 58; `--workers=3` if wrangler dies under 6);
   863 tests / 38 files.
 - ⏳ **Remaining:** client content for Bokning & priser / Utbildning / Våra brands; RUNBOOK §5 on the
   client's Cloudflare account + domain (Access, DNS); the deferred WebP variant Worker; GA4/consent.

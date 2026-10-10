@@ -50,12 +50,12 @@ html.nr .fc-head .nr-em { font-style: italic; }
 /* ── Scroll reveals ────────────────────────────────────────────────────── */
 /* --d is the stagger refresh.ts writes per element. Nothing is hidden for good:
    an element that never intersects is still in the DOM and in the a11y tree. */
-/* Distance and durations are custom properties (2026-10-11) so the inner pages can
-   run the same reveal at their own speed; the fallbacks are the home's values, and
+/* Distance and durations are custom properties (2026-10-11; --nr-r-*, because
+   --nr-dur is the marquee's) so the inner pages can run the same reveal at their own speed; the fallbacks are the home's values, and
    nothing on the home page sets them, so its computed reveal is unchanged. */
 html.nr-motion .nr-r {
-  opacity: 0; transform: translate3d(0, var(--nr-dy, 28px), 0);
-  transition: opacity var(--nr-dur, 1.1s) var(--ease), transform var(--nr-dur-t, 1.3s) var(--ease);
+  opacity: 0; transform: translate3d(0, var(--nr-r-dy, 28px), 0);
+  transition: opacity var(--nr-r-dur, 1.1s) var(--ease), transform var(--nr-r-dur-t, 1.3s) var(--ease);
   transition-delay: var(--d, 0ms);
 }
 html.nr-motion .nr-r.nr-in { opacity: 1; transform: none; }
@@ -70,13 +70,13 @@ html.nr-motion .nr-img.nr-in { clip-path: inset(0 0 0 0); }
 /* An inner page is read, not toured: the same reveal, shorter and closer. Scoped to
    <main> so the footer band keeps the home's pace on every page. */
 html.nr-motion:not(.nr-home) main {
-  --nr-dy: 18px; --nr-dur: 550ms; --nr-dur-t: 650ms; --nr-clip: 900ms;
+  --nr-r-dy: 18px; --nr-r-dur: 550ms; --nr-r-dur-t: 650ms; --nr-clip: 900ms;
 }
 /* A revealed .btn keeps its hover fade: the reveal's transition list would replace
    tokens.css's, so it is restated here (the footer does the same for its button). */
 html.nr-motion:not(.nr-home) main .btn.nr-r {
   transition:
-    opacity var(--nr-dur) var(--ease) var(--d, 0ms), transform var(--nr-dur-t) var(--ease) var(--d, 0ms),
+    opacity var(--nr-r-dur) var(--ease) var(--d, 0ms), transform var(--nr-r-dur-t) var(--ease) var(--d, 0ms),
     background-color 0.3s, border-color 0.3s;
 }
 /* Before refresh.ts has run, an inner page's <main> is held, so the masthead's held
