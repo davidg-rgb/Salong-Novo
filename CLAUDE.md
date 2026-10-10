@@ -54,6 +54,10 @@ Access (admin) · markdown-it (`html:false`) · Vitest. See `ARCHITECTURE.md`.
   `public/video/` (1080p ≥900px, 720p below, poster frames), attached by `refresh.ts` only with
   motion allowed + Save-Data off; no JS / reduced motion / refused autoplay keep the poster.
   `npm run e2e` (Playwright, 41). After the editor rebuild (same day): 854 tests / 36 files.
+- ✅ **Inner-page motion (2026-10-11, branch `genjutsu-trial`):** every inner page opens with a
+  masthead (kicker wipe, h1 word masks, lead) and reveals one object (portraits, years + shots, map,
+  brand cards, course/post rows) at inner-page speed; home unchanged. `npm run e2e` (Playwright, 56);
+  863 tests / 38 files.
 - ⏳ **Remaining:** client content for Bokning & priser / Utbildning / Våra brands; RUNBOOK §5 on the
   client's Cloudflare account + domain (Access, DNS); the deferred WebP variant Worker; GA4/consent.
 - **Local dev:** `.dev.vars` (gitignored) sets `DEV_ADMIN_EMAIL` + `ADMIN_API_TOKEN`; run

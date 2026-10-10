@@ -1,10 +1,11 @@
 /*
- * Salong NOVO v2 — the refresh's motion layer (2026-09-30).
+ * Salong NOVO v2 — the refresh's motion layer (2026-09-30; inner pages 2026-10-11).
  *
  * ONLY what src/scripts/refresh.ts gates. Every rule below needs a class the
  * script adds — html.nr, html.nr-motion, html.lenis, or an .nr-* state/reveal
  * class — so a visitor without JS matches none of it, and html.nr-motion is
- * withheld under prefers-reduced-motion. Both get the complete static page the
+ * withheld under prefers-reduced-motion. (html.nr-motion alone is also set early by
+ * Base.astro's head script, under the same media test, so held states paint first.) Both get the complete static page the
  * components render.
  *
  * Load order: Base.astro imports this BEFORE the components' scoped styles, so a
@@ -49,18 +50,76 @@ html.nr .fc-head .nr-em { font-style: italic; }
 /* ── Scroll reveals ────────────────────────────────────────────────────── */
 /* --d is the stagger refresh.ts writes per element. Nothing is hidden for good:
    an element that never intersects is still in the DOM and in the a11y tree. */
+/* Distance and durations are custom properties (2026-10-11) so the inner pages can
+   run the same reveal at their own speed; the fallbacks are the home's values, and
+   nothing on the home page sets them, so its computed reveal is unchanged. */
 html.nr-motion .nr-r {
-  opacity: 0; transform: translate3d(0, 28px, 0);
-  transition: opacity 1.1s var(--ease), transform 1.3s var(--ease);
+  opacity: 0; transform: translate3d(0, var(--nr-dy, 28px), 0);
+  transition: opacity var(--nr-dur, 1.1s) var(--ease), transform var(--nr-dur-t, 1.3s) var(--ease);
   transition-delay: var(--d, 0ms);
 }
 html.nr-motion .nr-r.nr-in { opacity: 1; transform: none; }
 html.nr-motion .nr-img {
   clip-path: inset(12% 0 0 0);
-  transition: clip-path 1.5s var(--ease);
+  transition: clip-path var(--nr-clip, 1.5s) var(--ease);
   transition-delay: var(--d, 0ms);
 }
 html.nr-motion .nr-img.nr-in { clip-path: inset(0 0 0 0); }
+
+/* ── Inner pages (2026-10-11) ──────────────────────────────────────────── */
+/* An inner page is read, not toured: the same reveal, shorter and closer. Scoped to
+   <main> so the footer band keeps the home's pace on every page. */
+html.nr-motion:not(.nr-home) main {
+  --nr-dy: 18px; --nr-dur: 550ms; --nr-dur-t: 650ms; --nr-clip: 900ms;
+}
+/* A revealed .btn keeps its hover fade: the reveal's transition list would replace
+   tokens.css's, so it is restated here (the footer does the same for its button). */
+html.nr-motion:not(.nr-home) main .btn.nr-r {
+  transition:
+    opacity var(--nr-dur) var(--ease) var(--d, 0ms), transform var(--nr-dur-t) var(--ease) var(--d, 0ms),
+    background-color 0.3s, border-color 0.3s;
+}
+/* Before refresh.ts has run, an inner page's <main> is held, so the masthead's held
+   state is the first thing painted rather than a flash of the finished page that then
+   vanishes and rises. html.nr-motion arrives early from Base.astro's head script;
+   html.nr is boot()'s, and its arrival drops the hold in the same task that sets the
+   held states. If the module never runs, the step-end animation shows <main> at 2.5s
+   anyway. :has(.hero) keeps the home page out (html.nr-home is boot()'s too). */
+html.nr-motion:not(.nr) main:not(:has(.hero)) { animation: nr-hold 2.5s step-end both; }
+@keyframes nr-hold {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Masthead: the kicker writes itself in, the h1's words rise through the home's masks,
+   the lead follows. Held until refresh.ts adds .nr-go (fonts, or 900ms at the latest). */
+html.nr-motion .nr-mast .nr-kick { transition: clip-path 400ms var(--ease); }
+html.nr-motion .nr-mast:not(.nr-go) .nr-kick { clip-path: inset(0 100% 0 0); }
+html.nr-motion .nr-mast .nr-split .nr-w > span {
+  transition: transform 820ms var(--ease);
+  transition-delay: calc(140ms + var(--i, 0) * 60ms);
+}
+/* The lead — and, at 360px and below, the unsplit h1 (refresh.ts sets its --d and
+   --nr-ld) — rises as one block. */
+html.nr-motion .nr-mast .nr-lead {
+  transition: opacity var(--nr-ld, 640ms) var(--ease), transform var(--nr-ld, 640ms) var(--ease);
+  transition-delay: var(--d, 420ms);
+}
+html.nr-motion .nr-mast:not(.nr-go) .nr-lead { opacity: 0; transform: translate3d(0, 14px, 0); }
+/* /tavlingar: each year rises through its word masks as it scrolls in. */
+html.nr-motion .year-mark.nr-split .nr-w > span { transition-duration: 820ms; }
+/* /personal: the stylist card opens with a short fade and lift. Close stays instant
+   (the modal is display: none the moment .open goes). */
+html.nr-motion .staff-modal.open .sm-bg { animation: nr-fade 200ms var(--ease) both; }
+html.nr-motion .staff-modal.open .sm-card { animation: nr-card 260ms var(--ease) both; }
+@keyframes nr-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes nr-card {
+  from { opacity: 0; transform: translate3d(0, 12px, 0); }
+  to { opacity: 1; transform: none; }
+}
 
 /* ── Hero intro ────────────────────────────────────────────────────────── */
 /* Held until refresh.ts adds .nr-go (after the fonts, or 900ms at the latest), then

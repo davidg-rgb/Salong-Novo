@@ -200,10 +200,14 @@ const imageBase = (await bindings()).PUBLIC_IMAGE_BASE ?? "";
   .frame .duo { position: absolute; inset: 0; background: var(--charcoal); mix-blend-mode: color; opacity: 0.34; transition: opacity 0.55s ease; }
   /* :focus-visible carries the same shift as :hover — the card is a <button>, so
      without it a keyboard user tabbing the roster gets no feedback at all. */
-  .staff-card:hover .frame .portrait,
   .staff-card:focus-visible .frame .portrait { filter: grayscale(1); }
-  .staff-card:hover .frame .duo,
   .staff-card:focus-visible .frame .duo { opacity: 0; }
+  /* Hover only where hover exists (2026-10-11): on touch a tap leaves :hover stuck on
+     the card, so the portrait stayed grey after its modal closed. */
+  @media (hover: hover) {
+    .staff-card:hover .frame .portrait { filter: grayscale(1); }
+    .staff-card:hover .frame .duo { opacity: 0; }
+  }
   .staff-card b { font-family: var(--font-serif); font-weight: 500; font-size: 18px; margin-top: 16px; color: var(--ink); }
 
   /* Modal — light gallery card, hairline border, 0 radius. The OVERLAY is the scroll

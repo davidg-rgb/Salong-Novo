@@ -15,7 +15,7 @@ on **Cloudflare**, with a staff-writable blog.
 |-------|-------|
 | Core logic (i18n, slug, markdown, images, posts, db, seo, redirects, content, keune) | ✅ Built + **854 tests passing** (36 files, 2026-10-10) |
 | App (Astro + Cloudflare): layout, components, all pages (SV+EN), blog, admin API, SEO | ✅ Builds green, `tsc` clean |
-| Visual design | ✅ "Haute Editorial" applied (§11, 2026-06-01); home-page refresh 2026-09-30 (fixed transparent header, 100svh hero (the salon film as its plate since 2026-10-10, poster fallback), awards marquee, owner cards, Lenis + motion layer in `src/styles/motion.css` / `src/scripts/refresh.ts`) |
+| Visual design | ✅ "Haute Editorial" applied (§11, 2026-06-01); home-page refresh 2026-09-30 (fixed transparent header, 100svh hero (the salon film as its plate since 2026-10-10, poster fallback), awards marquee, owner cards, Lenis + motion layer in `src/styles/motion.css` / `src/scripts/refresh.ts`); inner-page motion 2026-10-11 (masthead: kicker wipe, h1 word masks, lead; then one revealed object per page at inner-page speed; reduced motion and no-JS stay static) |
 | Cloudflare resources (D1, R2, Access) | ⏳ Create at deploy (see below) |
 
 The design is the only thing waiting. Everything in `src/` is design-independent scaffolding;
@@ -50,7 +50,7 @@ npm run db:migrate:remote            # ...and to the remote D1
 | `npm run dev` | Astro dev server |
 | `npm run build` | Build to `dist/` (Workers output: `dist/client` + `dist/server`) |
 | `npm test` / `test:watch` | Vitest unit suite |
-| `npm run e2e` | Playwright suite `tests/e2e/home-refresh.spec.ts` in Chromium (the kit's 15 checks + project checks); builds + serves via `npm run preview -- --port 4321` unless a server already answers there; screenshots to `tests/e2e/__shots__/` (gitignored) |
+| `npm run e2e` | Playwright suites `tests/e2e/home-refresh.spec.ts` (the kit's 15 checks + project checks) and `tests/e2e/inner-motion.spec.ts` (inner-page masthead + reveals, reduced motion, no-JS, 360px) in Chromium; builds + serves via `npm run preview -- --port 4321` unless a server already answers there; screenshots to `tests/e2e/__shots__/` (gitignored) |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run preview` | `astro build && wrangler dev --config dist/server/wrangler.json` (full runtime incl. D1/R2; port 8787 unless `-- --port N`) |
 | `npm run db:migrate:local` / `:remote` | Apply D1 migrations |

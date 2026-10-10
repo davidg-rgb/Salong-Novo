@@ -94,7 +94,8 @@ const imageBase = (await bindings()).PUBLIC_IMAGE_BASE ?? "";
      pure type but never dominates the row. */
   .shot { display: block; aspect-ratio: 4/3; background: var(--clay); overflow: hidden; }
   .shot img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.6s; }
-  a.shot:hover img { transform: scale(1.03); }
+  /* Hover only where hover exists (2026-10-11): a tap must not leave the shot zoomed. */
+  @media (hover: hover) { a.shot:hover img { transform: scale(1.03); } }
   /* The logo/name link: no underline, the name keeps its ink; the card's hover
      feedback is the arrow on "Läs mer" and the photo's slow zoom. */
   .mark { display: flex; flex-direction: column; align-items: flex-start; color: inherit; text-decoration: none; }

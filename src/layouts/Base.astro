@@ -44,6 +44,12 @@ const noindex = siteNoindex();
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    {/* Motion flag before first paint (2026-10-11), so motion.css's held states are what
+        paints first instead of the finished page flashing and then vanishing. ONLY
+        nr-motion: html.nr is refresh.ts's idempotency guard and must stay its own. Inline
+        is allowed here: the strict `script-src 'self'` CSP covers /admin/* only, which
+        does not use this layout. */}
+    <script is:inline>if (!matchMedia("(prefers-reduced-motion: reduce)").matches) document.documentElement.classList.add("nr-motion");</script>
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />

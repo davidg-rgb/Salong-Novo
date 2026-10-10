@@ -13,7 +13,8 @@
  * rather than kept "just in case".
  *
  * Loaded on every page by Base.astro. Every step is guarded by the element it
- * needs, because only `/` and `/en` have a .hero, .strip or .team-grid.
+ * needs, because only `/` and `/en` have a .hero, .strip or .team-grid. Every other
+ * page gets innerPage() (2026-10-11): a masthead plus one revealed object.
  */
 import Lenis from "lenis";
 
@@ -23,9 +24,12 @@ const root = document.documentElement;
 if (!root.classList.contains("nr")) boot();
 
 function boot(): void {
-  root.classList.add("nr");
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (!reduce) root.classList.add("nr-motion");
+  // Base.astro's head script may already have set nr-motion (2026-10-11); toggle so
+  // this is the final word either way.
+  root.classList.toggle("nr-motion", !reduce);
+  // html.nr is added AFTER the inner page's held states are set (below), in the same
+  // task: motion.css holds an inner <main> until html.nr, so nothing paints between.
 
   const hero = document.querySelector<HTMLElement>(".hero");
   const header = document.querySelector<HTMLElement>(".site-header");
@@ -37,7 +41,9 @@ function boot(): void {
   if (!reduce) marquee();
   italicLastWord();
   document.querySelectorAll<HTMLElement>(".story h2, .team-head h2, .strip-head h2").forEach(splitWords);
-  reveals(hero, reduce);
+  const inner = hero || reduce ? [] : innerPage();
+  root.classList.add("nr");
+  reveals(hero, reduce, inner);
 
   if (!reduce) smoothScroll();
   scrollLinked(hero, header, reduce);
@@ -208,8 +214,8 @@ function italicLastWord(): void {
  * IntersectionObserver) everything is marked revealed at once, which with no
  * html.nr-motion is a no-op anyway — nothing is ever left hidden.
  */
-function reveals(hero: HTMLElement | null, reduce: boolean): void {
-  const targets: Element[] = [];
+function reveals(hero: HTMLElement | null, reduce: boolean, inner: Element[] = []): void {
+  const targets: Element[] = [...inner];
   const add = (els: Iterable<Element>, cls: string, step = 0, cols = 1) => {
     let i = 0;
     for (const el of els) {
@@ -225,8 +231,9 @@ function reveals(hero: HTMLElement | null, reduce: boolean): void {
   add(all(".team-grid > li.owner"), "nr-r", 140, 2);
   add(all(".team-grid > li:not(.owner)"), "nr-r", 80, 5);
   add(all(".site-footer .foot > *"), "nr-r", 90, 4);
+  // A masthead h1 is started by its .nr-go, not by scrolling into view.
   all(".nr-split").forEach((el) => {
-    if (!hero?.contains(el)) targets.push(el);
+    if (!hero?.contains(el) && !el.closest(".nr-mast")) targets.push(el);
   });
 
   if (reduce || !("IntersectionObserver" in window)) {
@@ -244,6 +251,115 @@ function reveals(hero: HTMLElement | null, reduce: boolean): void {
     { rootMargin: "0px 0px -12% 0px", threshold: 0.08 },
   );
   targets.forEach((el) => io.observe(el));
+}
+
+/**
+ * The inner pages (2026-10-11, motion only — boot() skips this under reduced motion
+ * and on the home page). Every page opens like a magazine section: the kicker wipes
+ * in, the h1's words rise through the home's masks, the lead follows (.nr-go on the
+ * h1's parent, the masthead). Then ONE object per page reveals with the home's own
+ * .nr-r / .nr-img at the inner-page speed motion.css sets on <main>. Returns the
+ * reveal targets for reveals()' observer.
+ *
+ * Delay = base + column × step. base is 560ms for an element whose top is inside
+ * the first viewport at boot (so it follows the masthead), else 0 (it is revealed by
+ * scrolling, after the masthead is long done). Grid columns are read from the
+ * computed track list, so a phone's one-column grid gets no stagger and a 4-up row
+ * gets four. List-like objects use a rolling stagger among the visible items only.
+ */
+function innerPage(): Element[] {
+  const h1 = document.querySelector<HTMLElement>("main h1");
+  if (!h1?.parentElement) return [];
+  const targets: Element[] = [];
+  const marked: HTMLElement[] = [];
+  const vh = innerHeight;
+  const mark = (el: Element, cls: string, delay: number) => {
+    if (!(el instanceof HTMLElement)) return;
+    el.classList.add(cls);
+    el.style.setProperty("--d", `${delay}ms`);
+    marked.push(el);
+    targets.push(el);
+  };
+  const base = (el: Element) => (el.getBoundingClientRect().top < vh ? 560 : 0);
+  /** Rolling stagger: the nth visible item waits n × step after the masthead. */
+  const rolling = (selector: string, step: number) => {
+    let k = 0;
+    for (const el of Array.from(document.querySelectorAll(selector))) {
+      const b = base(el);
+      mark(el, "nr-r", b ? b + k++ * step : 0);
+    }
+  };
+  /** Column stagger, columns read from the grid as laid out at boot. */
+  const grid = (list: Element, items: string, cls: string, step: number) => {
+    const cols = tracks(list);
+    Array.from(list.querySelectorAll(items)).forEach((el, i) => mark(el, cls, base(el) + (i % cols) * step));
+  };
+
+  // Masthead. Measured and marked before anything moves (base() reads layout).
+  const mast = h1.parentElement;
+  mast.classList.add("nr-mast");
+  const kicker = mast.querySelector<HTMLElement>(":scope > .kicker");
+  kicker?.classList.add("nr-kick");
+  const next = h1.nextElementSibling;
+  const lead = next?.matches(".prose")
+    ? next.querySelector<HTMLElement>(":scope > p:first-child")
+    : next?.matches(".intro")
+      ? (next as HTMLElement)
+      : null;
+  lead?.classList.add("nr-lead");
+  // At 360px and below a long single word ("Integritetspolicy") cannot break inside
+  // an overflow:hidden mask and would be cut, so the h1 rises whole, like the lead.
+  if (matchMedia("(max-width: 360px)").matches) {
+    h1.classList.add("nr-lead");
+    h1.style.setProperty("--d", "140ms");
+    h1.style.setProperty("--nr-ld", "820ms");
+  } else {
+    splitWords(h1);
+  }
+
+  // The one object per page. Selectors that miss are no-ops.
+  rolling(".article > .prose > p:not(:first-child), .article > .sub, .article > .btn", 60);
+  document.querySelectorAll(".staff-grid").forEach((list) => grid(list, ":scope > li", "nr-r", 70));
+  document.querySelectorAll<HTMLElement>(".year-mark").forEach(splitWords);
+  document.querySelectorAll(".shots").forEach((list) => grid(list, ":scope > li", "nr-img", 80));
+  document.querySelectorAll(".contact .map").forEach((map) => mark(map, "nr-img", base(map)));
+  rolling(".info > address, .info > .dir, .info > .reach, .info > .btn, .info > .cancel", 60);
+  document.querySelectorAll(".brand-grid").forEach((list) => grid(list, ":scope > .brand", "nr-r", 70));
+  rolling(".course-list > .course, .courses > .empty", 60);
+  rolling(".post-list > li, .blog > .empty", 60);
+  // A blog cover is clipped only if it already has a height: the <img> carries no
+  // size, and a clip on a 0-height box would reveal nothing and then jump.
+  const cover = document.querySelector<HTMLImageElement>(".post .cover img");
+  if (cover && cover.naturalHeight > 0 && cover.parentElement) mark(cover.parentElement, "nr-img", base(cover));
+
+  // Set the held states without transitioning INTO them: if the page has already
+  // painted (motion.css's 2.5s hold expired on a slow load) a reveal would otherwise
+  // start fading out and be reversed by its own .nr-in before it ever showed.
+  const held = mast.querySelectorAll<HTMLElement>(".nr-kick, .nr-lead, .nr-w > span");
+  const settle = [...marked, ...Array.from(held), ...Array.from(document.querySelectorAll<HTMLElement>(".year-mark .nr-w > span"))];
+  settle.forEach((el) => (el.style.transition = "none"));
+  void document.body.offsetHeight;
+  settle.forEach((el) => (el.style.transition = ""));
+
+  // Start once the fonts are in or after 900ms, two frames later so the held state
+  // paints first — the hero's race in wordmark().
+  const go = () =>
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => {
+        mast.classList.add("nr-go");
+        h1.classList.add("nr-in");
+      }),
+    );
+  const fonts = document.fonts?.ready ?? Promise.resolve();
+  void Promise.race([fonts, new Promise((resolve) => setTimeout(resolve, 900))]).then(go);
+  return targets;
+}
+
+/** Column count of a grid as laid out (its computed track list), 1 when not a grid. */
+function tracks(el: Element): number {
+  const list = getComputedStyle(el).gridTemplateColumns;
+  if (!list || list === "none") return 1;
+  return Math.max(1, list.trim().split(/\s+/).length);
 }
 
 /**
