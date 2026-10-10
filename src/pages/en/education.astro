@@ -13,7 +13,9 @@ const body = paraKeys("education", "body").map((key) => t(key));
     the article rather than a section after it — same measure, same rhythm, and
     the promise resolves inside the same column the sentence was read in. */}
 <Base locale={locale} pageKey="education" title={`${t("nav.education")} — Salong NOVO`} description={t("education.body1")}>
-  <ArticlePage locale={locale} no="05" kicker={t("nav.education")} heading={t("education.heading")} paragraphs={body}>
+  {/* No closing "Boka tid" here (client, 2026-10-10): next to a course list it reads
+      as "book a course", and course sign-up is by email, not Voady. */}
+  <ArticlePage locale={locale} no="05" kicker={t("nav.education")} heading={t("education.heading")} paragraphs={body} booking={false}>
     <CourseList locale={locale} />
   </ArticlePage>
 </Base>
