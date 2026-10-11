@@ -1057,3 +1057,22 @@ Images:
 - `astro check` reports 0 errors, 0 warnings and 6 hints.
 - `astro build` completes.
 - `npm run e2e -- --workers=3` passed 70 tests.
+
+### 2026-10-11 — Performance pass, part C: inline CSS, deferred hero film, home CLS diagnosed
+- `astro.config.mjs` sets `build.inlineStylesheets: "always"`. No page ships a CSS file now. The largest
+  inline set is about 31 KB, on the home page. /personal HTML grew from 43,600 to 65,081 bytes raw, or from
+  10,913 to 15,046 gzip. The admin CSP already allows inline styles (`style-src 'self' 'unsafe-inline'`).
+- `heroVideo()` attaches the film only after window load plus an idle callback (1.5 s timer without
+  requestIdleCallback, 3 s idle cap). It also skips the film on a `2g` or `slow-2g` connection, the same
+  as Save-Data. The mp4 request moved from about 0.34 s to about 1.24 s in the Lighthouse trace, after load.
+- The home desktop CLS of 0.056 is NOT font swap. refresh.ts adds `html.nr-home` at boot, which flips the
+  header from sticky to fixed. When the module runs after first paint, the hero moves up 74 px. Lighthouse
+  names the hero's `::after` grain layer (inset -50%) because it is the largest moved box. Left as is and
+  reported.
+
+**Gates:**
+- `npm test` passed 885 tests in 40 files.
+- `tsc` is clean.
+- `astro check` reports 0 errors and 0 warnings.
+- `astro build` completes.
+- `npm run e2e -- --workers=3` passed 77 tests.

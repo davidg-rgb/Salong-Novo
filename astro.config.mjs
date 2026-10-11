@@ -20,7 +20,13 @@ export default defineConfig({
     imageService: "compile",
   }),
   trailingSlash: "never",
-  build: { format: "directory" },
+  // Every stylesheet ships inside the HTML (2026-10-11, performance pass). The pages are
+  // SSR and the HTML is never cached, so the document is a fresh request anyway, and the
+  // two render-blocking CSS round trips (Base + the page's own) were ~0.7 s of mobile
+  // FCP. Measured: the largest page (/) inlines ~31 KB raw (Base 16.5 + Home 15.1), well
+  // under the ~60 KB where "auto" would be the better call. The admin's CSP (_headers and
+  // cms/http.ts) already allows inline styles: style-src 'self' 'unsafe-inline'.
+  build: { format: "directory", inlineStylesheets: "always" },
   // Astro sessions are OFF. Admin auth is a Cloudflare Access JWT, so nothing
   // here uses a session — but @astrojs/cloudflare wants a KV namespace bound as
   // SESSION and auto-provisions an unused one at deploy unless told otherwise.

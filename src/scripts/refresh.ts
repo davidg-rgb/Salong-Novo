@@ -168,7 +168,8 @@ function wordmark(hero: HTMLElement, expired = false): void {
 /**
  * The hero's salon film (2026-10-10). Home.astro renders the <video> with a poster
  * and no source, so the browser fetches no mp4 until this attaches one. It does so
- * only with motion allowed, Save-Data off and both data-src paths present; 1080p
+ * only with motion allowed, Save-Data off, no 2G connection and both data-src paths
+ * present, and only after window load plus an idle period (2026-10-11); 1080p
  * from 900px wide, 720p below. Every other path adds .nr-video-off, which in
  * motion.css hands the plate back to the poster frame.
  *
@@ -187,9 +188,13 @@ function heroVideo(hero: HTMLElement, reduce: boolean): void {
   };
   const hd = video.dataset.srcHd?.trim() ?? "";
   const sd = video.dataset.srcSd?.trim() ?? "";
-  const saveData = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData === true;
+  const connection = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
+  const saveData = connection?.saveData === true;
+  // A 2G link (2026-10-11) is treated like Save-Data: the film is MBs the visitor
+  // would wait on and pay for, and the poster is already a complete plate.
+  const slow = connection?.effectiveType === "2g" || connection?.effectiveType === "slow-2g";
   if (reduce) return; // no html.nr-motion: the poster is already the opaque plate
-  if (saveData || !hd || !sd) {
+  if (saveData || slow || !hd || !sd) {
     off();
     return;
   }
@@ -205,20 +210,40 @@ function heroVideo(hero: HTMLElement, reduce: boolean): void {
     { once: true },
   );
   video.addEventListener("error", off, { once: true });
-  video.muted = true;
-  video.src = matchMedia("(min-width: 900px)").matches ? hd : sd;
-  video.load();
-  play();
-  if (!("IntersectionObserver" in window)) return;
-  new IntersectionObserver((entries) => {
-    for (const entry of entries) {
-      if (entry.isIntersecting) {
-        if (video.paused) play();
-      } else if (!video.paused) {
-        video.pause();
+  // The source is attached only once the page has finished loading AND the main
+  // thread is idle (2026-10-11): the film is megabytes, and fetched at boot it
+  // competed with the fonts, the CSS and the hero text that is the LCP element. The
+  // poster is the plate until then, exactly as on every path that never attaches.
+  afterLoadAndIdle(() => {
+    video.muted = true;
+    video.src = matchMedia("(min-width: 900px)").matches ? hd : sd;
+    video.load();
+    play();
+    if (!("IntersectionObserver" in window)) return;
+    new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          if (video.paused) play();
+        } else if (!video.paused) {
+          video.pause();
+        }
       }
-    }
-  }).observe(hero);
+    }).observe(hero);
+  });
+}
+
+/**
+ * Run `fn` after the window `load` event and then the next idle period. Browsers
+ * without requestIdleCallback (Safari) wait a flat 1.5 s after load instead. The
+ * idle wait is capped at 3 s so a page that never goes idle still gets its film.
+ */
+function afterLoadAndIdle(fn: () => void): void {
+  const idle = () => {
+    if (typeof window.requestIdleCallback === "function") window.requestIdleCallback(() => fn(), { timeout: 3000 });
+    else setTimeout(fn, 1500);
+  };
+  if (document.readyState === "complete") idle();
+  else addEventListener("load", idle, { once: true });
 }
 
 /**

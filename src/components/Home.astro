@@ -41,8 +41,9 @@ const gallery = [
      Since 2026-10-10 the plate is the salon's own film ("Hemsida Novo Final", muted, looped,
      public/video/), replacing the hair texture. The <video> ships with a poster and NO source,
      so nothing but the poster frame is fetched until refresh.ts attaches one — and it only does
-     with motion allowed, Save-Data off and both data-src paths present (1080p from 900px wide,
-     720p below). No JS, reduced motion, Save-Data or a refused autoplay all leave the poster
+     with motion allowed, Save-Data off, no 2G link and both data-src paths present, and only
+     after window load plus an idle period (2026-10-11) (1080p from 900px wide, 720p below).
+     No JS, reduced motion, Save-Data, 2G or a refused autoplay all leave the poster
      frame as the static plate, which is the whole fallback.
      Refresh 2026-09-30 (Desktop-Claude kit, implemented natively): full viewport height, the
      wordmark rises letter by letter and the plate drifts — both driven by src/scripts/refresh.ts

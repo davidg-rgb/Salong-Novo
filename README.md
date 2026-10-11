@@ -50,7 +50,7 @@ npm run db:migrate:remote            # ...and to the remote D1
 | `npm run dev` | Astro dev server |
 | `npm run build` | Build to `dist/` (Workers output: `dist/client` + `dist/server`) |
 | `npm test` / `test:watch` | Vitest unit suite |
-| `npm run e2e` | Playwright suites `tests/e2e/home-refresh.spec.ts` (the kit's 15 checks + project checks), `tests/e2e/inner-motion.spec.ts` (inner-page masthead + reveals, reduced motion, no-JS, 360px) and `tests/e2e/perf-assets.spec.ts` (no Google font request, self-hosted faces load, WebP picked, staff-modal WebP/JPEG fallback, CLS < 0.02 on /personal) in Chromium; builds + serves via `npm run preview -- --port 4321` unless a server already answers there; screenshots to `tests/e2e/__shots__/` (gitignored) |
+| `npm run e2e` | Playwright suites `tests/e2e/home-refresh.spec.ts` (the kit's 15 checks + project checks), `tests/e2e/inner-motion.spec.ts` (inner-page masthead + reveals, reduced motion, no-JS, 360px) and `tests/e2e/perf-assets.spec.ts` (no Google font request, no CSS request (styles inlined), self-hosted faces load, WebP picked, staff-modal WebP/JPEG fallback, CLS < 0.02 on /personal) in Chromium; builds + serves via `npm run preview -- --port 4321` unless a server already answers there; screenshots to `tests/e2e/__shots__/` (gitignored) |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run preview` | `astro build && wrangler dev --config dist/server/wrangler.json` (full runtime incl. D1/R2; port 8787 unless `-- --port N`) |
 | `npm run db:migrate:local` / `:remote` | Apply D1 migrations |

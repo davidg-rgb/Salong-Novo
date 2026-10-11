@@ -54,7 +54,8 @@ Access (admin) · markdown-it (`html:false`) · Vitest. See `ARCHITECTURE.md`.
   and no-JS get the complete static page.
 - ✅ **Hero film (2026-10-10):** the salon video ("Hemsida Novo Final") is the hero plate —
   `public/video/` (1080p ≥900px, 720p below, poster frames), attached by `refresh.ts` only with
-  motion allowed + Save-Data off; no JS / reduced motion / refused autoplay keep the poster.
+  motion allowed + Save-Data off + no 2G, after window load and an idle period (2026-10-11); no
+  JS / reduced motion / Save-Data / 2G / refused autoplay keep the poster.
   `npm run e2e` (Playwright, 41). After the editor rebuild (same day): 854 tests / 36 files.
 - ✅ **Inner-page motion (2026-10-11, branch `genjutsu-trial`):** every inner page opens with a
   masthead (kicker wipe, h1 word masks, lead) and reveals one object (portraits, years + shots, map,

@@ -140,7 +140,8 @@ The home page is a sequence of full-width sections. Each maps to a component slo
   tap/click (toggle), not hover-only. Bio text is always in the DOM (not injected on hover) so it's
   reachable by AT and indexable.
 - Video + gallery auto-motion are suppressed under `prefers-reduced-motion: reduce`; video also
-  suppressed under Save-Data. The hero is fully usable (logo + CTA) with zero JS.
+  suppressed under Save-Data and on a 2G / slow-2G connection, and attached only after window load
+  plus an idle period (2026-10-11). The hero is fully usable (logo + CTA) with zero JS.
 
 ### 2A.3 Content-readiness ledger (what blocks each new/changed page)
 

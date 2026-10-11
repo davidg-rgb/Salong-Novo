@@ -163,13 +163,27 @@ const playing = (page: Page) =>
     const v = document.querySelector<HTMLVideoElement>(".hero video.hero-video")!;
     return document.querySelector(".hero")!.classList.contains("nr-video-on") || !v.paused;
   });
+/**
+ * The film is attached only after window load plus an idle period (2026-10-11).
+ * Resolves after that point: our idle callback is queued behind refresh.ts's, so a
+ * test that asserts "no source" after this is asserting it past the deferral.
+ */
+const filmSettled = (page: Page) =>
+  page.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        const idle = () => requestIdleCallback(() => setTimeout(resolve, 100), { timeout: 4000 });
+        if (document.readyState === "complete") idle();
+        else addEventListener("load", idle, { once: true });
+      }),
+  );
 
 test.describe("hero film", () => {
   test("hero video attaches source and plays (desktop: 1080p)", async ({ page }) => {
     const errors: string[] = [];
     page.on("pageerror", (e) => errors.push(String(e)));
     await open(page, 1440);
-    expect(await videoSrc(page)).toMatch(/\/video\/hero-1080\.mp4$/);
+    await expect.poll(() => videoSrc(page), { timeout: 5000 }).toMatch(/\/video\/hero-1080\.mp4$/);
     await expect.poll(() => playing(page), { timeout: 5000 }).toBe(true);
     await expect(page.locator(".hero")).toHaveClass(/nr-video-on/, { timeout: 5000 });
     await expect(video(page)).toHaveCSS("opacity", "1", { timeout: 3000 });
@@ -187,7 +201,60 @@ test.describe("hero film", () => {
 
   test("a 390px phone gets the 720p file", async ({ page }) => {
     await open(page, 390, 844);
-    expect(await videoSrc(page)).toMatch(/\/video\/hero-720\.mp4$/);
+    await expect.poll(() => videoSrc(page), { timeout: 5000 }).toMatch(/\/video\/hero-720\.mp4$/);
+  });
+
+  test("the film waits for window load: no source while an eager image is still loading", async ({ page }) => {
+    // Hold one eager team portrait for 2.5 s, so boot() has long run but load has not fired.
+    let release!: () => void;
+    const held = new Promise<void>((resolve) => (release = resolve));
+    await page.route(/\/images\/staff\/[a-z-]+-(480|800)\.webp$/, async (route) => {
+      await Promise.race([held, new Promise((r) => setTimeout(r, 2500))]);
+      await route.continue();
+    });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(HOME, { waitUntil: "domcontentloaded" });
+    await page.waitForFunction(() => document.documentElement.classList.contains("nr"));
+    await page.waitForTimeout(300);
+    expect(await page.evaluate(() => document.readyState)).not.toBe("complete");
+    expect(await videoSrc(page)).toBe("");
+    release();
+    await filmSettled(page);
+    await expect.poll(() => videoSrc(page), { timeout: 5000 }).toMatch(/\/video\/hero-1080\.mp4$/);
+  });
+
+  for (const effectiveType of ["2g", "slow-2g"]) {
+    test(`a ${effectiveType} connection: no source is attached and the poster stays the plate`, async ({ page }) => {
+      await page.addInitScript((type) => {
+        Object.defineProperty(navigator, "connection", { configurable: true, get: () => ({ saveData: false, effectiveType: type }) });
+      }, effectiveType);
+      await open(page, 1440);
+      await filmSettled(page);
+      expect(await videoSrc(page)).toBe("");
+      await expect(page.locator(".hero")).toHaveClass(/nr-video-off/);
+      await expect(page.locator(".hero")).not.toHaveClass(/nr-video-on/);
+      await expect(video(page)).toHaveCSS("opacity", "1", { timeout: 3000 });
+    });
+  }
+
+  test("without requestIdleCallback (Safari) the film attaches on the 1.5 s timer after load", async ({ page }) => {
+    await page.addInitScript(() => {
+      // @ts-expect-error — removing the API is the point
+      delete window.requestIdleCallback;
+    });
+    await open(page, 1440);
+    await page.waitForLoadState("load");
+    expect(await page.evaluate(() => typeof window.requestIdleCallback)).toBe("undefined");
+    expect(await videoSrc(page)).toBe("");
+    await expect.poll(() => videoSrc(page), { timeout: 4000 }).toMatch(/\/video\/hero-1080\.mp4$/);
+  });
+
+  test("a 4g connection still gets the film", async ({ page }) => {
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "connection", { configurable: true, get: () => ({ saveData: false, effectiveType: "4g" }) });
+    });
+    await open(page, 1440);
+    await expect.poll(() => videoSrc(page), { timeout: 5000 }).toMatch(/\/video\/hero-1080\.mp4$/);
   });
 
   test("the decoder pauses once the hero leaves the viewport and resumes when it returns", async ({ page }) => {
@@ -205,6 +272,7 @@ test.describe("hero film", () => {
       Object.defineProperty(navigator, "connection", { configurable: true, get: () => ({ saveData: true }) });
     });
     await open(page, 1440);
+    await filmSettled(page);
     expect(await videoSrc(page)).toBe("");
     await expect(page.locator(".hero")).toHaveClass(/nr-video-off/);
     await expect(page.locator(".hero")).not.toHaveClass(/nr-video-on/);
@@ -221,6 +289,7 @@ test.describe("hero film", () => {
       },
     );
     await open(page, 1440);
+    await filmSettled(page);
     expect(await videoSrc(page)).toBe("");
     await expect(page.locator(".hero")).toHaveClass(/nr-video-off/);
     await expect(video(page)).toHaveCSS("opacity", "1", { timeout: 3000 });
@@ -236,7 +305,7 @@ test.describe("hero film", () => {
       HTMLMediaElement.prototype.play = () => Promise.reject(new DOMException("autoplay refused", "NotAllowedError"));
     });
     await open(page, 1440);
-    expect(await videoSrc(page)).toMatch(/hero-1080\.mp4$/);
+    await expect.poll(() => videoSrc(page), { timeout: 5000 }).toMatch(/hero-1080\.mp4$/);
     await expect(page.locator(".hero")).toHaveClass(/nr-video-off/);
     await expect(page.locator(".hero")).not.toHaveClass(/nr-video-on/);
     await expect(video(page)).toHaveAttribute("poster", "/video/hero-poster.jpg");
@@ -251,6 +320,7 @@ test.describe("reduced motion", () => {
     await open(page, 1440);
     await expect(page.locator("html")).not.toHaveClass(/nr-motion/);
     // The film never loads: no source, the poster is the plate, fully opaque.
+    await filmSettled(page);
     expect(await videoSrc(page)).toBe("");
     await expect(video(page)).toHaveAttribute("poster", "/video/hero-poster.jpg");
     await expect(video(page)).toHaveCSS("opacity", "1");

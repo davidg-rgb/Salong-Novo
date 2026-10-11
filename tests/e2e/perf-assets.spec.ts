@@ -55,6 +55,18 @@ for (const path of ["/", "/personal"]) {
     expect(google).toEqual([]);
     expect(errors).toEqual([]);
   });
+
+  test(`${path}: every stylesheet is inline — no CSS request, no stylesheet link`, async ({ page }) => {
+    const css: string[] = [];
+    page.on("request", (r) => {
+      if (r.resourceType() === "stylesheet" || new URL(r.url()).pathname.endsWith(".css")) css.push(r.url());
+    });
+    await page.goto(path, { waitUntil: "load" });
+    expect(css).toEqual([]);
+    expect(await page.locator('link[rel="stylesheet"]').count()).toBe(0);
+    // The inlined CSS is really applied: the tokens' sans stack is on <body>.
+    expect(await page.evaluate(() => getComputedStyle(document.body).fontFamily)).toContain("Hanken Grotesk");
+  });
 }
 
 test("/personal: the first portrait is the WebP; the 500 serif face is what the names use", async ({ page }) => {
