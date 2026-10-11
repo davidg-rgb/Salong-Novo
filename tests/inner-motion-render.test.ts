@@ -58,7 +58,11 @@ describe("inner pages, rendered: the static page is complete", () => {
     expect(early[0]).toContain('matchMedia("(prefers-reduced-motion: reduce)").matches');
     expect(early[0]).toContain('classList.add("nr-motion")');
     expect(early[0]).not.toMatch(/add\("nr"\)/);
-    // Before any stylesheet link, so it runs ahead of first paint.
-    expect(head.indexOf("classList.add")).toBeLessThan(head.indexOf('rel="stylesheet"'));
+    // Before any <link> — since the fonts went self-hosted (2026-10-11) the first one
+    // is a font preload, and there is no third-party stylesheet left to anchor on —
+    // so it runs ahead of first paint.
+    const firstLink = head.indexOf("<link");
+    expect(firstLink).toBeGreaterThan(-1);
+    expect(head.indexOf("classList.add")).toBeLessThan(firstLink);
   });
 });

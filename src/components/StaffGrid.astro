@@ -12,6 +12,8 @@ import {
 import { resolveCollection } from "../lib/collections";
 import { bindings } from "../lib/cms/bindings";
 import { PRODUCTS, STAFF } from "../cms.config";
+import { staticPicture } from "../lib/static-images";
+import Pic from "./Pic.astro";
 const { locale } = Astro.props as { locale: Locale };
 const { kv } = await Astro.locals.getCms();
 const t = useT(locale, kv);
@@ -27,6 +29,10 @@ const products = staff.some((s) => s.picks.length > 0)
 // Portraits resolve through the same field whether they are the shipped defaults
 // or a picture the client uploaded later (§10.7 / `stylistPhotoUrl`).
 const imageBase = (await bindings()).PUBLIC_IMAGE_BASE ?? "";
+// The modal photo (2026-10-11) gets the same WebP srcset as the grid, so opening a
+// card reuses the file the grid already fetched instead of downloading the JPEG.
+// .sm-card is at most 460px with ~44px padding a side: the photo is ~372px wide.
+const MODAL_SIZES = "(max-width: 460px) 86vw, 372px";
 ---
 <ul class="staff-grid" role="list">
   {staff.map((s, i) => {
@@ -42,6 +48,7 @@ const imageBase = (await bindings()).PUBLIC_IMAGE_BASE ?? "";
         data-bio={stylistBio(s, locale)}
         data-book={booking}
         data-photo={photo ?? ""}
+        data-photo-webp={photo ? staticPicture(photo, { sizes: MODAL_SIZES })?.webpSrcset : undefined}
         data-picks={picks.length ? JSON.stringify(picks) : undefined}
         data-picks-heading={picks.length ? t("labels.picksBy", { name: possessiveFirstName(s.name, locale) }) : undefined}
         aria-haspopup="dialog"
@@ -54,10 +61,13 @@ const imageBase = (await bindings()).PUBLIC_IMAGE_BASE ?? "";
             stay lazy. The intrinsic size is declared so the decode is sized;
             .frame already pins aspect-ratio: 3/4, so there is no CLS either way. */}
         <span class="frame" aria-hidden="true">
+          {/* WebP via <Pic> (2026-10-11); `sizes` follows .staff-grid: 4 columns of the
+              1200px wrap above 1000px, 3 to 681px, 2 below. */}
           {photo
-            ? <img
+            ? <Pic
                 class="portrait"
                 src={photo}
+                sizes="(max-width: 680px) 50vw, (max-width: 1000px) 33vw, 270px"
                 alt={s.name}
                 width="600"
                 height="800"
@@ -79,7 +89,7 @@ const imageBase = (await bindings()).PUBLIC_IMAGE_BASE ?? "";
   <div class="sm-bg" data-close></div>
   <div class="sm-card">
     <button class="sm-close" id="sm-close" type="button" data-close aria-label={t("labels.close")}>✕</button>
-    <img class="sm-photo" id="sm-photo" src="" alt="" hidden />
+    <picture><source id="sm-photo-webp" type="image/webp" sizes={MODAL_SIZES} /><img class="sm-photo" id="sm-photo" src="" alt="" hidden /></picture>
     {/* No specialty line since client round 3 (2026-08-27) — "Ta bort nyckelord
         typ 'blondt' 'herr' i nuläget. Behåll bara namn + instagram." Name, bio,
         handle and the booking button are what a card carries now. */}
@@ -109,6 +119,10 @@ const imageBase = (await bindings()).PUBLIC_IMAGE_BASE ?? "";
     // A stylist with no portrait yet keeps the card text-only rather than
     // reserving a blank frame.
     const photo = document.getElementById("sm-photo");
+    // The WebP source is set (or cleared) BEFORE the img's src, so the browser picks
+    // once; a client upload has no static variants and falls through to the img.
+    const webp = document.getElementById("sm-photo-webp");
+    if (d.photoWebp) webp.srcset = d.photoWebp; else webp.removeAttribute("srcset");
     if (d.photo) { photo.src = d.photo; photo.alt = d.name; photo.hidden = false; }
     else { photo.removeAttribute("src"); photo.alt = ""; photo.hidden = true; }
     set("sm-bio", d.bio || "");

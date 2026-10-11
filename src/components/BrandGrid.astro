@@ -19,10 +19,14 @@ import { isKickbackLink } from "../lib/keune";
 import { resolveCollection } from "../lib/collections";
 import { bindings } from "../lib/cms/bindings";
 import { BRANDS } from "../cms.config";
+import Pic from "./Pic.astro";
 const { locale } = Astro.props as { locale: Locale };
 const t = useT(locale, (await Astro.locals.getCms()).kv);
 const brands = (await resolveCollection(Astro.locals.db, BRANDS)).items.map(asBrand);
 const imageBase = (await bindings()).PUBLIC_IMAGE_BASE ?? "";
+// Product-shot `sizes` (2026-10-11), from .brand-grid: 3 columns of the 1200px wrap
+// from 1248px, 2 to 561px, 1 below.
+const SHOT_SIZES = "(max-width: 560px) 100vw, (max-width: 1247px) 50vw, 370px";
 ---
 <ul class="brand-grid" role="list">
   {brands.map((brand) => {
@@ -50,10 +54,10 @@ const imageBase = (await bindings()).PUBLIC_IMAGE_BASE ?? "";
         {shot && (
           brand.url
             ? <a class="shot" href={brand.url} target="_blank" rel={rel} aria-hidden="true" tabindex="-1">
-                <img src={shot} alt="" loading="lazy" decoding="async" />
+                <Pic src={shot} sizes={SHOT_SIZES} alt="" loading="lazy" decoding="async" />
               </a>
             : <span class="shot" aria-hidden="true">
-                <img src={shot} alt="" loading="lazy" decoding="async" />
+                <Pic src={shot} sizes={SHOT_SIZES} alt="" loading="lazy" decoding="async" />
               </span>
         )}
         <div class="body">

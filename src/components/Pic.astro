@@ -1,0 +1,32 @@
+---
+/**
+ * One build-shipped photograph as `<picture>`: a WebP srcset for every browser
+ * that takes it, the original JPEG as the <img> (2026-10-11, performance pass).
+ *
+ * Presentation only — `staticPicture` (src/lib/static-images.ts) decides what
+ * exists. Every other attribute is passed to the <img> EXACTLY as given (width,
+ * height, alt, class, loading, fetchpriority, decoding, and the parent's scoped-
+ * style `data-astro-cid-*`), so sizing, priority and the parent's CSS are what
+ * they were before the wrapper. `<picture>` itself is `display: contents`
+ * (tokens.css), so it adds no box: `.frame .portrait`'s absolute inset and
+ * `.shots img`'s percentage height still resolve against the same ancestor.
+ *
+ * A src the manifest does not know (a client upload in R2, a logo) renders the
+ * bare <img> it always did.
+ */
+import { staticPicture } from "../lib/static-images";
+
+interface Props {
+  /** Nullable like `assetUrl`'s result: no src renders the same src-less <img> as before. */
+  src: string | null | undefined;
+  /** `sizes` for the WebP source — derive it from the component's real grid. */
+  sizes: string;
+  widths?: readonly number[];
+  [attr: string]: unknown;
+}
+const { src, sizes, widths, ...attrs } = Astro.props;
+const pic = staticPicture(src, { sizes, widths });
+---
+{pic
+  ? <picture><source type="image/webp" srcset={pic.webpSrcset} sizes={pic.sizes} /><img src={pic.fallback} {...attrs} /></picture>
+  : <img src={src ?? undefined} {...attrs} />}

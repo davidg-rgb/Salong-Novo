@@ -20,7 +20,9 @@
     "bildbank:seed:remote": "node scripts/bildbank-seed.mjs --remote",
     "keune:check": "node scripts/keune-sync.mjs --check",
     "keune:update": "node scripts/keune-sync.mjs --update",
-    "keune:images": "node scripts/keune-sync.mjs --images"
+    "keune:images": "node scripts/keune-sync.mjs --images",
+    "images:variants": "node scripts/image-variants.mjs",
+    "images:check": "node scripts/image-variants.mjs --check"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^14.1.7",

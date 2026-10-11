@@ -1,0 +1,604 @@
+{
+  "/images/staff/caroline-olofsson.jpg": {
+    "width": 800,
+    "hash": "f610d34b77be",
+    "variants": [
+      480,
+      800
+    ]
+  },
+  "/images/staff/chriss-berner.jpg": {
+    "width": 800,
+    "hash": "da0295726873",
+    "variants": [
+      480,
+      800
+    ]
+  },
+  "/images/staff/daniel-huynh.jpg": {
+    "width": 800,
+    "hash": "004ba2d267d1",
+    "variants": [
+      480,
+      800
+    ]
+  },
+  "/images/staff/ellen-rudd.jpg": {
+    "width": 800,
+    "hash": "6d9155fe126a",
+    "variants": [
+      480,
+      800
+    ]
+  },
+  "/images/staff/emma-gahn.jpg": {
+    "width": 800,
+    "hash": "b2c03ae9d612",
+    "variants": [
+      480,
+      800
+    ]
+  },
+  "/images/staff/fanny-wallen.jpg": {
+    "width": 800,
+    "hash": "cff4cf19d1fb",
+    "variants": [
+      480,
+      800
+    ]
+  },
+  "/images/staff/iris-paula.jpg": {
+    "width": 800,
+    "hash": "b01d19ee45a6",
+    "variants": [
+      480,
+      800
+    ]
+  },
+  "/images/staff/isabella-valentino.jpg": {
+    "width": 800,
+    "hash": "4bccc32ae2c1",
+    "variants": [
+      480,
+      800
+    ]
+  },
+  "/images/staff/jannie-olofsson.jpg": {
+    "width": 800,
+    "hash": "eeba030734a1",
+    "variants": [
+      480,
+      800
+    ]
+  },
+  "/images/staff/jasmina-rosengren.jpg": {
+    "width": 800,
+    "hash": "d65fa80e226e",
+    "variants": [
+      480,
+      800
+    ]
+  },
+  "/images/staff/kristiana-buta.jpg": {
+    "width": 800,
+    "hash": "b55f31035c9b",
+    "variants": [
+      480,
+      800
+    ]
+  },
+  "/images/staff/linnea-hellstrom.jpg": {
+    "width": 800,
+    "hash": "fc3f80139094",
+    "variants": [
+      480,
+      800
+    ]
+  },
+  "/images/staff/linnea-widman.jpg": {
+    "width": 800,
+    "hash": "f63ff05076cf",
+    "variants": [
+      480,
+      800
+    ]
+  },
+  "/images/staff/merike-janson-ruuth.jpg": {
+    "width": 800,
+    "hash": "89bc573895bf",
+    "variants": [
+      480,
+      800
+    ]
+  },
+  "/images/staff/michelle-kesen.jpg": {
+    "width": 800,
+    "hash": "50a8cfe40757",
+    "variants": [
+      480,
+      800
+    ]
+  },
+  "/images/staff/ola-oterkjaer.jpg": {
+    "width": 800,
+    "hash": "2fa4e55f27cc",
+    "variants": [
+      480,
+      800
+    ]
+  },
+  "/images/staff/therese-frieberg.jpg": {
+    "width": 800,
+    "hash": "51e9ef0fd571",
+    "variants": [
+      480,
+      800
+    ]
+  },
+  "/images/awards-2025/avantgarde-1.jpg": {
+    "width": 991,
+    "hash": "4f7ddf08bb0f",
+    "variants": [
+      480,
+      800,
+      991
+    ]
+  },
+  "/images/awards-2025/avantgarde-2.jpg": {
+    "width": 991,
+    "hash": "97c9f8ec0bca",
+    "variants": [
+      480,
+      800,
+      991
+    ]
+  },
+  "/images/awards-2025/avantgarde-3.jpg": {
+    "width": 991,
+    "hash": "13bc35bc4a0e",
+    "variants": [
+      480,
+      800,
+      991
+    ]
+  },
+  "/images/awards-2025/avantgarde-4.jpg": {
+    "width": 991,
+    "hash": "967b37200ba0",
+    "variants": [
+      480,
+      800,
+      991
+    ]
+  },
+  "/images/awards-2025/brud-1.jpg": {
+    "width": 1000,
+    "hash": "37a830c68c1b",
+    "variants": [
+      480,
+      800,
+      1000
+    ]
+  },
+  "/images/awards-2025/brud-2.jpg": {
+    "width": 1000,
+    "hash": "7c1edbc3c2be",
+    "variants": [
+      480,
+      800,
+      1000
+    ]
+  },
+  "/images/awards-2025/dam-1.jpg": {
+    "width": 1033,
+    "hash": "a4b406dc60d1",
+    "variants": [
+      480,
+      800,
+      1033
+    ]
+  },
+  "/images/awards-2025/dam-2.jpg": {
+    "width": 1033,
+    "hash": "f8c36c4f1d33",
+    "variants": [
+      480,
+      800,
+      1033
+    ]
+  },
+  "/images/awards-2025/dam-3.jpg": {
+    "width": 1033,
+    "hash": "24c3fc1ecec0",
+    "variants": [
+      480,
+      800,
+      1033
+    ]
+  },
+  "/images/awards-2025/dam-4.jpg": {
+    "width": 1033,
+    "hash": "990ae4a9afed",
+    "variants": [
+      480,
+      800,
+      1033
+    ]
+  },
+  "/images/awards-2025/herr1-1.jpg": {
+    "width": 1000,
+    "hash": "29d0745785b4",
+    "variants": [
+      480,
+      800,
+      1000
+    ]
+  },
+  "/images/awards-2025/herr1-2.jpg": {
+    "width": 1000,
+    "hash": "71b69fc8a4e4",
+    "variants": [
+      480,
+      800,
+      1000
+    ]
+  },
+  "/images/awards-2025/herr1-3.jpg": {
+    "width": 1000,
+    "hash": "7abe8243e28f",
+    "variants": [
+      480,
+      800,
+      1000
+    ]
+  },
+  "/images/awards-2025/herr1-4.jpg": {
+    "width": 1000,
+    "hash": "7d39e3375a09",
+    "variants": [
+      480,
+      800,
+      1000
+    ]
+  },
+  "/images/awards-2025/herr2-1.jpg": {
+    "width": 1054,
+    "hash": "708ac5ef591e",
+    "variants": [
+      480,
+      800,
+      1054
+    ]
+  },
+  "/images/awards-2025/herr2-2.jpg": {
+    "width": 1054,
+    "hash": "8f01db4dcbb1",
+    "variants": [
+      480,
+      800,
+      1054
+    ]
+  },
+  "/images/awards-2025/herr2-3.jpg": {
+    "width": 1054,
+    "hash": "7125ae96f7a4",
+    "variants": [
+      480,
+      800,
+      1054
+    ]
+  },
+  "/images/awards-2025/herr2-4.jpg": {
+    "width": 1054,
+    "hash": "bcd3e738f520",
+    "variants": [
+      480,
+      800,
+      1054
+    ]
+  },
+  "/images/awards-2025/kollektion1-1.jpg": {
+    "width": 1000,
+    "hash": "e6c52e7891a0",
+    "variants": [
+      480,
+      800,
+      1000
+    ]
+  },
+  "/images/awards-2025/kollektion1-2.jpg": {
+    "width": 1000,
+    "hash": "ffcaa855337e",
+    "variants": [
+      480,
+      800,
+      1000
+    ]
+  },
+  "/images/awards-2025/kollektion1-3.jpg": {
+    "width": 1000,
+    "hash": "23d201b024a1",
+    "variants": [
+      480,
+      800,
+      1000
+    ]
+  },
+  "/images/awards-2025/kollektion1-4.jpg": {
+    "width": 1000,
+    "hash": "dd0578dec7d3",
+    "variants": [
+      480,
+      800,
+      1000
+    ]
+  },
+  "/images/awards-2025/kollektion2-1.jpg": {
+    "width": 1015,
+    "hash": "9f996761bc7c",
+    "variants": [
+      480,
+      800,
+      1015
+    ]
+  },
+  "/images/awards-2025/kollektion2-2.jpg": {
+    "width": 1015,
+    "hash": "4776667a4b2e",
+    "variants": [
+      480,
+      800,
+      1015
+    ]
+  },
+  "/images/awards-2025/kollektion2-3.jpg": {
+    "width": 1015,
+    "hash": "ae9d19eba111",
+    "variants": [
+      480,
+      800,
+      1015
+    ]
+  },
+  "/images/awards-2025/kollektion2-4.jpg": {
+    "width": 1015,
+    "hash": "7f314d747bc7",
+    "variants": [
+      480,
+      800,
+      1015
+    ]
+  },
+  "/images/awards-2026/avantgarde-1.jpg": {
+    "width": 934,
+    "hash": "e3ebfadf10a9",
+    "variants": [
+      480,
+      800,
+      934
+    ]
+  },
+  "/images/awards-2026/avantgarde-2.jpg": {
+    "width": 934,
+    "hash": "421b4957bcd7",
+    "variants": [
+      480,
+      800,
+      934
+    ]
+  },
+  "/images/awards-2026/avantgarde-3.jpg": {
+    "width": 934,
+    "hash": "8a80865df162",
+    "variants": [
+      480,
+      800,
+      934
+    ]
+  },
+  "/images/awards-2026/avantgarde-4.jpg": {
+    "width": 934,
+    "hash": "7b9a92014cb6",
+    "variants": [
+      480,
+      800,
+      934
+    ]
+  },
+  "/images/awards-2026/farg-1.jpg": {
+    "width": 934,
+    "hash": "ab9896c30e51",
+    "variants": [
+      480,
+      800,
+      934
+    ]
+  },
+  "/images/awards-2026/farg-2.jpg": {
+    "width": 934,
+    "hash": "4501eaa51a1b",
+    "variants": [
+      480,
+      800,
+      934
+    ]
+  },
+  "/images/awards-2026/farg-3.jpg": {
+    "width": 934,
+    "hash": "a040140dcc09",
+    "variants": [
+      480,
+      800,
+      934
+    ]
+  },
+  "/images/awards-2026/farg-4.jpg": {
+    "width": 934,
+    "hash": "2c4033e7dac7",
+    "variants": [
+      480,
+      800,
+      934
+    ]
+  },
+  "/images/awards-2026/herr-1.jpg": {
+    "width": 1000,
+    "hash": "4db110b87e6b",
+    "variants": [
+      480,
+      800,
+      1000
+    ]
+  },
+  "/images/awards-2026/herr-2.jpg": {
+    "width": 1000,
+    "hash": "ff51a379f129",
+    "variants": [
+      480,
+      800,
+      1000
+    ]
+  },
+  "/images/awards-2026/herr-3.jpg": {
+    "width": 1000,
+    "hash": "a38c863b4ba5",
+    "variants": [
+      480,
+      800,
+      1000
+    ]
+  },
+  "/images/awards-2026/herr-4.jpg": {
+    "width": 1000,
+    "hash": "4a3d43137d62",
+    "variants": [
+      480,
+      800,
+      1000
+    ]
+  },
+  "/images/awards-2026/nykomling-1.jpg": {
+    "width": 667,
+    "hash": "09e754a05ff8",
+    "variants": [
+      480,
+      667
+    ]
+  },
+  "/images/awards-2026/nykomling-2.jpg": {
+    "width": 667,
+    "hash": "859e543572a3",
+    "variants": [
+      480,
+      667
+    ]
+  },
+  "/images/awards-2026/nykomling-3.jpg": {
+    "width": 667,
+    "hash": "3ff86a1fa576",
+    "variants": [
+      480,
+      667
+    ]
+  },
+  "/images/awards-2026/nykomling-4.jpg": {
+    "width": 667,
+    "hash": "8e76f2788893",
+    "variants": [
+      480,
+      667
+    ]
+  },
+  "/images/nordic-hairshot-2025/nordic-hairshot-1.jpg": {
+    "width": 1073,
+    "hash": "5cd0db185001",
+    "variants": [
+      480,
+      800,
+      1073
+    ]
+  },
+  "/images/nordic-hairshot-2025/nordic-hairshot-2.jpg": {
+    "width": 1170,
+    "hash": "3d12dd89ad8b",
+    "variants": [
+      480,
+      800,
+      1170
+    ]
+  },
+  "/images/nordic-hairshot-2025/nordic-hairshot-3.jpg": {
+    "width": 1079,
+    "hash": "4a254c35a956",
+    "variants": [
+      480,
+      800,
+      1079
+    ]
+  },
+  "/images/nordic-hairshot-2025/nordic-hairshot-4.jpg": {
+    "width": 1170,
+    "hash": "c164172f2685",
+    "variants": [
+      480,
+      800,
+      1170
+    ]
+  },
+  "/images/brands/dc-hair-shot.jpg": {
+    "width": 900,
+    "hash": "f32cf53629f3",
+    "variants": [
+      450,
+      900
+    ]
+  },
+  "/images/brands/ghd-shot.jpg": {
+    "width": 900,
+    "hash": "10725f58b11b",
+    "variants": [
+      450,
+      900
+    ]
+  },
+  "/images/brands/keune-shot.jpg": {
+    "width": 900,
+    "hash": "755459ab2dbe",
+    "variants": [
+      450,
+      900
+    ]
+  },
+  "/images/brands/richy-hair-shot.jpg": {
+    "width": 900,
+    "hash": "8eb3ca7d3613",
+    "variants": [
+      450,
+      900
+    ]
+  },
+  "/images/brands/signaturdoftljus-shot.jpg": {
+    "width": 900,
+    "hash": "38bee04d5090",
+    "variants": [
+      450,
+      900
+    ]
+  },
+  "/images/textures/hair-band.jpg": {
+    "width": 1536,
+    "hash": "d81781e9765e",
+    "variants": [
+      768,
+      1536
+    ]
+  },
+  "/images/textures/silk-band.jpg": {
+    "width": 1536,
+    "hash": "8396b7efce57",
+    "variants": [
+      768,
+      1536
+    ]
+  }
+}

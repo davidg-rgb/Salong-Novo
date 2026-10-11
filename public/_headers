@@ -17,6 +17,11 @@
 /images/*
   Cache-Control: public, max-age=86400, stale-while-revalidate=2592000
 
+# Self-hosted fonts (2026-10-11): versioned by filename, so they can be immutable.
+# A new cut ships under a new name (e.g. playfair-display-400-v2.woff2), never in place.
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
 # The hero film (2026-10-10): stable paths, and the client may re-cut the film
 # into the same filenames, so the same one-day + SWR rule as /images/*.
 /video/*

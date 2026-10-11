@@ -52,12 +52,12 @@ const noindex = siteNoindex();
     <script is:inline>if (!matchMedia("(prefers-reduced-motion: reduce)").matches) document.documentElement.classList.add("nr-motion");</script>
     <title>{title}</title>
     <meta name="description" content={description} />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..700;1,400..600&family=Hanken+Grotesk:wght@300..700&display=swap"
-    />
+    {/* Self-hosted fonts (2026-10-11): the @font-face rules live in styles/fonts.css.
+        The two faces above the fold on every page — the Playfair headline and the
+        Hanken body — are preloaded so they arrive with the HTML instead of after the
+        CSS is parsed. The italic is not: it sets only a last word and may swap late. */}
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/playfair-display-400.woff2" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/hanken-grotesk-var-300-700.woff2" />
     <link rel="canonical" href={canonical} />
     {noindex && <meta name="robots" content="noindex, nofollow" />}
     {alts && alts.map((a) => (

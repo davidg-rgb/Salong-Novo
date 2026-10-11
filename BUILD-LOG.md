@@ -1025,3 +1025,35 @@ Tests (+90):
 - `astro build` completes. The editor chunk is `/_astro/editor.client.*.js` at 469 KB raw and 145 KB gzip, with
   no `eval` and no `new Function`.
 - `npm run e2e` passed 41 tests.
+
+### 2026-10-11 — Performance pass: self-hosted fonts + WebP <picture> for the shipped photos
+Branch `perf` (worktree). No visual change: the computed (family, weight, style) set on all 13 public pages at
+390 and 1440 is identical before and after.
+
+Fonts:
+- The render-blocking Google Fonts stylesheet and both preconnects are gone from `Base.astro`.
+- `src/styles/fonts.css` (imported first in tokens.css, so the admin gets it too) declares four faces from
+  `public/fonts/`: Google's latin-subset cuts of Playfair Display 400, 400 italic and 500, and one Hanken
+  Grotesk variable file for 300–700. OFL licence texts ship beside them.
+- Playfair 500 is there because the stylist names on /personal set it. A new serif weight needs its own file.
+- The 400 serif and the Hanken file are preloaded. `/fonts/*` is cached for a year, immutable: a new cut gets a
+  new filename.
+
+Images:
+- `npm run images:variants` (`scripts/image-variants.mjs`, sharp, q80) writes `<stem>-<w>.webp` beside every
+  JPEG in staff, awards-2025, awards-2026, nordic-hairshot-2025, brands and textures. A width above the source
+  is capped at the source width. Staleness is by source content hash, not mtime.
+- The manifest `src/lib/static-image-variants.json` is what `staticPicture()` reads, so a srcset never names a
+  missing file. `npm run images:check` exits 1 on a missing or stale variant.
+- `<Pic>` wraps staff portraits, home tiles and team portraits, award shots and brand shots in `<picture>`.
+  The `<img>` keeps every attribute, and `picture { display: contents }` keeps the layout identical.
+- The staff modal takes the same WebP srcset, so opening a card reuses the grid's file. An R2 upload falls
+  back to the JPEG path.
+- The footer and story textures use `image-set()` with the WebP first.
+
+**Gates** (baseline 863 unit + 63 e2e):
+- `npm test` passed 885 tests in 40 files.
+- `tsc` is clean.
+- `astro check` reports 0 errors, 0 warnings and 6 hints.
+- `astro build` completes.
+- `npm run e2e -- --workers=3` passed 70 tests.

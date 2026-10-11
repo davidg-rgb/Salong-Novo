@@ -32,7 +32,9 @@ Access (admin) · markdown-it (`html:false`) · Vitest. See `ARCHITECTURE.md`.
   `tests/editor-roundtrip.test.ts` pins parser agreement). Light admin theme, WCAG 2.2 AA computed
   by `tests/admin-contrast.test.ts`. The editor no longer calls `/api/admin/preview`.
 - ✅ **Visual design applied** ("Haute Editorial" + recognition layer, §11): `tokens.css` + every
-  public component restyled; Playfair Display + Hanken Grotesk fonts wired globally.
+  public component restyled; Playfair Display + Hanken Grotesk fonts wired globally — self-hosted
+  since 2026-10-11 (`src/styles/fonts.css`, `public/fonts/`; no Google request), and the build-shipped
+  JPEGs serve WebP variants through `<Pic>` (`npm run images:variants` after adding or replacing one).
 - ✅ **Forge CMS retrofit + client IA DONE (2026-08-11):** Astro 7 / Workers, all 7 client tabs
   (22 public routes, SSR-from-D1 with JSON-default fallback), CMS-editable copy/facts/collections,
   529+ tests. **`BUILD-LOG.md` is canonical** for everything after this line — read its tail first.

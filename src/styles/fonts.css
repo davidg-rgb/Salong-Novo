@@ -1,0 +1,54 @@
+/*
+ * Self-hosted web fonts (2026-10-11, performance pass). Replaces the render-blocking
+ * Google Fonts stylesheet Base.astro used to load: that cost two extra origins (DNS +
+ * TLS to Google's CSS host and its font host) and a CSS round trip before a
+ * single glyph could be fetched. The files under /public/fonts are Google's own
+ * latin-subset cuts (css2 API, fetched 2026-10-11) — the subset covers å ä ö and
+ * every other glyph the Swedish and English copy uses — so rendering is unchanged.
+ *
+ * Only the faces the site actually sets are shipped (computed styles walked on all 13
+ * public pages at 390 and 1440, 2026-10-11): Playfair Display at 400 (the headings),
+ * its 400 italic (the italic-last-word device) and 500 (the stylist names under the
+ * /personal portraits — a browser loads a face only when text on the page needs it,
+ * so every other page never fetches that file), and Hanken Grotesk as ONE variable
+ * file covering 300–700 (body 400, labels 500/600). The family names are identical
+ * to the old ones, so --font-sans / --font-serif and every selector stay. A NEW serif
+ * weight in the CSS needs its own file here, or the browser fakes it from the 400.
+ *
+ * Filenames are the version: a new cut ships under a new name, which is why
+ * public/_headers can cache /fonts/* as immutable. Licences (SIL OFL 1.1, required for
+ * redistribution) sit beside the files. Imported at the top of tokens.css, so the
+ * admin (AdminBase) gets the same faces from the same path.
+ */
+@font-face {
+  font-family: "Playfair Display";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/playfair-display-400.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Playfair Display";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/playfair-display-400i.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Playfair Display";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/playfair-display-500.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Hanken Grotesk";
+  font-style: normal;
+  font-weight: 300 700;
+  font-display: swap;
+  src: url("/fonts/hanken-grotesk-var-300-700.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}

@@ -16,6 +16,7 @@ import { resolveCollection } from "../lib/collections";
 import { bindings } from "../lib/cms/bindings";
 import { AWARDS } from "../cms.config";
 import BookingButton from "./BookingButton.astro";
+import Pic from "./Pic.astro";
 
 const { locale } = Astro.props as { locale: Locale };
 const { kv } = await Astro.locals.getCms();
@@ -24,6 +25,11 @@ const years = groupAwards((await resolveCollection(Astro.locals.db, AWARDS)).ite
 // Award photography resolves through the same field whether it is a shipped
 // asset or a picture the client uploaded later (`assetUrl`).
 const imageBase = (await bindings()).PUBLIC_IMAGE_BASE ?? "";
+// Award-shot `sizes` (2026-10-11), from .shots: 4 columns of the 1200px wrap, 3 to
+// 681px, and below that a justified row 82vw tall — a portrait is ~0.71 of that wide
+// and a square Nordic card the full 82vw, so the square is the ceiling.
+// Still NO width/height attributes on these: see the `height: auto` note in the CSS.
+const SHOT_SIZES = "(max-width: 680px) 82vw, (max-width: 900px) 33vw, 288px";
 ---
 <section class="wrap competitions">
   <header class="shead">
@@ -65,8 +71,9 @@ const imageBase = (await bindings()).PUBLIC_IMAGE_BASE ?? "";
                     <ul class="shots" role="list">
                       {shots.map((image, index) => (
                         <li>
-                          <img
+                          <Pic
                             src={assetUrl(image, imageBase)}
+                            sizes={SHOT_SIZES}
                             alt={t("awards.imageAlt", {
                               category: item.category,
                               year: yearText,

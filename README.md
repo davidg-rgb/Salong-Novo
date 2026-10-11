@@ -50,7 +50,7 @@ npm run db:migrate:remote            # ...and to the remote D1
 | `npm run dev` | Astro dev server |
 | `npm run build` | Build to `dist/` (Workers output: `dist/client` + `dist/server`) |
 | `npm test` / `test:watch` | Vitest unit suite |
-| `npm run e2e` | Playwright suites `tests/e2e/home-refresh.spec.ts` (the kit's 15 checks + project checks) and `tests/e2e/inner-motion.spec.ts` (inner-page masthead + reveals, reduced motion, no-JS, 360px) in Chromium; builds + serves via `npm run preview -- --port 4321` unless a server already answers there; screenshots to `tests/e2e/__shots__/` (gitignored) |
+| `npm run e2e` | Playwright suites `tests/e2e/home-refresh.spec.ts` (the kit's 15 checks + project checks), `tests/e2e/inner-motion.spec.ts` (inner-page masthead + reveals, reduced motion, no-JS, 360px) and `tests/e2e/perf-assets.spec.ts` (no Google font request, self-hosted faces load, WebP picked, staff-modal WebP/JPEG fallback, CLS < 0.02 on /personal) in Chromium; builds + serves via `npm run preview -- --port 4321` unless a server already answers there; screenshots to `tests/e2e/__shots__/` (gitignored) |
 | `npm run typecheck` | `tsc --noEmit` |
 | `npm run preview` | `astro build && wrangler dev --config dist/server/wrangler.json` (full runtime incl. D1/R2; port 8787 unless `-- --port N`) |
 | `npm run db:migrate:local` / `:remote` | Apply D1 migrations |
@@ -58,6 +58,8 @@ npm run db:migrate:remote            # ...and to the remote D1
 | `npm run keune:check` | Check every curated product in `content/products.json` against Keune's SE sitemap + Shopify feed; exit 1 if a slug left the sitemap |
 | `npm run keune:update` | Rewrite matched rows' `price` + `_synced` from the feed (`-- --dry-run` to preview) |
 | `npm run keune:images` | Fetch each product's keune.com page and save its gallery render (og:image as fallback) from Contentful as `public/images/keune/<slug>.webp` (1200 px); reports `gallery`/`og`/`MISSING` per slug, exit 1 on any MISSING or failed download (skips existing; `-- --force`, `-- --dry-run`) |
+| `npm run images:variants` | Write `<stem>-<w>.webp` (q80) beside every JPEG under `public/images/{staff,awards-2025,awards-2026,nordic-hairshot-2025,brands,textures}` and the manifest `src/lib/static-image-variants.json` that `<Pic>` reads; widths capped at the source, never upscaled; skips a variant whose source hash is unchanged. Run after adding or replacing a shipped photo and commit the output |
+| `npm run images:check` | Exit 1 if any variant or manifest entry is missing or stale (also asserted by `tests/static-images.test.ts`) |
 
 ## Key facts (verified from live site, 2026-05-31)
 

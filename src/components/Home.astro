@@ -6,6 +6,7 @@ import { bindings } from "../lib/cms/bindings";
 import { STAFF } from "../cms.config";
 import BookingButton from "./BookingButton.astro";
 import Logo from "./Logo.astro";
+import Pic from "./Pic.astro";
 const { locale } = Astro.props as { locale: Locale };
 const { kv } = await Astro.locals.getCms();
 const t = useT(locale, kv);
@@ -15,6 +16,11 @@ const staff = (await resolveCollection(Astro.locals.db, STAFF)).items.map(asStyl
 const staffLabel = t("nav.staff");
 const coOwner = t("labels.coOwner");
 const imageBase = (await bindings()).PUBLIC_IMAGE_BASE ?? "";
+// Team portrait `sizes` (2026-10-11), from .team-grid: a 10-column grid in the 1200px
+// wrap (cards span 2, co-owners 5), 6 columns to 700px (span 2 / 3), 2 below (span 1 /
+// 2; the odd last card also spans 2, so the phone card size is the wide one's ceiling).
+const CARD_SIZES = "(max-width: 699px) 100vw, (max-width: 1099px) 33vw, 230px";
+const OWNER_SIZES = "(max-width: 699px) 100vw, (max-width: 1099px) 50vw, 576px";
 // Section order is client-confirmed (ARCHITECTURE §2A.2): hero → Boka tid → hair strip →
 // founders story → team (hover/focus/tap bios). Pending assets (salon video, owners photo)
 // slot into these existing slots without layout changes.
@@ -95,8 +101,10 @@ const gallery = [
   <ul class="strip-track" role="list">
     {gallery.map((shot, i) => (
       <li class="tile" style={`--i:${i}`}>
-        <img
+        {/* `sizes` mirrors .tile's clamp(230px, 23vw, 360px) (2026-10-11). */}
+        <Pic
           src={shot.src}
+          sizes="(max-width: 1000px) 230px, (max-width: 1565px) 23vw, 360px"
           alt={t("home.galleryAlt", { category: shot.category })}
           loading="lazy"
           decoding="async"
@@ -152,9 +160,10 @@ const gallery = [
               {/* First row eager (see StaffGrid for the reasoning); rows 2+ lazy. */}
               <span class="frame" aria-hidden="true">
                 {photo
-                  ? <img
+                  ? <Pic
                       class="portrait"
                       src={photo}
+                      sizes={s.owner ? OWNER_SIZES : CARD_SIZES}
                       alt={s.name}
                       width="600"
                       height="800"
@@ -364,6 +373,11 @@ const gallery = [
       linear-gradient(rgba(10, 14, 17, 0.55), rgba(10, 14, 17, 0.55)),
       url("/images/textures/silk-band.jpg") center / cover no-repeat,
       #1c1b18;
+    /* WebP first (2026-10-11), same layers; without image-set type() the line is
+       dropped and the shorthand above stands. */
+    background-image:
+      linear-gradient(rgba(10, 14, 17, 0.55), rgba(10, 14, 17, 0.55)),
+      image-set(url("/images/textures/silk-band-1536.webp") type("image/webp"), url("/images/textures/silk-band.jpg") type("image/jpeg"));
     position: relative; overflow: hidden;
   }
   /* REVERSES the grey watermark N (2026-09-30, kit): an italic champagne N at display size,
