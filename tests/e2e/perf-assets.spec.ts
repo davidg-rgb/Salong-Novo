@@ -122,3 +122,66 @@ for (const width of [390, 1440]) {
     expect(errors).toEqual([]);
   });
 }
+
+test.describe("home header class before first paint (desktop CLS)", () => {
+  const delayModules = (page: Page) =>
+    page.route(/\/_astro\/.*\.js$/, async (route) => {
+      await new Promise((r) => setTimeout(r, 600));
+      await route.continue();
+    });
+
+  test("with the module 600 ms late, the home page does not shift (< 0.01)", async ({ page }) => {
+    await delayModules(page);
+    await page.setViewportSize({ width: 1350, height: 940 });
+    await page.goto("/", { waitUntil: "load" });
+    await page.waitForFunction(() => document.documentElement.classList.contains("nr"));
+    expect(await cls(page)).toBeLessThan(0.01);
+  });
+
+  test("the check is real: without data-nr-home the same load shifts the hero", async ({ page }) => {
+    await delayModules(page);
+    await page.route(
+      (url) => url.pathname === "/",
+      async (route) => {
+        const response = await route.fetch();
+        await route.fulfill({ response, body: (await response.text()).replace(/ data-nr-home(="")?/, "") });
+      },
+    );
+    await page.setViewportSize({ width: 1350, height: 940 });
+    await page.goto("/", { waitUntil: "load" });
+    await page.waitForFunction(() => document.documentElement.classList.contains("nr"));
+    expect(await cls(page)).toBeGreaterThan(0.03);
+  });
+
+  test("/personal never gets nr-home", async ({ page }) => {
+    await page.goto("/personal", { waitUntil: "load" });
+    await expect(page.locator("html")).not.toHaveClass(/\bnr-home\b/);
+  });
+
+  for (const reducedMotion of ["no-preference", "reduce"] as const) {
+    test(`home with the module aborted (${reducedMotion}): after the hold the header is the solid glass bar`, async ({ page }) => {
+      await page.emulateMedia({ reducedMotion });
+      await page.route(/\/_astro\/.*\.js$/, (route) => route.abort());
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await page.goto("/", { waitUntil: "load" });
+      const header = page.locator(".site-header");
+      await expect(page.locator("html")).toHaveClass(/\bnr-home\b/);
+      await expect(page.locator("html")).not.toHaveClass(/(^|\s)nr(\s|$)/);
+      await expect(header).toHaveCSS("position", "fixed");
+      await expect(header).toHaveCSS("background-color", "rgba(255, 255, 255, 0.94)", { timeout: 4000 });
+      // --on-variant #5b5a55 and --ink #1a1a1a: the solid state's colours, not cream.
+      await expect(header.locator(".nav-desktop a").first()).toHaveCSS("color", "rgb(91, 90, 85)");
+      await expect(header.locator(".lang-current:visible").first()).toHaveCSS("color", "rgb(26, 26, 26)");
+      // The keyframe resolves invert(1) -> none as invert(0): the uninverted ink logo.
+      await expect(header.locator(".logo svg")).toHaveCSS("filter", /^(none|invert\(0\))$/);
+    });
+  }
+
+  test("with the module running, the home header is transparent over the hero as before", async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/", { waitUntil: "load" });
+    await page.waitForFunction(() => document.documentElement.classList.contains("nr"));
+    await page.waitForTimeout(2300); // past the hold: the fallback must not have fired
+    await expect(page.locator(".site-header")).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+  });
+});

@@ -182,7 +182,8 @@ const otherLocale = LOCALES.find((l) => l !== locale)!;
   .lang:hover .lang-other { color: var(--ink); }
 
   /* ── Home page only (2026-09-30) — REVERSES the sticky glass header on this one page.
-     refresh.ts adds html.nr-home when the page has a .hero, so without JS the home page
+     Base.astro's head script adds html.nr-home on the home page before first paint (since
+     2026-10-11; refresh.ts also adds it at boot), so without JS the home page
      keeps the sticky glass bar above. The header is fixed over the hero plate: transparent
      with cream type and an inverted logo, then glass once the hero has scrolled past
      (.nr-solid), tucked away while reading down (.nr-hide), and solid cream while the
@@ -210,6 +211,27 @@ const otherLocale = LOCALES.find((l) => l !== locale)!;
   }
   :global(html.nr-home) .site-header.nr-hide { transform: translateY(-102%); }
   :global(html.nr-home) .site-header.nr-open { transform: none; background-color: var(--cream); }
+  /* Failed-module fallback (2026-10-11). nr-home is set by the head script before first
+     paint, but only refresh.ts ever makes the bar solid (.nr-solid on scroll). If the
+     module never runs (html.nr never lands), the bar would stay transparent with cream
+     type over the cream page below the hero. So after the same --nr-hold cap the hero and
+     inner <main> use, it steps to the glass state's look. Once html.nr lands the rule no
+     longer matches and refresh.ts owns the header again. !important beats the reduced-
+     motion `animation: none !important` in tokens.css: this is a state switch, not motion,
+     and without it a reduced-motion visitor would keep the transparent bar. */
+  :global(html.nr-home:not(.nr)) .site-header { animation: nr-hdr-solid var(--nr-hold, 2s) step-end forwards !important; }
+  :global(html.nr-home:not(.nr)) .site-header :is(.nav-desktop a, .lang, .lang-other) { animation: nr-hdr-muted var(--nr-hold, 2s) step-end forwards !important; }
+  :global(html.nr-home:not(.nr)) .site-header :is(.lang-current, .nav-toggle) { animation: nr-hdr-ink var(--nr-hold, 2s) step-end forwards !important; }
+  :global(html.nr-home:not(.nr)) .site-header .logo :global(svg) { animation: nr-hdr-logo var(--nr-hold, 2s) step-end forwards !important; }
+  @keyframes nr-hdr-solid {
+    to {
+      background-color: rgba(255, 255, 255, 0.94); border-bottom-color: var(--hairline); color: var(--ink);
+      backdrop-filter: blur(14px) saturate(1.3); -webkit-backdrop-filter: blur(14px) saturate(1.3);
+    }
+  }
+  @keyframes nr-hdr-muted { to { color: var(--on-variant); } }
+  @keyframes nr-hdr-ink { to { color: var(--ink); } }
+  @keyframes nr-hdr-logo { to { filter: none; } }
 
   /* ── Mobile menu (hamburger + slide-down panel) ─────────────────── */
   .nav-toggle {

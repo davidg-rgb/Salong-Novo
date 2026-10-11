@@ -36,6 +36,8 @@ function boot(): void {
   const hero = document.querySelector<HTMLElement>(".hero");
   const header = document.querySelector<HTMLElement>(".site-header");
   // The home page's fixed/transparent header (SiteHeader.astro) keys off this.
+  // Base.astro's head script sets it before first paint on the home page (2026-10-11);
+  // add() is a no-op then, and still covers a .hero on any page without the attribute.
   if (hero) root.classList.add("nr-home");
 
   if (hero) wordmark(hero, expired);

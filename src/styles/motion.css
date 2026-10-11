@@ -84,7 +84,8 @@ html.nr-motion:not(.nr-home) main .btn.nr-r {
    vanishes and rises. html.nr-motion arrives early from Base.astro's head script;
    html.nr is boot()'s, and its arrival drops the hold in the same task that sets the
    held states. If the module never runs, the step-end animation shows <main> at the
-   cap anyway. :has(.hero) keeps the home page out (html.nr-home is boot()'s too).
+   cap anyway. :has(.hero) keeps the home page out (it does not rely on html.nr-home, which
+   since 2026-10-11 the head script also sets early on the home page).
    --nr-hold is the ONE cap for every pre-boot hold (inner <main> and the home hero);
    refresh.ts reads it to tell a late boot, which then skips the intro (2026-10-11). */
 html.nr-motion { --nr-hold: 2s; }

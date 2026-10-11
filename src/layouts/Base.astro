@@ -40,7 +40,7 @@ const jsonld = hairSalonJsonLd(siteUrl, kv);
 const noindex = siteNoindex();
 ---
 <!doctype html>
-<html lang={locale}>
+<html lang={locale} data-nr-home={pageKey === "home" ? "" : undefined}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -48,8 +48,12 @@ const noindex = siteNoindex();
         paints first instead of the finished page flashing and then vanishing. ONLY
         nr-motion: html.nr is refresh.ts's idempotency guard and must stay its own. Inline
         is allowed here: the strict `script-src 'self'` CSP covers /admin/* only, which
-        does not use this layout. */}
-    <script is:inline>if (!matchMedia("(prefers-reduced-motion: reduce)").matches) document.documentElement.classList.add("nr-motion");</script>
+        does not use this layout.
+        nr-home too, on the home page (data-nr-home above), and regardless of reduced
+        motion, as refresh.ts does: it turns the header from sticky to fixed, and set at
+        boot instead it moved the hero up 74px after first paint (desktop CLS 0.056,
+        2026-10-11). No JS: no script, no class, the sticky header stays. */}
+    <script is:inline>(function (r) { if (r.hasAttribute("data-nr-home")) r.classList.add("nr-home"); if (!matchMedia("(prefers-reduced-motion: reduce)").matches) r.classList.add("nr-motion"); })(document.documentElement);</script>
     <title>{title}</title>
     <meta name="description" content={description} />
     {/* Self-hosted fonts (2026-10-11): the @font-face rules live in styles/fonts.css.

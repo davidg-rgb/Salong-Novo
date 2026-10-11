@@ -1076,3 +1076,19 @@ Images:
 - `astro check` reports 0 errors and 0 warnings.
 - `astro build` completes.
 - `npm run e2e -- --workers=3` passed 77 tests.
+
+### 2026-10-11 — Home desktop CLS fixed: html.nr-home before first paint
+- Base.astro renders `data-nr-home` on `<html>` for the home page (sv and en). The head script adds
+  `nr-home` from it, independent of reduced motion, so the header is fixed from the first paint and the hero
+  never moves. `nr-motion` still needs motion allowed, and `nr` is never set early.
+- A module that never runs is covered by SiteHeader.astro. Under `html.nr-home:not(.nr)` the bar steps to
+  the glass state after `--nr-hold` (2 s), with the glass background, ink and muted type, and the uninverted
+  logo. It is `!important` so it also applies under reduced motion. No-JS keeps the sticky header.
+- Lighthouse on local / desktop: CLS 0.056 → 0.000 in both runs, score 99 → 100. Mobile stays at CLS 0.
+
+**Gates:**
+- `npm test` passed 889 tests.
+- `tsc` is clean.
+- `astro check` reports 0 errors.
+- The build completes.
+- `npm run e2e -- --workers=3` passed 83 tests.
