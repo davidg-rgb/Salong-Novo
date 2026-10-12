@@ -147,7 +147,7 @@ The home page is a sequence of full-width sections. Each maps to a component slo
 
 | Page | Structure | Copy | Imagery | Unblocks when |
 |------|-----------|------|---------|---------------|
-| Home | buildable now | story copy pending | salon video, hair strip, owners photo, stylist texts pending | client mails assets/texts |
+| Home | buildable now | story copy pending | salon video (landed 2026-10-10), hair strip, story photo (landed 2026-10-11), stylist texts pending | client mails assets/texts |
 | `pricing` (Bokning & priser) | buildable now | **price list pending** | — | client mails prices |
 | `competitions` (Tävlingar) | buildable now | carries `awards.json`; refresh pending | competition imagery pending | client mails copy/photos |
 | `education` (Utbildning & kurser) | buildable now | pending | pending | client mails per-tab |

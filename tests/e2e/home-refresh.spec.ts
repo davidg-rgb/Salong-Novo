@@ -442,6 +442,36 @@ test.describe("header states", () => {
   });
 });
 
+// Project check (2026-10-11): the founders-story plate is a photograph now, not the
+// silk-and-monogram stand-in. It reveals like the other plates (nr-img clip), the
+// browser takes the WebP, and the scroll parallax moves the image, not the frame.
+test.describe("founders-story plate", () => {
+  test("photograph loads as WebP, reveals on scroll, and drifts with the parallax inside the frame", async ({ page }) => {
+    await open(page, 1440);
+    const frame = page.locator(".story .story-frame");
+    const img = frame.locator("img.story-plate");
+    await expect(frame).toHaveClass(/\bnr-img\b/);
+    await expect(img).toHaveAttribute("alt", /Chriss Berner/);
+    await expect(page.locator(".story .story-media")).not.toHaveAttribute("aria-hidden", "true");
+    await page.locator("section.story").evaluate((el) => window.scrollTo({ top: el.getBoundingClientRect().top + scrollY - 200, behavior: "instant" }));
+    await expect(frame).toHaveClass(/\bnr-in\b/);
+    await page.waitForFunction(() => {
+      const i = document.querySelector<HTMLImageElement>(".story .story-plate");
+      return !!i && i.complete && i.naturalWidth > 0;
+    });
+    expect(await img.evaluate((i: HTMLImageElement) => i.currentSrc)).toMatch(/\/images\/story\/chriss-at-work-\d+\.webp$/);
+    await expect(frame).toHaveCSS("overflow", "hidden");
+    const drift = async () => img.evaluate((i) => i.style.translate);
+    await page.waitForTimeout(200);
+    const before = await drift();
+    await page.mouse.wheel(0, 240);
+    await page.waitForTimeout(600);
+    const after = await drift();
+    expect(before).not.toBe(after);
+    expect(await frame.evaluate((el) => el.style.translate)).toBe("");
+  });
+});
+
 test.describe("anchors and Lenis", () => {
   test("the skip link is never routed through Lenis: it lands on #main natively", async ({ page }) => {
     await open(page, 1440);
@@ -525,7 +555,7 @@ test.describe("screenshots", () => {
         await open(page, width, width === 390 ? 844 : 900, path);
         await page.waitForTimeout(2600); // the hero intro
         await page.screenshot({ path: `${SHOTS}${locale}-${width}-hero.png` });
-        for (const section of ["strip", "team"] as const) {
+        for (const section of ["strip", "story", "team"] as const) {
           const el = page.locator(`section.${section}`);
           // Walk the section through the viewport from its top, the way a reader
           // would, so every reveal fires. (scrollIntoViewIfNeeded CENTRES a section
@@ -546,7 +576,7 @@ test.describe("screenshots", () => {
           await page.waitForTimeout(1600); // the last reveals land
           // The fixed header would be painted wherever the viewport sat mid-capture.
           await el.screenshot({
-            path: `${SHOTS}${locale}-${width}-${section === "strip" ? "awards" : "team"}.png`,
+            path: `${SHOTS}${locale}-${width}-${section === "strip" ? "awards" : section}.png`,
             style: ".site-header { visibility: hidden; }",
           });
         }

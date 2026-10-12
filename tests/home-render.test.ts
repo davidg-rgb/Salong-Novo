@@ -267,6 +267,31 @@ describe("Home — the strip heading is client copy", () => {
   });
 });
 
+describe("Home — the founders-story plate (2026-10-11)", () => {
+  const plate = async (locale: "sv" | "en" = "sv") => section(await render(Home, locale), /<span class="story-frame"/, "</span>");
+
+  it("renders the salon photograph as <picture> with its WebP srcset, the JPEG as fallback", async () => {
+    const html = await plate();
+    expect(html).toContain("<picture>");
+    expect(html).toContain('<source type="image/webp"');
+    for (const w of [480, 800, 1200]) expect(html).toContain(`/images/story/chriss-at-work-${w}.webp ${w}w`);
+    expect(html).toMatch(/<img src="\/images\/story\/chriss-at-work\.jpg"/);
+  });
+
+  it("the plate is a real image now: sized 4:5, lazy, with alt text in both locales and no monogram", async () => {
+    const sv = await plate("sv");
+    expect(sv).toContain('class="story-plate"');
+    expect(sv).toContain('width="1600"');
+    expect(sv).toContain('height="2000"');
+    expect(sv).toContain('loading="lazy"');
+    expect(sv).toContain('alt="Chriss Berner, delägare, plattar en kunds hår i salongen"');
+    expect(sv).not.toContain('class="mono"');
+    expect(await plate("en")).toContain('alt="Chriss Berner, co-owner, straightening a client');
+    // The slot used to be aria-hidden decoration; a photograph with alt must not be.
+    expect(await render(Home)).not.toMatch(/<div class="story-media" aria-hidden/);
+  });
+});
+
 describe("SiteFooter — the booking band heading", () => {
   it.each(["sv", "en"] as const)("renders the heading text unchanged (%s): the italic last word is JS-side", async (locale) => {
     const html = await render(SiteFooter, locale);

@@ -600,5 +600,14 @@
       768,
       1536
     ]
+  },
+  "/images/story/chriss-at-work.jpg": {
+    "width": 1600,
+    "hash": "325e1af9c78f",
+    "variants": [
+      480,
+      800,
+      1200
+    ]
   }
 }

@@ -43,6 +43,13 @@ export const home = {
     sv: "{category}, Årets Frisör 2026",
     en: "{category}, Swedish Hairdressing Awards 2026",
   } as Bi,
+  // The founders-story plate (2026-10-11): Chriss at the chair, from the
+  // client's salon photography. Names her as the roster does, since the slot
+  // sits right above the team grid where she is a card.
+  storyAlt: {
+    sv: "Chriss Berner, delägare, plattar en kunds hår i salongen",
+    en: "Chriss Berner, co-owner, straightening a client's hair in the salon",
+  } as Bi,
   teamHeading: { sv: "Vårt fantastiska team.", en: "Our wonderful team." } as Bi,
   // The awards strip's heading (home refresh, 2026-09-30). EN follows the
   // competitions intro below ("Hairdresser of the Year"), NOT `galleryAlt` above,

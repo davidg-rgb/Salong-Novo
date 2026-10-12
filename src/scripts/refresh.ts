@@ -504,7 +504,10 @@ function scrollLinked(hero: HTMLElement | null, header: HTMLElement | null, redu
   const menuOpen = () => toggle?.getAttribute("aria-expanded") === "true";
   const soft = hero?.querySelector<HTMLElement>(".hero-soft") ?? null;
   const heroInner = hero?.querySelector<HTMLElement>(".hero-inner") ?? null;
-  const frameKids = Array.from(document.querySelectorAll<HTMLElement>(".story .story-frame > *"));
+  // The plate's <picture> wrapper is display: contents (no box), so the FRAME is what
+  // is measured, and the <img> is what moves (2026-10-11).
+  const plate = document.querySelector<HTMLElement>(".story .story-frame .story-plate");
+  const plateFrame = plate?.closest<HTMLElement>(".story-frame") ?? null;
   let lastY = scrollY;
   let ticking = false;
 
@@ -529,11 +532,11 @@ function scrollLinked(hero: HTMLElement | null, header: HTMLElement | null, redu
         heroInner.style.opacity = Math.max(0, 1 - p * 1.35).toFixed(3);
       }
     }
-    if (!reduce && frameKids.length > 0) {
-      const r = frameKids[0]!.parentElement!.getBoundingClientRect();
+    if (!reduce && plate && plateFrame) {
+      const r = plateFrame.getBoundingClientRect();
       if (r.bottom > 0 && r.top < vh) {
         const q = (r.top + r.height / 2 - vh / 2) / vh;
-        frameKids.forEach((kid) => (kid.style.translate = `0 ${(q * -40).toFixed(1)}px`));
+        plate.style.translate = `0 ${(q * -40).toFixed(1)}px`;
       }
     }
     lastY = y;

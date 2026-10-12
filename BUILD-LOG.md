@@ -389,6 +389,7 @@ still fits at 1181 px with the longer label and bigger mark, hover reversal conf
    the repo, so there is nothing to swap to. Slot is ready.
 2. The founders photo (C + J in the salon, from the last shoot) to replace the "N" monogram plate in
    the homepage story section. Geometry unchanged when it lands — drop the file in.
+   → LANDED 2026-10-11 as Chriss alone at the chair (see the entry of that date).
 3. Brand logos + product images for all five lines. `BrandGrid` renders complete without them.
 
 **QUESTION BACK TO THE CLIENT: is the Schwarzkopf relationship over?** She removed "Schwarzkopf
@@ -1092,3 +1093,32 @@ Images:
 - `astro check` reports 0 errors.
 - The build completes.
 - `npm run e2e -- --workers=3` passed 83 tests.
+
+### 2026-10-11 — Home story plate: the photograph of Chriss replaces the monogram stand-in
+- David supplied four salon photographs (`Desktop/Novo/Salong-1..4.jpg`, 6720×4480 and one 3917×4896, sRGB).
+  Salong-2 chosen: Chriss sharp and laughing with the straightener, the client's head lower right, warm
+  window light. Salong-3 is native 4:5 and shows the salon but her expression is flat; Salong-1 focuses
+  on the model; Salong-4 has veiling haze. Cropped at full height, 3584 px wide from x=1747, written
+  as `public/images/story/chriss-at-work.jpg` (1600×2000, q84 mozjpeg, ICC stripped after sRGB).
+- `scripts/image-variants.mjs` gains `story: [480, 800, 1200]`; the manifest carries the three WebPs.
+- Home.astro: the `.story-media` slot drops `aria-hidden`; the `.story-frame` holds a `<Pic class="story-plate">`
+  with width/height 1600×2000, lazy, `sizes` from the grid (0.85fr of 1200 on desktop, the 420 px cap below
+  820 px) and the new `home.storyAlt` copy (sv/en, names Chriss as the roster does). The silk texture and
+  the italic N are gone; the frame is `overflow: hidden` and the image is drawn at `scale: 1.08` with
+  `object-position: 50% 40%` so the parallax drift (±20 px) never shows an edge.
+- refresh.ts: the story parallax measures the FRAME and translates the image. The old code measured
+  the moved element's parent, which is now the `<picture>` wrapper (`display: contents`, a zero rect),
+  so the drift silently never ran until the e2e caught it. motion.css `will-change` follows the new selector.
+- Tests: home-render +2 (picture + srcset + fallback; 4:5 size, lazy, alt in both locales, no monogram,
+  no aria-hidden); home-refresh e2e +1 (nr-img reveal, WebP currentSrc, overflow hidden, the drift lands
+  on the image and not the frame) and the screenshot walk now captures `*-story.png` for both locales
+  and widths.
+- Known hook noise: `no-control-bytes.py` flags vendor bytes in the gitignored `dist/` on every build.
+
+**Gates** (baseline 889 unit + 83 e2e):
+- `npm test` passed 891 tests in 41 files.
+- `tsc` is clean.
+- `astro check` reports 0 errors, 0 warnings and 6 hints.
+- `astro build` completes.
+- `npm run images:variants -- --check` is OK (71 sources, 185 variants).
+- `npm run e2e -- --workers=3` passed 84 tests.

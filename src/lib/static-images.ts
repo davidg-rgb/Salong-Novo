@@ -3,7 +3,7 @@
  *
  * The sibling of `images.ts`, which does the same job for client uploads in R2.
  * `scripts/image-variants.mjs` writes `${stem}-${w}.webp` beside every JPEG under
- * public/images/{staff,awards-*,nordic-hairshot-2025,brands,textures} and records
+ * public/images/{staff,awards-*,nordic-hairshot-2025,brands,textures,story} and records
  * what it wrote in `static-image-variants.json`. This module only READS that
  * manifest, so a srcset can never name a file that is not on disk — a source the
  * manifest does not know (an R2 upload, a PNG logo, a path the script has not

@@ -52,6 +52,9 @@ Access (admin) · markdown-it (`html:false`) · Vitest. See `ARCHITECTURE.md`.
   scroll cue, awards strip head + numbered captions + marquee, owner cards from `owner`/`role`
   data, bio slide-up, ink CTA button, Lenis. Motion is JS-gated (`html.nr-motion`); reduced-motion
   and no-JS get the complete static page.
+- ✅ **Story photograph (2026-10-11):** the home founders-story plate is Chriss at the chair
+  (`public/images/story/chriss-at-work.jpg`, 4:5 crop of the client's `Salong-2.jpg`, WebP via `<Pic>`),
+  replacing the silk-and-monogram stand-in; the scroll parallax moves the image inside the frame.
 - ✅ **Hero film (2026-10-10):** the salon video ("Hemsida Novo Final") is the hero plate —
   `public/video/` (1080p ≥900px, 720p below, poster frames), attached by `refresh.ts` only with
   motion allowed + Save-Data off + no 2G, after window load and an idle period (2026-10-11); no

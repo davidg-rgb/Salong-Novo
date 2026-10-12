@@ -215,5 +215,6 @@ html.nr-motion .strip:hover .strip-track.nr-marquee { animation-play-state: paus
 }
 
 /* ── Story plate parallax ──────────────────────────────────────────────── */
-/* refresh.ts moves the monogram against the scroll (inline `translate`). */
-html.nr-motion .story-frame > * { will-change: transform; }
+/* refresh.ts moves the photograph against the scroll (inline `translate`); it is
+   drawn 8% oversize in Home.astro so the ±20px drift never shows an edge. */
+html.nr-motion .story-frame .story-plate { will-change: transform; }

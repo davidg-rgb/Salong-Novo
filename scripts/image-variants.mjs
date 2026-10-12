@@ -44,6 +44,7 @@ const FOLDERS = {
   "nordic-hairshot-2025": [480, 800, 1200],
   brands: [450, 900],
   textures: [768, 1536],
+  story: [480, 800, 1200],
 };
 const DEFAULT_QUALITY = 80;
 /** Per-file quality overrides (`folder/file.jpg` → q), for a file that bands at 80. */
