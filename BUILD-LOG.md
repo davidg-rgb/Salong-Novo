@@ -1122,3 +1122,33 @@ Images:
 - `astro build` completes.
 - `npm run images:variants -- --check` is OK (71 sources, 185 variants).
 - `npm run e2e -- --workers=3` passed 84 tests.
+
+### 2026-10-12 — Keune links: UTMs and source=novo removed
+
+David's call: "UTM was never part of the brief." Every Keune salon link the site emits is now the bare
+salon route `https://www.keune.com/salon/6451330/`, plus `?pageSlug=%2Fp%2F<slug>%2F` for a product,
+and nothing else. The bare form lands on `/se/?fromKickbackFeeCode=NOVO` and shows Keune's "Du har valt
+salongen" modal, which the UTM form suppressed. The encoded `pageSlug` was click-tested 2026-10-12.
+
+- `src/lib/keune.ts`: `keuneLink(slug?)` and `keuneGenericLink()` lose the `campaign` parameter;
+  `keuneCampaign` is deleted; no `utm_*`, no `source`. `keuneSlug`, `isKickbackLink` and
+  `KEUNE_SALON_NO` are unchanged. The module comment says why the link carries nothing beyond `pageSlug`
+  (Keune's redirect appends a second `?` whenever other params are present).
+- Call sites: ProductGrid (card CTAs + full-range button), ShopPitch, `stylistPicks` in `content.ts`;
+  their comments no longer mention placements or `utm_campaign`.
+- `content/brands.json`: the Keune card's literal `url` is the bare route (its `_note` updated). The
+  staging D1 `brands` rows, if already saved by the client, still carry the old literal until re-saved.
+- Tests: the invariant helper in keune-render now asserts host, path, `pageSlug` as the only key (and
+  only when a product is expected), no `utm_`/`source`/`fromKickbackFeeCode`, and no second `?`. keune.test
+  adds the exact generic link (no `?`), `keuneLink("" | undefined | "   ")` equal to it, and a product link
+  with exactly one parameter; the two campaign-normalisation tests are deleted (891 → 889).
+- Docs: `Planning/KEUNE-KICKBACK.md` gets the dated decision block, the UTM table rows marked not used,
+  and the code sample rewritten; project `CLAUDE.md` Keune bullet updated.
+
+**Gates** (baseline 891 unit, main d68ebca):
+- `npx vitest run` on keune, keune-render, content-cms and home-render passed 187 tests in 4 files.
+- `npx vitest run` passed 889 tests in 41 files.
+- `tsc` is clean.
+- `astro check` reports 0 errors, 0 warnings and 6 hints.
+- `astro build` completes.
+- e2e not run (Directive).

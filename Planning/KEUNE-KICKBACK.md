@@ -4,6 +4,13 @@ Researched 2026-09-29 in a live Chrome session against www.keune.com (Next.js st
 Shopify, one Shopify store per country; Sweden = `checkout-se.keune.com`). Everything below was
 either observed in the browser or read from Keune's shipped JS bundles. Nothing is guessed.
 
+> **2026-10-12 — UTMs removed.** David: "UTM was never part of the brief." The site emits the bare
+> salon route `https://www.keune.com/salon/6451330/`, plus `?pageSlug=%2Fp%2F<slug>%2F` for a product
+> deep link, and nothing else: no `utm_*`, no `source=novo`. The bare form shows Keune's "Du har valt
+> salongen" confirmation modal (the UTM form suppressed it). The percent-encoded `pageSlug` was
+> click-tested on 2026-10-12 and lands on the product page with the salon set. The UTM rows in the link
+> table, the UTM/modal trade-off and the per-placement `utm_campaign` plan below are historical.
+
 ## The mechanism
 
 NOVO's link `https://www.keune.com/salon/6451330/` is the Next.js route `/salon/[kickbackFeeCode]`.
@@ -49,16 +56,16 @@ Consequences:
 |---|---|---|---|---|
 | `https://www.keune.com/salon/6451330/` | `/se/` | yes | yes | The generic link Keune gave NOVO. |
 | `https://www.keune.com/salon/6451330/?pageSlug=/p/style-air-flow/` | `/se/p/style-air-flow/` | yes | yes | **Product deep link.** Slug without the `/se` prefix (the route adds it; `/se/se/...` 404s). |
-| `https://www.keune.com/salon/6451330/?pageSlug=/p/<slug>/&utm_source=salongnovo&utm_medium=referral&utm_campaign=<c>` | product page | yes | **no** | Keune bug: the redirect appends `?fromKickbackFeeCode=` with a second `?`, so the last param's value becomes `<c>?fromKickbackFeeCode=NOVO`. GA4 sees a corrupted campaign. |
-| `...&utm_campaign=<c>&source=novo` | product page | yes | no | **UTM-safe form.** `source` is on Keune's pass-through allow-list and absorbs the mangling; the three UTMs arrive clean. |
+| `https://www.keune.com/salon/6451330/?pageSlug=/p/<slug>/&utm_source=salongnovo&utm_medium=referral&utm_campaign=<c>` | product page | yes | **no** | Keune bug: the redirect appends `?fromKickbackFeeCode=` with a second `?`, so the last param's value becomes `<c>?fromKickbackFeeCode=NOVO`. GA4 sees a corrupted campaign. **Not used** (UTMs removed 2026-10-12). |
+| `...&utm_campaign=<c>&source=novo` | product page | yes | no | **UTM-safe form.** `source` is on Keune's pass-through allow-list and absorbs the mangling; the three UTMs arrive clean. **Not used** (UTMs removed 2026-10-12). |
 | `https://www.keune.com/se/p/<slug>/?fromKickbackFeeCode=NOVO` | product page | **no** | yes | Looks right, does nothing. Do not use. |
 
 Pass-through allow-list on the redirect: `utm_source, utm_medium, utm_campaign, utm_term,
 utm_content, mid, gclid, source`. Anything else is dropped. `multi=true` keeps the visitor's current
 locale instead of deriving it; irrelevant for NOVO (always `se`).
 
-Trade-off to decide: with UTMs the confirmation modal never shows; without UTMs it does. The black
-bar shows either way, and attribution is set either way.
+Trade-off (historical, decided 2026-10-12 for no UTMs): with UTMs the confirmation modal never shows;
+without UTMs it does. The black bar shows either way, and attribution is set either way.
 
 ## Data sources for a product surface on salongnovo.se
 
@@ -109,7 +116,7 @@ deep link, so the salon is attributed the moment the visitor lands.
 So Pure), search. More surface, more maintenance, and it competes with Keune's own site for the same
 searches while adding nothing Keune's site does not already do. Only worth it if B proves demand.
 
-Ship B. Measure it: `utm_campaign` per placement (hero, brand page, staff picks, blog post), and ask
+Ship B. Measure it (historical: the UTM part was dropped 2026-10-12): `utm_campaign` per placement (hero, brand page, staff picks, blog post), and ask
 Keune for the salon's kickback report cadence so clicks can be reconciled against orders.
 
 ## Ask Keune (one mail)
@@ -127,16 +134,14 @@ Keune for the salon's kickback report cadence so clicks can be reconciled agains
 
 ## Ready-to-use link builder
 
+Since 2026-10-12 (no UTMs; the shipped version with full slug normalisation is `src/lib/keune.ts`):
+
 ```ts
 export const KEUNE_SALON = "6451330";
-export function keuneLink(slug?: string, campaign = "site") {
+export function keuneLink(slug?: string) {
   const u = new URL(`https://www.keune.com/salon/${KEUNE_SALON}/`);
   if (slug) u.searchParams.set("pageSlug", `/p/${slug.replace(/^\/?(se\/)?p\//, "").replace(/\/?$/, "/")}`);
-  u.searchParams.set("utm_source", "salongnovo.se");
-  u.searchParams.set("utm_medium", "referral");
-  u.searchParams.set("utm_campaign", campaign);
-  u.searchParams.set("source", "novo"); // must be LAST: absorbs Keune's '?fromKickbackFeeCode=' append
-  return u.toString();
+  return u.toString(); // pageSlug is the only parameter: any other one draws Keune's second '?'
 }
 ```
 
@@ -145,14 +150,15 @@ export function keuneLink(slug?: string, campaign = "site") {
 Option B is live in the codebase (not yet deployed):
 
 - `src/lib/keune.ts` — the builder above as `keuneLink` / `keuneGenericLink` (constant renamed
-  `KEUNE_SALON_NO`), plus slug/campaign normalisation. Every Keune link on the site goes through it.
+  `KEUNE_SALON_NO`), plus slug normalisation (campaign normalisation removed 2026-10-12). Every Keune link on the site goes through it.
 - `content/products.json` — 24 curated products (care 12, style 6, 1922 4, so-pure 2) with NOVO's own
   blurbs; images `public/images/keune/<slug>.webp` (Contentful renders, see Data sources). Client-editable
   as the "Butiken (Keune)" list in the admin.
-- `/butik` + `/en/shop` — the product wall; `utm_campaign` per placement: `butik-<line>`, `butik-all`,
-  `varumarken` (the Keune card on Våra brands), `personal-<stylist-slug>` (picks).
-  **2026-10-10: products hidden** (client request). The page is the copy plus ONE `butik-all` link
-  (`src/components/ShopPitch.astro`); the `butik-<line>` placements are dormant until the grid
+- `/butik` + `/en/shop` — the product wall; shipped with `utm_campaign` per placement (`butik-<line>`,
+  `butik-all`, `varumarken`, `personal-<stylist-slug>`) — **removed 2026-10-12**: every link is now the
+  bare salon route or the route + `pageSlug`.
+  **2026-10-10: products hidden** (client request). The page is the copy plus ONE full-range link
+  (`src/components/ShopPitch.astro`); the per-product deep links are dormant until the grid
   returns. ProductGrid, `products.json`, the admin list and keune-sync are unchanged.
 - Stylist picks — a `picks` list on every stylist, rendered in the team modal (max 3); all empty.
 - `scripts/keune-sync.mjs` — `npm run keune:check` (fails if a slug leaves the sitemap),

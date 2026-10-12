@@ -5,9 +5,8 @@
  * Every CTA is built HERE from the row's slug by `keuneLink()` — the salon
  * route plus `pageSlug`, which is what attributes the purchase to NOVO
  * (`Planning/KEUNE-KICKBACK.md`). No row stores a URL, so no row can skip the
- * attribution. `utm_campaign` names the placement per line (`butik-care`, …)
- * and `butik-all` for the full-range button, so the kickback report can be read
- * against the page. `rel="sponsored"` because the salon earns on the click.
+ * attribution. No UTMs (removed 2026-10-12): the full-range button is the bare
+ * salon route. `rel="sponsored"` because the salon earns on the click.
  *
  * Grouped by line in a fixed order (`groupProducts`); an empty line prints no
  * heading. Built, like the brand grid, to be COMPLETE WITHOUT THE ASSETS: a row
@@ -67,7 +66,7 @@ const synced = getProductsSyncedAt();
                 {blurb && <p class="desc">{blurb}</p>}
                 <a
                   class="btn btn--ghost cta"
-                  href={keuneLink(product.slug, `butik-${group.line}`)}
+                  href={keuneLink(product.slug)}
                   target="_blank"
                   rel="noopener sponsored"
                 >{t("cta.shopAtKeune")}</a>
@@ -79,7 +78,7 @@ const synced = getProductsSyncedAt();
     </div>
   ))}
   <div class="shop-foot">
-    <a class="btn" href={keuneGenericLink("butik-all")} target="_blank" rel="noopener sponsored">
+    <a class="btn" href={keuneGenericLink()} target="_blank" rel="noopener sponsored">
       {t("cta.shopAll")}
     </a>
     {synced && <p class="synced">{t("labels.priceAt")} · {synced}</p>}

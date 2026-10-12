@@ -43,9 +43,9 @@ Access (admin) · markdown-it (`html:false`) · Vitest. See `ARCHITECTURE.md`.
   Real staff portraits + 2026 award imagery + generated textures wired (2026-08-12).
 - ✅ **Keune product wall (2026-09-29):** `/butik` + `/en/shop` — 24 curated Keune products
   (`content/products.json`, CMS collection `products`), every CTA a salon-attributed deep link built
-  by `src/lib/keune.ts`; stylist `picks` wired but empty; `npm run keune:check` keeps slugs/prices
+  by `src/lib/keune.ts` (bare salon route + pageSlug, no UTMs since 2026-10-12); stylist `picks` wired but empty; `npm run keune:check` keeps slugs/prices
   honest. 26 public page files. Mechanism: `Planning/KEUNE-KICKBACK.md`.
-  **Products HIDDEN since 2026-10-10** (client request): the page is the copy + one `butik-all` link
+  **Products HIDDEN since 2026-10-10** (client request): the page is the copy + one full-range salon link
   (`ShopPitch.astro`); ProductGrid, the data, the admin list and its tests stay for the return.
 - ✅ **Home-page refresh (2026-09-30):** Desktop-Claude kit implemented natively (no override layer):
   fixed transparent→frosted header on `/` only, 1340px hamburger, 100svh hero with letter intro +

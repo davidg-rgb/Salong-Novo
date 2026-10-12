@@ -78,18 +78,20 @@ const buttons = (html: string) => [...html.matchAll(/<button\s([^>]*)>/g)].map((
 const cards = (html: string) => html.split(/<li class="product"/).slice(1);
 const text = (html: string) => html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 
-/** Every rule a salon-attributed link must satisfy, on one href. */
-function expectKickbackInvariants(href: string, campaign: RegExp) {
-  expect(href.startsWith("https://www.keune.com/salon/6451330/?"), href).toBe(true);
+/**
+ * Every rule a salon-attributed link must satisfy, on one href: NOVO's salon
+ * route, and `pageSlug` as the only query parameter — present exactly when a
+ * product is expected. No UTMs, no `source` (removed 2026-10-12).
+ */
+function expectKickbackInvariants(href: string, product: boolean) {
   const url = new URL(href);
-  expect([...url.searchParams.keys()].at(-1), href).toBe("source");
-  expect(url.searchParams.get("source"), href).toBe("novo");
-  expect(url.searchParams.get("utm_source")).toBe("salongnovo.se");
-  expect(url.searchParams.get("utm_medium")).toBe("referral");
-  expect(url.searchParams.get("utm_campaign"), href).toMatch(campaign);
+  expect(url.host, href).toBe("www.keune.com");
+  expect(url.pathname, href).toBe("/salon/6451330/");
+  expect([...url.searchParams.keys()], href).toEqual(product ? ["pageSlug"] : []);
+  expect(href, href).not.toMatch(/utm_|[?&]source=/);
   const decoded = decodeURIComponent(href);
   expect(decoded, decoded).not.toMatch(/fromKickbackFeeCode/i);
-  expect(decoded.split("?").length - 1, decoded).toBe(1);
+  expect(decoded.split("?").length - 1, decoded).toBe(product ? 1 : 0);
 }
 
 const product = (over: Record<string, unknown>) => ({
@@ -108,21 +110,21 @@ describe("ProductGrid — rendered", () => {
     const html = await render(ProductGrid);
     const links = anchors(html);
     expect(links).toHaveLength(25);
-    for (const link of links) {
+    links.forEach((link, index) => {
       expect(link.rel, link.href).toBe("noopener sponsored");
       expect(link.target, link.href).toBe("_blank");
-      expectKickbackInvariants(link.href!, /^butik-(care|style|1922|so-pure|all)$/);
-    }
-    // Each card's CTA deep-links to that card's product, tagged with its line.
+      expectKickbackInvariants(link.href!, index < 24);
+    });
+    // Each card's CTA deep-links to that card's product.
     const expected = getProducts();
     const ctas = links.slice(0, 24);
     ctas.forEach((link, index) => {
       const url = new URL(link.href!);
       expect(url.searchParams.get("pageSlug")).toBe(`/p/${expected[index]!.slug}/`);
-      expect(url.searchParams.get("utm_campaign")).toBe(`butik-${expected[index]!.line}`);
     });
     // The last anchor is the generic, product-less link.
-    expect(links[24]!.href).toBe(keuneGenericLink("butik-all"));
+    expect(links[24]!.href).toBe(keuneGenericLink());
+    expect(links[24]!.href).toBe("https://www.keune.com/salon/6451330/");
     expect(cards(html)).toHaveLength(24);
     expect(images(html)).toHaveLength(24);
     expect([...html.matchAll(/<h2 class="line-heading"[^>]*>([^<]*)<\/h2>/g)].map((m) => m[1])).toEqual([
@@ -187,7 +189,7 @@ describe("ProductGrid — rendered", () => {
     expect(html).not.toContain('class="synced"');
     expect(text(html)).not.toContain("Pris hos keune.com");
     // The full-range button does not depend on the date.
-    expect(anchors(html).at(-1)!.href).toBe(keuneGenericLink("butik-all"));
+    expect(anchors(html).at(-1)!.href).toBe(keuneGenericLink());
   });
 
   it("an unknown line is not rendered, an empty line prints no heading, and a blank slug links generically", async () => {
@@ -200,7 +202,7 @@ describe("ProductGrid — rendered", () => {
     expect([...html.matchAll(/<h2 class="line-heading"[^>]*>([^<]*)<\/h2>/g)].map((m) => m[1])).toEqual(["Styling"]);
     const [cta] = anchors(cards(html)[0]!);
     expect(new URL(cta!.href!).searchParams.get("pageSlug")).toBeNull();
-    expectKickbackInvariants(cta!.href!, /^butik-style$/);
+    expectKickbackInvariants(cta!.href!, false);
   });
 
   it("an empty list renders no cards and no headings, and still offers the full range", async () => {
@@ -235,7 +237,7 @@ describe("StaffGrid — stylist picks, rendered", () => {
     const [chriss, anna] = buttons(html).filter((b) => (b.class ?? "").includes("staff-card"));
     const picks = JSON.parse(chriss!["data-picks"]!) as { title: string; href: string }[];
     expect(picks.map((p) => p.title)).toEqual(["Air Flow", "Sea Foam"]);
-    for (const pick of picks) expectKickbackInvariants(pick.href, /^personal-chriss-berner$/);
+    for (const pick of picks) expectKickbackInvariants(pick.href, true);
     expect(picks.map((p) => new URL(p.href).searchParams.get("pageSlug"))).toEqual([
       "/p/style-air-flow/",
       "/p/style-sea-foam/",
@@ -281,13 +283,13 @@ describe("BrandGrid — sponsored rel on kickback links only, rendered", () => {
     // One brand = one href, in card order; every anchor of a card (photo, logo/name,
     // "Läs mer" — the whole card is clickable since 2026-10-10) carries the same rel.
     expect([...new Set(links.map((l) => l.href))]).toEqual([
-      keuneGenericLink("varumarken"),
+      keuneGenericLink(),
       "https://www.ghdhair.com",
       "https://dc-hair.com",
       "https://richyhair.se",
     ]);
     const relOf = (href: string) => [...new Set(links.filter((l) => l.href === href).map((l) => l.rel))];
-    expect(relOf(keuneGenericLink("varumarken"))).toEqual(["noopener sponsored"]);
+    expect(relOf(keuneGenericLink())).toEqual(["noopener sponsored"]);
     for (const plain of ["https://www.ghdhair.com", "https://dc-hair.com", "https://richyhair.se"]) expect(relOf(plain)).toEqual(["noopener"]);
     // Each card: logo/name link + "Läs mer" always, photo link only when a shot exists.
     for (const card of html.split(/<li class="brand"/).slice(1)) {
@@ -348,9 +350,9 @@ describe("the shop pages, rendered", () => {
       // Exactly one sponsored link, and it is the generic full-range link.
       const sponsored = anchors(article).filter((a) => a.rel === "noopener sponsored");
       expect(sponsored).toHaveLength(1);
-      expect(sponsored[0]!.href).toBe(keuneGenericLink("butik-all"));
+      expect(sponsored[0]!.href).toBe(keuneGenericLink());
       expect(sponsored[0]!.target).toBe("_blank");
-      expectKickbackInvariants(sponsored[0]!.href!, /^butik-all$/);
+      expectKickbackInvariants(sponsored[0]!.href!, false);
       // booking={false}: the only booking buttons are the header's, never the article's.
       expect(text(article)).not.toContain(bookingLabel);
       // The nav marks this page as current.

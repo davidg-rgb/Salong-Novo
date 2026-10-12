@@ -13,18 +13,18 @@
  * parameter, and `keuneSlug` cuts any query string or fragment off a pasted slug,
  * so a copied address-bar URL cannot carry it in through `pageSlug` either.
  *
- * `source=novo` is set LAST on purpose. Keune's redirect appends its own
- * `?fromKickbackFeeCode=NOVO` with a second `?`, which corrupts whatever
- * parameter happens to be last. `source` is on Keune's pass-through allow-list
- * and nothing reads it, so it absorbs the damage and the three UTMs arrive
- * clean. `URLSearchParams.set` appends a new key at the end, so the order of the
- * calls below IS the order of the query string.
+ * No UTMs, no `source` (removed 2026-10-12 on David's call: UTMs were never in
+ * the brief). Keune's redirect appends its own `?fromKickbackFeeCode=NOVO` with
+ * a second `?` whenever the link carries other parameters, which corrupts the
+ * last one — so the link carries nothing beyond the optional `pageSlug`. The
+ * bare form also shows Keune's "Du har valt salongen" confirmation modal, which
+ * the UTM form suppressed.
  *
  * `pageSlug` is percent-encoded (`%2Fp%2F<slug>%2F`) by `URLSearchParams`, while
  * the tested matrix in the planning doc used literal slashes. Keune's salon
- * route reads it from Next's `useRouter().query`, which decodes percent-escapes
- * — read in the shipped salon chunk on 2026-09-29, NOT click-tested in a browser
- * in the encoded form. Click one live link before relying on it at go-live.
+ * route reads it from Next's `useRouter().query`, which decodes percent-escapes;
+ * the encoded form WAS click-tested in a browser on 2026-10-12 and lands on the
+ * product page with the salon set.
  */
 
 /** NOVO's `salonNo` at Keune. No vanity `kickbackFeeCode` yet — see the planning doc's "Ask Keune". */
@@ -67,43 +67,18 @@ export function keuneSlug(slug?: string | null): string {
 }
 
 /**
- * A `utm_campaign` value in the `[a-z0-9-]` alphabet: lowercased, diacritics
- * folded (`personal-linnea-hellström` → `personal-linnea-hellstrom`), anything
- * else collapsed to a single hyphen. An input with nothing usable left becomes
- * `site`, the default placement, rather than an empty campaign.
+ * The salon-attributed link to one Keune product, or the bare salon route
+ * (Keune's Swedish home page) when `slug` is absent or reduces to nothing.
+ * `pageSlug` is the only query parameter it ever carries.
  */
-export function keuneCampaign(campaign: string | null | undefined): string {
-  const clean = String(campaign ?? "")
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9-]+/g, "-")
-    .replace(/-{2,}/g, "-")
-    .replace(/^-+|-+$/g, "");
-  return clean || "site";
-}
-
-/**
- * The salon-attributed link to one Keune product, or to Keune's Swedish home
- * page when `slug` is absent or blank.
- *
- * `campaign` names the PLACEMENT (`butik-care`, `personal-chriss-berner`,
- * `varumarken`) so clicks can be reconciled against the kickback report per
- * surface.
- */
-export function keuneLink(slug?: string, campaign = "site"): string {
+export function keuneLink(slug?: string): string {
   const url = new URL(SALON_ROUTE);
   const bare = keuneSlug(slug);
   if (bare) url.searchParams.set("pageSlug", `/p/${bare}/`);
-  url.searchParams.set("utm_source", "salongnovo.se");
-  url.searchParams.set("utm_medium", "referral");
-  url.searchParams.set("utm_campaign", keuneCampaign(campaign));
-  // Must stay LAST — see the module comment.
-  url.searchParams.set("source", "novo");
   return url.toString();
 }
 
-/** The salon-attributed link to Keune's Swedish home page (no product). */
-export function keuneGenericLink(campaign = "site"): string {
-  return keuneLink(undefined, campaign);
+/** The salon-attributed link to Keune's Swedish home page (no product, no query string). */
+export function keuneGenericLink(): string {
+  return keuneLink();
 }

@@ -7,7 +7,6 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import {
   KEUNE_SALON_NO,
   isKickbackLink,
-  keuneCampaign,
   keuneGenericLink,
   keuneLink,
   keuneSlug,
@@ -96,28 +95,23 @@ function latin(text: string): Uint8Array {
 describe("keuneLink — the salon-attributed deep link", () => {
   it("is NOVO's salon route", () => {
     expect(KEUNE_SALON_NO).toBe("6451330");
-    expect(keuneLink().startsWith("https://www.keune.com/salon/6451330/?")).toBe(true);
+    expect(keuneLink().startsWith("https://www.keune.com/salon/6451330/")).toBe(true);
   });
 
-  it("with no slug: the generic salon link, UTMs, source last", () => {
-    expect(keuneLink()).toBe(
-      "https://www.keune.com/salon/6451330/?utm_source=salongnovo.se&utm_medium=referral&utm_campaign=site&source=novo",
-    );
-    expect(keuneGenericLink("varumarken")).toBe(
-      "https://www.keune.com/salon/6451330/?utm_source=salongnovo.se&utm_medium=referral&utm_campaign=varumarken&source=novo",
-    );
+  it("with no slug: the bare salon route — no query string, not even a trailing '?'", () => {
+    expect(keuneGenericLink()).toBe("https://www.keune.com/salon/6451330/");
+    expect(keuneGenericLink()).not.toContain("?");
+    expect(keuneLink()).toBe(keuneGenericLink());
+    expect(keuneLink(undefined)).toBe(keuneGenericLink());
+    expect(keuneLink("")).toBe(keuneGenericLink());
+    expect(keuneLink("   ")).toBe(keuneGenericLink());
   });
 
-  it("with a slug: pageSlug is /p/<slug>/ (the route adds /se itself)", () => {
-    const href = keuneLink("style-air-flow", "butik-style");
+  it("with a slug: pageSlug is /p/<slug>/ (the route adds /se itself) and the ONLY parameter", () => {
+    const href = keuneLink("style-air-flow");
     expect(pageSlug(href)).toBe("/p/style-air-flow/");
-    expect(params(href).map(([key]) => key)).toEqual([
-      "pageSlug",
-      "utm_source",
-      "utm_medium",
-      "utm_campaign",
-      "source",
-    ]);
+    expect(params(href)).toEqual([["pageSlug", "/p/style-air-flow/"]]);
+    expect(href).toBe("https://www.keune.com/salon/6451330/?pageSlug=%2Fp%2Fstyle-air-flow%2F");
   });
 
   it("strips a pasted /se/p/ prefix — /se/se/p/… is a 404", () => {
@@ -169,11 +163,11 @@ describe("keuneLink — the salon-attributed deep link", () => {
     }
   });
 
-  it("`source` is the LAST parameter — it absorbs Keune's '?fromKickbackFeeCode=' append", () => {
-    for (const href of [keuneLink(), keuneLink("style-sea-foam", "butik-style"), keuneGenericLink("butik-all")]) {
-      const last = params(href).at(-1);
-      expect(last, href).toEqual(["source", "novo"]);
-      expect(href.endsWith("&source=novo"), href).toBe(true);
+  it("carries no UTMs and no `source` — removed 2026-10-12, never in the brief", () => {
+    const hrefs = [keuneLink(), keuneLink("style-sea-foam"), keuneGenericLink(), ...getProducts().map((p) => keuneLink(p.slug))];
+    for (const href of hrefs) {
+      expect(href, href).not.toMatch(/utm_|[?&]source=/);
+      expect(params(href).every(([key]) => key === "pageSlug"), href).toBe(true);
     }
   });
 
@@ -182,21 +176,22 @@ describe("keuneLink — the salon-attributed deep link", () => {
     // would pass a raw-string check and still reach Keune's redirect intact.
     const hrefs = [
       keuneLink(),
-      keuneLink("/se/p/style-air-flow/?fromKickbackFeeCode=NOVO", "x?y"),
+      keuneLink("/se/p/style-air-flow/?fromKickbackFeeCode=NOVO"),
       keuneLink("https://www.keune.com/se/p/style-air-flow/?fromKickbackFeeCode=NOVO#x"),
       keuneLink("style-air-flow#fromKickbackFeeCode=NOVO"),
-      ...getProducts().map((p) => keuneLink(p.slug, `butik-${p.line}`)),
+      ...getProducts().map((p) => keuneLink(p.slug)),
     ];
     for (const href of hrefs) {
       const decoded = decodeURIComponent(href);
       expect(decoded, decoded).not.toMatch(/fromKickbackFeeCode/i);
-      expect(decoded.split("?").length - 1, decoded).toBe(1);
+      // The bare route has no '?', a product link exactly one — never two.
+      expect(decoded.split("?").length - 1, decoded).toBe(pageSlug(href) === null ? 0 : 1);
       expect(decoded, decoded).not.toContain("#");
     }
   });
 
   it("recognises a salon-attributed link, and only that, as a kickback link", () => {
-    expect(isKickbackLink(keuneGenericLink("varumarken"))).toBe(true);
+    expect(isKickbackLink(keuneGenericLink())).toBe(true);
     expect(isKickbackLink(keuneLink("style-air-flow"))).toBe(true);
     expect(isKickbackLink("https://www.keune.com/salon/novo/")).toBe(true);
     for (const href of ["https://www.keune.com", "https://www.keune.com/se/p/style-air-flow/", "https://www.ghdhair.com", "", null, undefined]) {
@@ -204,27 +199,12 @@ describe("keuneLink — the salon-attributed deep link", () => {
     }
   });
 
-  it("sanitises the campaign to lowercase [a-z0-9-]", () => {
-    const campaign = (value: string) => new URL(keuneLink("x", value)).searchParams.get("utm_campaign");
-    expect(campaign("Butik Care!")).toBe("butik-care");
-    expect(campaign("personal-linnea-hellström")).toBe("personal-linnea-hellstrom");
-    expect(campaign("  --Hero__Banner--  ")).toBe("hero-banner");
-    expect(campaign("butik-so-pure")).toBe("butik-so-pure");
-    expect(campaign("butik-1922")).toBe("butik-1922");
-  });
-
-  it("a campaign with nothing usable left falls back to `site`, never blank", () => {
-    expect(keuneCampaign("")).toBe("site");
-    expect(keuneCampaign("!!!")).toBe("site");
-    expect(keuneCampaign(null)).toBe("site");
-    expect(keuneCampaign(undefined)).toBe("site");
-  });
-
   it("the brand page's Keune link is the builder's output, pasted as a literal", () => {
     // brands.json carries the literal (it is a client-editable `url` field);
     // this pins it to the one builder so the two cannot drift.
     const keune = getBrands().find((brand) => brand.slug === "keune");
-    expect(keune?.url).toBe(keuneGenericLink("varumarken"));
+    expect(keune?.url).toBe(keuneGenericLink());
+    expect(keune?.url).toBe("https://www.keune.com/salon/6451330/");
   });
 });
 
@@ -441,14 +421,13 @@ describe("stylist picks", () => {
     expect(stylist.picks).toEqual(["style-air-flow", "style-sea-foam"]);
   });
 
-  it("resolves picks to titles + salon links tagged personal-<stylist>", () => {
+  it("resolves picks to titles + bare salon deep links (pageSlug only)", () => {
     const picks = stylistPicks({ slug: "chriss-berner", picks: ["style-air-flow"] }, products);
     expect(picks).toHaveLength(1);
     expect(picks[0]!.title).toBe("Air Flow");
     const href = new URL(picks[0]!.href);
     expect(href.searchParams.get("pageSlug")).toBe("/p/style-air-flow/");
-    expect(href.searchParams.get("utm_campaign")).toBe("personal-chriss-berner");
-    expect([...href.searchParams.keys()].at(-1)).toBe("source");
+    expect([...href.searchParams.keys()]).toEqual(["pageSlug"]);
   });
 
   it("an unknown slug is dropped silently, never linked", () => {

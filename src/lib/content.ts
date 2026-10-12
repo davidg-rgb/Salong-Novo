@@ -275,8 +275,7 @@ export const MAX_PICKS = 3;
 
 /**
  * A stylist's picks as the team modal's links: the product's title and its
- * salon-attributed deep link, tagged `personal-<stylist slug>` so the kickback
- * report can be read per stylist.
+ * salon-attributed deep link (the salon route + `pageSlug`, nothing else).
  *
  * Only slugs the product list actually carries survive — an unknown one (a
  * typo, or a product retired from the wall) is dropped silently rather than
@@ -294,7 +293,7 @@ export function stylistPicks(
     const product = bySlug.get(slug);
     if (!product || seen.has(slug)) continue;
     seen.add(slug);
-    out.push({ title: product.title, href: keuneLink(product.slug, `personal-${stylist.slug}`) });
+    out.push({ title: product.title, href: keuneLink(product.slug) });
     if (out.length === MAX_PICKS) break;
   }
   return out;
